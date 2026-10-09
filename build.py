@@ -166,6 +166,37 @@ def load_weeks(data_dir, errors):
     return weeks
 
 
+TOPIC_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
+
+
+def load_topics(data_dir, errors):
+    """专题页：data/topics/<slug>.json，字段 slug/title/summary(必填)，updated/desc/attachments(可选)。"""
+    topics = []
+    td = data_dir / "topics"
+    if not td.exists():
+        return topics
+    for f in sorted(td.glob("*.json")):
+        try:
+            t = json.loads(f.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as ex:
+            errors.append(f"topics/{f.name}: JSON 解析失败 {ex}")
+            continue
+        if t.get("slug") != f.stem or not TOPIC_RE.match(f.stem):
+            errors.append(f"topics/{f.name}: slug 必须等于文件名（小写字母/数字/连字符）")
+        if not t.get("title") or not t.get("summary"):
+            errors.append(f"topics/{f.name}: 缺少 title 或 summary")
+        try:
+            t["summary"] = resolve_text(t.get("summary"), data_dir)
+        except DataError as ex:
+            errors.append(f"topics/{f.name}: {ex}")
+        for a in t.get("attachments", []) or []:
+            if not (data_dir / a).exists():
+                errors.append(f"topics/{f.name}: 附件不存在 {a}")
+        topics.append(t)
+    topics.sort(key=lambda x: x.get("updated", ""), reverse=True)
+    return topics
+
+
 # ---------------------------------------------------------------- HTML 片段
 def page(title, body, rel, desc=""):
     return f"""<!doctype html>
@@ -176,7 +207,7 @@ def page(title, body, rel, desc=""):
 <link rel="stylesheet" href="{rel}static/style.css">
 </head><body><div class="wrap">
 <header class="site"><a class="brand" href="{rel}index.html">{e(SITE_TITLE)}</a>
-<nav><a href="{rel}index.html">汇总</a><a href="{rel}index.html#weekly">周度脉络</a></nav></header>
+<nav><a href="{rel}index.html">汇总</a><a href="{rel}index.html#topics">专题</a><a href="{rel}index.html#weekly">周度脉络</a></nav></header>
 {body}
 <footer>纯静态页面 · 每个工作日更新 · 评级：必读 / 值得看 / 了解即可</footer>
 </div></body></html>
@@ -216,7 +247,7 @@ def coverage_html(p):
     if not c:
         return ""
     items = [f"<span>{lab}：{COVERAGE_VALUES.get(c.get(k), '—')}</span>" for k, lab in COVERAGE_KEYS if k in c]
-    note = f'<span>{e(c["note"])}</span>' if c.get("note") else ""
+    note = f'<span class="note">核查说明：{e(c["note"])}</span>' if c.get("note") else ""
     return f'<div class="coverage">{"".join(items)}{note}</div>'
 
 
@@ -226,7 +257,7 @@ def media_html(p, rel):
         src = rel + m["src"]
         cap = f"<figcaption>{e(m.get('caption'))}</figcaption>" if m.get("caption") else ""
         if Path(m["src"]).suffix.lower() in VIDEO_EXT:
-            el = f'<video src="{e(src)}" controls preload="none" playsinline></video>'
+            el = f'<video src="{e(src)}" controls preload="metadata" playsinline></video>'
         else:
             el = f'<img src="{e(src)}" alt="{e(m.get("caption") or p["title"])}" loading="lazy">'
         out.append(f"<figure>{el}{cap}</figure>")
@@ -329,6 +360,16 @@ def render_week(w):
     return page(f'{w["week"]} 周度脉络 · {SITE_TITLE}', body, rel, w["title"])
 
 
+def render_topic(t):
+    rel = "../../"
+    meta = " · ".join(x for x in [f"更新于 {t['updated']}" if t.get("updated") else "", t.get("desc", "")] if x)
+    body = (f'<h1>{e(t["title"])}</h1>'
+            + (f'<p class="sub">{e(meta)}</p>' if meta else "")
+            + f'<div class="md topic">{md(t["summary"])}</div>'
+            + f'<nav class="pager"><span></span><a href="{rel}index.html">汇总</a><span></span></nav>')
+    return page(f'{t["title"]} · 专题 · {SITE_TITLE}', body, rel, t.get("desc", t["title"]))
+
+
 def pick_focus(days):
     if not days:
         return []
@@ -344,7 +385,7 @@ def pick_focus(days):
     return [(c[3], c[4]) for c in cands[:2]]
 
 
-def render_index(days, weeks):
+def render_index(days, weeks, topics=()):
     rel = ""
     if not days:
         body = ('<h1>每日论文精读</h1><p class="sub">World Model · 视频生成 · 视频编辑 · 流式视频生成（重点：音视频流式生成）</p>'
@@ -357,6 +398,8 @@ def render_index(days, weeks):
             f'<a class="item" href="{day_url(dd)}#p-{e(p["id"])}"><div class="when">{badge(p["rating"])} {tags(p.get("directions", []))} {dd}</div>'
             f'<div class="tt">{e(p["title"])}</div><div class="s">{e(p["tldr"])}</div></a>' for dd, p in focus)
         out.append(f'<h2>本周最重要</h2><div class="focus">{items}</div>')
+    for t in topics[:1]:
+        out.append(f'<p class="sub" style="margin-top:14px">专题：<a href="topics/{e(t["slug"])}/index.html">{e(t["title"])}</a></p>')
     if weeks:
         w = weeks[0]
         out.append(f'<p class="sub" style="margin-top:14px">最新周度脉络：<a href="weekly/{e(w["week"])}/index.html">{e(w["week"])} · {e(w["title"])}</a></p>')
@@ -379,6 +422,10 @@ def render_index(days, weeks):
                     f'<span class="cnt">必读 {nm} · 值得看 {nw}</span></div>'
                     + (f'<ul class="dp">{lis}</ul>' if lis else "") + "</li>")
     out.append(f'<ol class="days">{"".join(rows)}</ol><p class="noresult">没有符合筛选条件的论文。</p>')
+    out.append('<h2 id="topics">专题</h2>' + (
+        '<ul class="weeks">' + "".join(f'<li><a href="topics/{e(t["slug"])}/index.html">{e(t["title"])}</a>'
+                                        + (f' · {e(t["desc"])}' if t.get("desc") else "") + "</li>" for t in topics) + "</ul>"
+        if topics else '<p class="sub">暂无专题。</p>'))
     out.append('<h2 id="weekly">周度脉络</h2>' + (
         '<ul class="weeks">' + "".join(f'<li><a href="weekly/{e(w["week"])}/index.html">{e(w["week"])}</a> · {e(w["title"])}</li>' for w in weeks) + "</ul>"
         if weeks else '<p class="sub">每周五发布，第一份即将上线。</p>'))
@@ -398,6 +445,7 @@ def main():
     errors, warnings = [], []
     days = load_days(data_dir, assets_dir, errors, warnings)
     weeks = load_weeks(data_dir, errors)
+    topics = load_topics(data_dir, errors)
     if data_dir.resolve() == (ROOT / "data").resolve():
         for d in days:
             if d.get("example"):
@@ -408,7 +456,7 @@ def main():
         for x in errors:
             print("错误:", x)
         sys.exit(f"校验失败：{len(errors)} 个错误")
-    print(f"校验通过：{len(days)} 天，{len(weeks)} 份周总结")
+    print(f"校验通过：{len(days)} 天，{len(weeks)} 份周总结，{len(topics)} 个专题")
     if a.check:
         return
     if out.exists():
@@ -430,7 +478,13 @@ def main():
         p = out / "weekly" / w["week"]
         p.mkdir(parents=True)
         (p / "index.html").write_text(render_week(w), encoding="utf-8")
-    (out / "index.html").write_text(render_index(days, weeks), encoding="utf-8")
+    for t in topics:
+        p = out / "topics" / t["slug"]
+        p.mkdir(parents=True)
+        (p / "index.html").write_text(render_topic(t), encoding="utf-8")
+        for a in t.get("attachments", []) or []:
+            shutil.copy2(data_dir / a, p / Path(a).name)
+    (out / "index.html").write_text(render_index(days, weeks, topics), encoding="utf-8")
     if days:  # latest/ 永远跳到最新一期
         (out / "latest").mkdir()
         (out / "latest" / "index.html").write_text(

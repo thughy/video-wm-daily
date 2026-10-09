@@ -1,0 +1,8 @@
+{
+  "slug": "survey-2026q3",
+  "title": "2026 Q3 领域综述：流式音视频生成 / 流式视频 / 世界模型 / 视频编辑",
+  "desc": "2026-07-09 ~ 10-09，1567 篇召回 → 47 篇精选；含五大判断、AV 流式专章、延迟口径与评测问题",
+  "updated": "2026-10-09",
+  "summary": {"file": "topics/survey-2026q3.md"},
+  "attachments": ["topics/survey-2026q3-signals.csv"]
+}

@@ -1,0 +1,355 @@
+{
+ "date": "2026-10-09",
+ "headline": "AV 流式的焦点已从「能不能流」转到「因果化与少步蒸馏怎么组合」，PAC 的受控对比最有说服力；共同代价落在同步、可懂度和音色上，而同步指标本身也靠不住。",
+ "papers": [
+  {
+   "id": "pac",
+   "rating": "must",
+   "directions": [
+    "av-streaming",
+    "streaming"
+   ],
+   "highlight": true,
+   "title": "Real-Time Joint Audio–Video Generation by Parallel Adapter Composition",
+   "tldr": "因果 adapter 和现成的 4 步 LoRA 各自对冻结的 MiniMax-H3 训练、推理时直接相加，就得到 30s 不崩的流式音视频生成；受控对比最干净，但 WER 是教师的 3 倍、音色掉 41%、没有代码。",
+   "institutions": [
+    "LIGHTSPEED",
+    "独立研究者"
+   ],
+   "published": "arXiv 2026-10-08 (v2)",
+   "links": {
+    "paper": "https://arxiv.org/abs/2610.10343",
+    "project": "https://pac-demo-2027.github.io/demo/",
+    "other": [
+     {
+      "label": "Turbo LoRA (lightx2v)",
+      "url": "https://huggingface.co/lightx2v/Minimax-h3-Turbo"
+     }
+    ]
+   },
+   "rating_reason": "本期唯一在同一 backbone 上把「先蒸馏 / 先因果 / 并行相加」三条路线放在一起受控对比的工作，结论可迁移。",
+   "coverage": {
+    "paper": "full",
+    "demo": "full",
+    "code": "unavailable",
+    "note": "4 个 30s demo 全部看过并逐段测响度；视频分析工具听不到音频，对立体声方位的判断也不可靠；所有音频响度、声道、空间类结论以 ffmpeg 信号实测为准。"
+   },
+   "insight": "因果化改的是「看哪些 token」（注意力路由），少步蒸馏改的是「每个噪声级怎么走」（去噪轨迹）。两份 LoRA 更新都很小（投影范数的 0.28% / 0.15%），写出方向近似正交，所以可以**直接相加**，不必串联训练。作者先给出这个预测，再在训练好的权重上验证。",
+   "media": [
+    {
+     "src": "assets/2026-10-09/pac-pac-fig1.webp",
+     "caption": "论文 Fig.1：Chained-DA（先蒸馏再因果，会「去蒸馏」）、Chained-AD（先因果再蒸馏，两阶段贵）、PAC（并行相加）。"
+    },
+    {
+     "src": "assets/2026-10-09/pac-pac-vs-chained-da.mp4",
+     "caption": "hdtf-028 第 16–24s：左 PAC，右 Chained-DA。音轨左声道 = PAC、右声道 = Chained-DA（戴耳机可分辨）。实测 Chained-DA 平均响度从开头约 −29dB 降到这一段约 −40dB，逐渐失声。"
+    }
+   ],
+   "context": "- **路线定位**：CausVid / Self-Forcing 用一个目标同时学因果和少步；Causal Forcing 先因果化再蒸馏（Chained-AD）；OmniForcing 在 AV 上先蒸馏再因果化（Chained-DA）。PAC 主张不必串联，并指出 Chained-DA 的「去蒸馏」：继续用 flow-matching 回归训练，会把跳步场拉回瞬时速度。3 个月综述的 AV 流式路线图里，它是唯一的「冻结底座 + 并行 adapter」路线（C）。\n- **对比 Ripple / Vorch-Streamer（综述）**：Vorch-Streamer 30s WER 7.92%（OmniForcing 98.79%、Hallo-Live 94.13%），而且消融显示去掉 speech-plan token 时 WER 是 184%。PAC 的 WER 0.127 是教师 0.041 的 3 倍，作者的解释「chunk 因果后模型不知道念到第几句」正好对应综述的判断：瓶颈已从音画同步转向「说什么、怎么持续说」。PAC 没有任何语言规划模块。综述里 Ripple 没有报 WER（只有 LSE-C 6.08），两者测试集不同，数字**不能直接横比**。\n- **速度口径（综述 2.4）**：Ripple 约 28 FPS @1×H100，Vorch 27.12 FPS @H200（只算 DiT），PAC 约 26 FPS 需要 **6 张 GPU**、TTFF 4.2s，属于不能和单卡比的多卡 stage-parallel 口径。\n- **底座**：综述把 MiniMax-H3 列为增长最快的新底座；PAC 是第一批 H3 上的 AV 流式工作，和 LTX-2 系的方法不能直接比较。",
+   "method": "clean-context teacher forcing：token 轴复制一份，clean / noisy 共用 RoPE，noisy chunk 只能看严格更早的 clean chunk，每个 chunk 单独采噪声级。rank-128 LoRA，每个 chunk 34 帧。推理用 7 个 chunk 的滑窗加首帧 anchor。少步一侧直接拿公开的 lightx2v Turbo LoRA，没有联合训练。",
+   "evidence": "held-out 4 步 AR 系统：IQA **0.914**（教师 0.908，Chained-DA 0.854）；Sync-C 7.44（Chained-AD 8.02 更高，教师 8.41）；FAD 3.19（Chained-DA 5.02）。Whole-seg（4 步双向）Sync-C 8.403，和教师 8.412 几乎一样，说明差距来自因果化方式而不是步数。30s 外推：IQA 末段 +2.6%；Chained-DA 唇同步掉 43.7% 并逐渐失声。",
+   "case_analysis": "**支持论文主张，PAC 30s 内没有出现长时崩溃。**\n- hdtf-028 PAC：唇同步首中尾都稳，语音持续到结尾，身份保持；后半段音色更「合成」、发闷（和论文的音色相似度 −41% 一致）。实测后半段反而更响（12s 后平均约 −15～−20dB），峰值 −0.3～−0.7dBFS，**有削波风险**，可能是发闷的原因之一。\n- hdtf-028 Chained-DA：约 13s 后口型对不上，脸部涂抹变形，身份漂移。视频分析把声音描述成「大声噪声」，但实测是逐渐变弱（0–8s 约 −29～−34dB → 16–24s 约 −40dB），准确说法是**逐渐失声**，和论文一致。\n- avspeech-071 PAC：唇同步稳、身份保持好，背景静止。手势运动时手部模糊（关键帧可见第 3s 抬手、18s/27s 放下，身体并非完全静止；视频分析的第二轮说法有误，以关键帧为准）。\n- avspeech-071 Chained-AD：唇同步略好于 PAC，但脸部糊、轻微闪烁、眼镜变形，背景文字变乱码。和论文「Chained-AD 同步最好、画质和身份最差」的取舍一致。\n- 项目页 30s 段共 6 个 clip（3 个数据集各 2 个），每个都并排 4 种方法、包括失败基线，不像只挑好例子，但没说是随机抽取。",
+   "code_analysis": "**没有代码和权重**，只有 demo 页。MiniMax-H3 FL2VA backbone 和 lightx2v Turbo LoRA 是公开的，但 causal adapter 没有放出，无法复现，也无法核对 mask 和滑窗的实现。",
+   "concerns": "1. 「实时」是 **6 张 GPU** 的吞吐，GPU 型号没写；demo 页写的 **TTFF 4.2s**，交互延迟其实不低。\n2. 所有因果系统的 WER 都约为教师的 3 倍（0.127 vs 0.041）。PAC 没有解决这个问题，只是没比别人更差。\n3. 长时说话人音色相似度掉 41%，是几种方法里最差的；case 里还看到峰值逼近 0dBFS。\n4. 只在 avatar（talking-head）域训练和评测；held-out 指标是相对教师输出算的。\n5. Sync-C（LSE-C 类）和人评的相关性较弱（见综述评测章节），7.44 vs 8.02 的差距应打折看。",
+   "details": {
+    "file": "2026-10-09/pac-details.md"
+   }
+  },
+  {
+   "id": "saltpp",
+   "rating": "worth",
+   "directions": [
+    "av-streaming",
+    "streaming"
+   ],
+   "title": "Salt++: Context-Aligned Post-Training for Few-Step Streaming Multimodal Generation",
+   "tldr": "让生成器和两个 score 模型共享同一个因果上下文做 AR DMD，4 步流式 AV 的 VQ/MQ 比 OmniForcing 高约 57%/45%；但音画对齐指标全部变差，case 也看到口型不同步和过锐，没有延迟数字和代码。",
+   "institutions": [
+    "HKUST",
+    "Vivix",
+    "USyd",
+    "Westlake"
+   ],
+   "published": "arXiv 2026-09-29",
+   "links": {
+    "paper": "https://arxiv.org/abs/2609.36995",
+    "project": "https://xingtongge.github.io/Saltpp/",
+    "code": "https://github.com/XingtongGe/Saltpp"
+   },
+   "rating_reason": "「score 模型要和生成器看同一个上下文」这个点有价值；但对一个主打音视频的方法来说，同步退步是硬伤。",
+   "coverage": {
+    "paper": "partial",
+    "demo": "partial",
+    "code": "unavailable",
+    "note": "读了主要章节；看过 4 个 5s demo；repo 只有 README。视频分析工具听不到音频，对立体声方位的判断也不可靠；所有音频响度、声道、空间类结论以 ffmpeg 信号实测为准。"
+   },
+   "insight": "因果 DMD 里如果直接复用双向 score 模型，打分时看到的上下文和生成时不一样，分布匹配本身就不成立。三方（生成器、fake score、real score）用同一个因果 mask 和前缀之后，DMD 可以单独承担少步蒸馏，不再需要 consistency 阶段。",
+   "media": [
+    {
+     "src": "assets/2026-10-09/saltpp-saltpp-recipe.webp",
+     "caption": "Salt++ 两阶段：Causal Self-Flow → 上下文对齐的 AR–AR DMD。"
+    },
+    {
+     "src": "assets/2026-10-09/saltpp-saltpp-context.webp",
+     "caption": "三方上下文对齐示意。"
+    },
+    {
+     "src": "assets/2026-10-09/saltpp-saltpp-vs-ltx2.mp4",
+     "caption": "main480-0（5s）：左 LTX-2 教师（40 步），右 Salt++ AR–AR DMD 4 步；音轨为 Salt++。"
+    }
+   ],
+   "context": "- **路线定位**：属于综述里「修 DMD 副作用」这一支的 teacher/context 失配问题，和 CMD（因果 teacher + Prefix Scoring）、RMD（chunk 边际打分）同一类诊断。Salt++ 的做法是在 AV 上把 score 模型的上下文也因果化。和 PAC 用「加法」处理蒸馏与因果化的耦合相比，Salt++ 是在蒸馏目标里做对齐。\n- **对照 StreamAV-Bench（综述）**：StreamAV-Bench 测了 13 个系统，原生流式 AV 的对齐反而不如级联管线（OmniForcing AVAlign 0.119，级联约 0.26–0.28）。Salt++ **唯一的流式基线就是 OmniForcing**，也就是该 benchmark 里对齐最差的那一档，赢它门槛不高；而 Salt++ 自己的 IB-AV / Javis / DeSync 都比教师差，和「原生流式在 AV 对齐上掉分」的规律一致。综述也指出本季新方法还没进入 StreamAV-Bench。\n- **同步指标（综述）**：AV sync 指标审计显示 DeSync 对偏移的跟踪最好（τ=0.84）。Salt++ 的 DeSync 从 0.608 退到 0.759，在各项同步指标里分量最重，case 里也看到了口型不同步。\n- **对比本季 AV 流式主力**：Ripple、Vorch 这些在 LSE-C 和 WER 上有长时数字，Salt++ 只有 5s，没有长时语义评测。",
+   "method": "CSF 阶段：学生看混入噪声的历史，EMA 教师看干净历史，在目标块不变的前提下对齐中间表征。AR–AR DMD：先在 clean prefix 上蒸馏，再 on-policy 适应自生成历史；teacher guidance 从固定 4.0 改为随机 U(1, 3.5)。另有 scale-wise 分支到 1664×960。",
+   "evidence": "480p 4 步：VQ **2.838** / MQ **1.010**（OmniForcing 1.807 / 0.699，LTX-2 40 步 1.884 / 0.566）。消融：BI-BI → AR-AR 的 VQ 0.837 → 3.147；guidance 随机化 VQ +91.5%。代价：IB-AV 0.184（LTX-2 0.239），Javis 0.146（TF-dCM 0.200），DeSync 0.759（LTX-2 0.608）。",
+   "case_analysis": "**支持「比 OmniForcing 好很多」，也支持「音画同步不如 LTX-2」。**\n- Salt++ 480p：锐度和饱和度明显偏高（蓝衬衫过艳），胡须和嘴部轻微形变，口型与语音有可见不同步。\n- OmniForcing：画面偏软偏糊，动作僵硬。\n- LTX-2 教师：最自然，头动、眨眼正常，口型对齐最好。\n- Salt++ 960p「健身教练」：锐利、高饱和，手放下时手部有伪影和抖动，口型明显不同步。\n- 过锐、过饱和符合 DMD mode-seeking 的典型表现，**可能抬高了 VQ/MQ 这类自动画质指标**。\n- 视频分析报告里的音频描述（语音清晰、OmniForcing 约 0:05 失真）未经信号复核，不作为结论。\n- demo 全部对应论文配图（精选），只有 5s，没有失败案例。",
+   "code_analysis": "repo 只有 README，TODO 中推理脚本、权重、训练脚本都**未勾选**（`README.md`「TODO List」一节），无法核对实现。",
+   "concerns": "1. **音画对齐退步**（IB-AV、Javis、DeSync 全差于教师），case 里也看到口型不同步。\n2. VQ/MQ 比 40 步教师高约 50%，加上 case 中的过锐、过饱和，自动指标可能偏乐观。\n3. **完全没报 fps、延迟或推理硬件**，「streaming」只体现在结构上。\n4. demo 只有 5s，没有长时生成；960p 对比中 OmniForcing 是直接外推的，不公平（作者承认）。\n5. 训练用 GB300 集群和内部 AV 数据，不可复现。",
+   "details": {
+    "file": "2026-10-09/saltpp-details.md"
+   }
+  },
+  {
+   "id": "helixworld",
+   "rating": "worth",
+   "directions": [
+    "av-streaming",
+    "world-model",
+    "streaming"
+   ],
+   "title": "HelixWorld: A Real-time Interactive Audio-Visual World Model",
+   "tldr": "相机和动作可控的实时音视频世界模型，立体声场随相机转动，单卡 H800 RTF 0.77，预览版代码和权重可用；但视觉均分低于 3 个基线，DeSync 也不如级联 V2A，空间声学指标是自定义的。",
+   "institutions": [
+    "HKUST",
+    "Noiz AI"
+   ],
+   "published": "arXiv 2026-09-29",
+   "links": {
+    "paper": "https://arxiv.org/abs/2609.38123",
+    "project": "https://helixworld.org/",
+    "code": "https://github.com/NoizAI/HelixWorld",
+    "other": [
+     {
+      "label": "HF 权重（preview）",
+      "url": "https://huggingface.co/NoizAI/HelixWorld-preview"
+     }
+    ]
+   },
+   "rating_reason": "少数开源可跑的「有声」交互世界模型，工程完整；但核心卖点（空间声学）只有自定义指标支撑。",
+   "coverage": {
+    "paper": "partial",
+    "demo": "unavailable",
+    "code": "partial",
+    "note": "项目页是依赖服务端的实时交互 demo，没有可下载的 case 视频；代码静态阅读，本机无 GPU，没有运行。"
+   },
+   "insight": "空间声学不应交给后接的 V2A 处理：相机和动作信号只注入视频分支，再通过 AV cross-attention 传到音频分支，「转头导致声像偏移」这种关系在联合训练中自然学到。",
+   "media": [
+    {
+     "src": "assets/2026-10-09/helixworld-helixworld-fig4.webp",
+     "caption": "论文 Fig.4：Self-forcing rollout + online trajectory distillation + DMD，以及 sink + 最近块的长时微调。"
+    }
+   ],
+   "context": "- **定位**：综述五大进展之三「世界模型开始有声音」的代表之一，与 EchoWM（JD，首个同时有环境声、音乐、语音的可进入世界模型，但声音不跟相机对齐）、WorldSonus（同团队的模块化路线）、JoyAI-Echo-1.5 并列。Matrix-Game、HY-World、LingBot 等交互世界模型基本是无声的。\n- **对照 StreamAV-Bench（综述）**：该 benchmark 的结论是级联管线的 AV 对齐好于原生流式。HelixWorld 自己的表也是这个规律：因果学生 DeSync 0.587，比级联的 HelixWorld+ThinkSound（0.424）、+PrismAudio（0.458）以及 LTX-2.3 base（0.404）都差，只在作者自定义的 Spatial 指标上大幅领先。所以「联合生成更好」目前只在空间声学这一维成立。\n- **评测割裂（综述）**：综述指出世界模型用 WBench、AV 用 LSE-C，两边评测完全割裂。HelixWorld 同时报了 WBench 和音频指标，算是往前走了一步，但空间声学指标未经验证（综述开放问题 7）。\n- **学生超教师（综述）**：综述把「HelixWorld 音频指标学生超教师」列为没有充分解释的结论。\n- **延迟口径**：RTF 是音频领域的口径，不能和视频 FPS 直接换算（综述 2.4）。",
+   "method": "4.1k 小时数据筛到 3.0k 小时（去伪立体声、去非 diegetic 声音、VGGT-Ω + Depth Anything V3 恢复度量位姿、三轨 caption）。6-DoF 相机用 PRoPE，81 类动作用 AdaLN。先训控制模块，再训视频分支，最后全量训练。因果蒸馏：ODE 初始化 → self-forcing DMD + online trajectory distillation → 长时 streaming 微调。另发布 HelixBench（1015 例）。",
+   "evidence": "HelixBench：因果学生 FAD **2.39**、Spatial **41.8**（EchoWM 7.75 / 12.6；级联最好的 Spatial 14.8，来自 ThinkSound），但 DeSync 0.587 落后于级联 0.424 和 LTX-2.3 base 0.404。WBench 均分 79.9，RTF 0.77 @单卡 H800。L_traj 让 DINOv3 多样性 +21.7%。",
+   "case_analysis": "**没有可下载的 case。** 项目页是依赖服务端的实时交互 demo，本次没有拿到任何生成视频，声场是否真的随相机转动未经核实。",
+   "code_analysis": "**预览版推理代码 + 47.8GB 权重已公开**，README 写「Full model, training, and report: Coming soon」，预览版不一定等于论文里的模型。\n- 与论文一致：每块 4 个 latent 帧（`generation_runner.py:24`）；4 步 schedule (1.0, 0.9, 0.7, 0.4, 0)（`schedule_runtime.py:9`）；KV 提交时 detach（`context_cache.py:159-160`）；sink + 最近块（`context_runtime.py:64-84`）；PRoPE 和动作 MLP（`video_control.py:204-284`）；音频 VAE 强制立体声（`audio_vae/model_configurator.py:54`）。\n- 需要注意：发布配置 `history_limit=3, fixed_prefix=1`（`scripts/infer_model.py:31-37`），即只有 1 个 sink 块加 2 个最近块，约 4s 上下文；每块都把历史重新编码进新缓存（`generation_core.py:250-256`），每块多出最多 3 次 forward。\n- 离线 CLI 生成完 121 帧才写 MP4，**实时流式服务端没有开源**。需要约 70GB 显存，本机没有运行。",
+   "concerns": "1. WBench 视觉均分 79.9，**低于** Alaya 82.0、EchoWM 81.0、Zing 81.0，摘要里「matches SOTA」说重了。\n2. Spatial 指标和 HelixBench 都是作者自定义的；V2A 基线是给 HelixWorld 自己的视频重新配音。\n3. 因果学生的音频指标全面好于双向教师（FAD 2.39 vs 3.08），没有解释。\n4. 用户研究在静音条件下输给 EchoWM。\n5. 发布版上下文只有约 4s，长时一致性存疑；实时服务端未开源。",
+   "details": {
+    "file": "2026-10-09/helixworld-details.md"
+   }
+  },
+  {
+   "id": "worldsonus",
+   "rating": "worth",
+   "directions": [
+    "av-streaming",
+    "world-model"
+   ],
+   "title": "WorldSonus: Bringing Sound to Worlds",
+   "tldr": "可以接在任意无声世界模型后面的流式立体声 V2A：100ms 一个 chunk、Ring-KV、流中切 prompt，H100 上 RTF 0.41，代码和权重已开源；case 里因果同步和 prompt 切换成立，但立体声有固定偏置，对比的基线是伪立体声。",
+   "institutions": [
+    "HKUST",
+    "Noiz AI",
+    "MetaX",
+    "SJTU"
+   ],
+   "published": "arXiv 2026-10-06",
+   "links": {
+    "paper": "https://arxiv.org/abs/2610.08760",
+    "project": "https://noizai.github.io/WorldSonus/",
+    "code": "https://github.com/NoizAI/WorldSonus",
+    "other": [
+     {
+      "label": "HF 权重",
+      "url": "https://huggingface.co/FF2416/WorldSonus"
+     }
+    ]
+   },
+   "rating_reason": "开源、可接任意无声世界模型的模块化方案，实用价值高；空间声学的说法要打折。",
+   "coverage": {
+    "paper": "partial",
+    "demo": "partial",
+    "code": "partial",
+    "note": "看了 4 个 demo 并逐秒测左右声道响度；代码静态阅读，本机无 GPU。方法论：视频分析对立体声方位的判断不可靠（宇航员 case 中与实测相反），音频空间类结论以信号实测为准。"
+   },
+   "insight": "把声音和视频基座解耦，任何无声世界模型都能接上声音，代价是拿不到动作信息。在因果设定下，用「双时间尺度视觉条件」加训练期的 ShiftNCE（借冻结的同步专家剔除时间上模糊的负样本），补偿看不到未来帧的问题。",
+   "media": [
+    {
+     "src": "assets/2026-10-09/worldsonus-worldsonus-architecture.webp",
+     "caption": "WorldSonus 架构：DINO 视觉条件 → AR 主干 + flow head → causal stereo VAE，Ring-KV。"
+    },
+    {
+     "src": "assets/2026-10-09/worldsonus-worldsonus-car-pass.mp4",
+     "caption": "benchmark case 0002 第 2–10s：深色汽车从左向右驶过，原片 5s（本片段第 3s）处 prompt 切到「城市夜景 + 倒车提示音」。实测左声道全程更响（L−R 约 5–19dB），声像有相对移动但没过中线。"
+    }
+   ],
+   "context": "- **定位**：综述 AV 路线图里的「级联 / 半级联」一支（流式视频 + 流式 V2A）。和同团队的 HelixWorld（原生联合）互补，也和 EchoWM、JoyAI-Echo-1.5 一起属于「世界模型开始有声音」。\n- **对照 StreamAV-Bench（综述）**：该 benchmark 显示级联管线（如 LongLive+V2A）的 AV 对齐好于早期原生流式 AV，这给模块化路线提供了间接支持。但 WorldSonus 没有进 StreamAV-Bench，自己的 DeSync（0.686）也比离线双向基线（0.481）差，「流式 V2A 能保住级联优势」还没被证明。\n- **前作**：流式 V2A 有 V-AURA（单声道、视觉窗口双向）、SoundReactor（不能文本控制）；WorldSonus 的 causal stereo VAE 改自 SoundReactor。\n- **延迟口径**：RTF 0.41 是音频领域口径（综述 2.4），实际 RTF 对应的 flow 步数和 CFG 设置需要自己核实（见代码结论）。",
+   "method": "AR 主干 + flow head；DINO 视觉特征 + 时间差分；causal stereo VAE；立体声监督来自 FOA 转换；每 100ms 一个 chunk、每 chunk 2 个 token；SWA 窗口 100 token，即约 5s Ring-KV。",
+   "evidence": "VGG 5s：FAD **1.73**（PrismAudio 2.09，V-AURA 4.06）。Inter. 30s：BiasSkill 15.90（其余 ≤4.19）。30s 流末段 FAD 2.51，冷启动 2.63，基本不漂移。prompt 切换增益 G=+0.051（CI 不含 0），但双匹配率绝对值只有约 25%。H100 上每 chunk 41.2ms（RTF 0.41）。",
+   "case_analysis": "**因果同步和 prompt 切换得到支持；空间立体声「有相对移动但有偏置」，不如论文说的干净；对比基线是伪立体声，优势被放大。**\n- 汽车左→右（case 0002）：引擎和路噪与车辆运动对应；5s 处倒车提示音和城市环境声准时出现；没有块边界咔哒声。**声道实测**：左声道全程更响，L−R 在 0s 4.9dB → 2s 19.2dB → 4s 5.3dB → 5–8s 约 7–9dB。声像有相对移动，但始终没过中线，可能有固定声道偏置。\n- AudioX 基线：实测左右声道完全相同（差信号约 −90dB），是伪立体声。demo 的「立体声优势」是在和单声道比。\n- 河流 → 火车（30s）：0–14s 水声连贯；15s 镜头下摇露出火车时准时切到行进声和汽笛；后段响度 −35dB → −21dB，与火车靠近一致；30s 内无漂移、无块边界伪影。\n- 宇航员（太空）：全程有风声和低沉轰鸣，物理上不合理（真空无声），模型按视觉「氛围」配声。视频分析说左声道更响，实测 3s 后右声道高 7–12dB。\n- 41 个 case 分 3 组，含基线和 GT，未说明挑选方式，没有失败案例。",
+   "code_analysis": "**推理代码和权重已公开（CC BY-NC 4.0）**，核心机制与论文一致：\n- `push()` 不读未来帧（`worldsonus/streaming.py:9-14`）；SWA 窗口 100 token、约 5s Ring-KV（`streaming.py:41,43`）；切 prompt 只换 prompt KV、保留音频历史（`streaming.py:55`）。\n- 需要注意：flow head 默认 **15 步**（`streaming.py:17`），CFG 用 3 路 batch（`:43`），RTF 0.41 对应什么设置要自己测；最大时长要预先给定（`streaming.py:12-13`），并非无限流；README 明确「does not promise a particular latency」；DINOv3、T5Gemma 2 需单独接受许可。本机无 GPU，没有运行。",
+   "concerns": "1. DeSync 比离线双向基线差（0.686 vs 0.481）。\n2. 立体声有固定偏置（case 实测），主要对比对象 AudioX 是伪立体声。\n3. 文本可控性偏弱：双匹配率绝对值约 25%。\n4. 按视觉氛围配声，物理不合理的场景（真空）也会出声。\n5. 自建 Interactive 集和训练域接近，基线没在该域训练；用户研究 20 人、40 段。",
+   "details": {
+    "file": "2026-10-09/worldsonus-details.md"
+   }
+  },
+  {
+   "id": "facegan",
+   "rating": "must",
+   "directions": [
+    "av-streaming",
+    "streaming"
+   ],
+   "title": "No Distillation Needed: Single-Pass Real-Time Talking Heads via Acausal Noise Shaping",
+   "tldr": "Meta 证明「因果生成器 + iid 噪声」存在频谱上限，用非因果的噪声整形让单步 GAN 流式驱动表情和头姿（43ms）；肉眼看唇同步不输基线、自然度明显更好，项目页 LSE-C 垫底更可能是指标问题。",
+   "institutions": [
+    "Meta Reality Labs"
+   ],
+   "published": "arXiv 2026-10-08",
+   "links": {
+    "paper": "https://arxiv.org/abs/2610.11070",
+    "project": "https://wojciechzielonka.com/facegan/"
+   },
+   "rating_reason": "必读看思想：给出了所有因果流式生成器都适用的随机性结构理论，消融扎实；工程上限于运动码，没有代码。",
+   "coverage": {
+    "paper": "full",
+    "demo": "partial",
+    "code": "unavailable",
+    "note": "看了 19 个对比 clip 中的 3 个 + 1 个固定头姿版本；网格顺序已从页面源码确认。视频分析听不到音频，唇同步判断是对照 GT 面板的口型做的视觉比较。"
+   },
+   "insight": "用 Kolmogorov–Szegő 定理证明：因果、时不变、只用当前 iid 噪声的生成器，输出谱在任何频带上都不可能为零；要把 δ 比例的频带压到 ε 以下，每步新息方差上限是 ε^δ。这就是 talking head 常见的「抖动或呆板」二选一。噪声是合成的，可以提前采样未来噪声，所以噪声通路非因果整形**不增加任何音频延迟**。",
+   "media": [
+    {
+     "src": "assets/2026-10-09/facegan-facegan-fig2.webp",
+     "caption": "论文 Fig.2：冻结 Mimi 音频编码器 + 2 层双向噪声栈（非因果整形）+ 6 层因果条件栈 → 128 维表情 + 头姿，25Hz 单次前向。"
+    },
+    {
+     "src": "assets/2026-10-09/facegan-facegan-gt-ours-fallingwater.mp4",
+     "caption": "A338_C019 第 18–26s，裁取对比网格前三格：GT / FaceGAN / Fallingwater（顺序按项目页 MANIFEST.methods，页面源码确认与拼接顺序一致；音轨为 GT 音频）。"
+    }
+   ],
+   "context": "- **路线定位**：针对用 diffusion 或蒸馏做 talking head 的路线（Fallingwater、DiffPoseTalk、ARTalk），论点是低维运动流形上单步 GAN 就够，DMD 的 mode-seeking 反而有害。综述把它和 LeapTalk（1 步 bridge，200 FPS）、AptAvatar（2 NFE）一起归入 avatar 加速；FaceGAN 的不同在于给出了「为什么因果 + iid 噪声不够」的理论解释。\n- **同步指标（综述）**：[《What Do AV Sync Metrics Actually Measure?》](https://arxiv.org/abs/2608.25157) 的审计显示，各同步指标几乎互不一致（Krippendorff α=0.066），DeSync 对偏移的跟踪最好（τ=0.84）；[PVSync](https://arxiv.org/abs/2610.09223) 报告其与人评的 Spearman 为 **0.83**，LSE-C 只有 **0.34**。综述的判断是：以 LSE-C / Sync-C 为主证据的结论都要打折。这正好解释 FaceGAN「LSE-C 最低、肉眼和用户研究却不差」的矛盾。\n- **和本期 AV 流式的关系**：FaceGAN 是音频驱动的单向耦合，不生成音频；但「流式生成的随机性结构」问题对所有因果生成器都适用，包括 PAC、Salt++ 的 DMD 少步学生。",
+   "method": "噪声栈：2 层双向注意力（半径 64），对合成噪声做非因果整形；条件栈：6 层因果注意力，音频用冻结的 Mimi 编码器，40ms lookahead；两个多尺度判别器（条件 / 无条件）+ mode-seeking 损失；输出运动码，由 Meta 内部渲染器出图。",
+   "evidence": "单路延迟 **43ms**，单张 H200 4096 路并发 62ms。论文 Table 2（with pose）Sync 0.8767 最佳（Fallingwater 0.696）。噪声栈改成因果后，表情方差降到 0.92–0.93，同宽度表情多样性 −14%、姿态多样性 −22%（三次运行的标准差带）。用户研究 19 人、684 次比较：唇同步打平，自然度 57.1%。",
+   "case_analysis": "**肉眼看唇同步不差于、甚至优于基线，自然度优势明显。**\n- 唇同步：FaceGAN 口型的时机和区分度最好（A338 约 0:24、G022 约 0:04）；Fallingwater 基本同步但噪声大；DiffPoseTalk、MemoryTalker、ARTalk 口型偏通用、幅度受限，DiffPoseTalk 最差。\n- 表情：FaceGAN 上半脸有挑眉、皱眉等动态；后三者明显僵硬。\n- 抖动：Fallingwater 明显抖动闪烁，FaceGAN 稳定。头姿：FaceGAN 接近 GT，Fallingwater 乱动，ARTalk 等基本不动。\n- 固定头姿版：FaceGAN 口型时机准、清晰，优于基线。\n- 说明：唇同步是对照 GT 面板做的视觉比较（视频分析听不到音频）；论文自己的用户研究里唇同步是「打平」，所以更稳妥的说法是「不输基线」。",
+   "code_analysis": "**无代码、无权重。** 表示空间和渲染器来自 Agrawal et al. 2025（Meta 内部运动码），外部无法复现。",
+   "concerns": "1. **指标可能不可靠，而非方法差**：项目页公开指标里 FaceGAN 的 LSE-C 3.80 最低（ARTalk 4.73、Fallingwater 5.13、MemoryTalker 5.31），LSE-D 8.14 最差，不含 pose 的 SyncScore 0.749 也落后（DiffPoseTalk 0.846）。但肉眼对比和论文用户研究都不支持「唇同步差」。结合综述，LSE-C 和人评的相关只有 0.34（PVSync 0.83），这类矛盾更可能是 LSE-C 本身的问题；一个推测是 LSE-C 偏好幅度大而平滑的「通用口型」。不过作者没报 PVSync 或 DeSync，**目前无法直接证实**，需要作者回应。\n2. 项目页 19 个 clip **是怎么从 64 条测试集里挑出来的，没有说明**（页面有「Auto-shuffle」）。\n3. 论文的 Sync 领先依赖 with-pose / 64 次采样口径。\n4. 理论基于平稳过程、时不变假设，严谨但适用范围有限；只做运动码，没有像素级生成。",
+   "details": {
+    "file": "2026-10-09/facegan-details.md"
+   }
+  },
+  {
+   "id": "optica",
+   "rating": "must",
+   "directions": [
+    "streaming",
+    "video-gen"
+   ],
+   "title": "Conditional Residual Prediction: Improving AR Video Diffusion without a Bidirectional Teacher",
+   "tldr": "历史条件只允许预测残差、再把视频 VAE 换成逐帧 image VAE，从图像模型起步就能训练出接近双向模型的因果视频模型；受控实验把 6.14 分差距缩到约 0.2，但只评了 5s、50 步、不实时。",
+   "institutions": [
+    "CUHK-Shenzhen",
+    "Tencent Hunyuan"
+   ],
+   "published": "arXiv 2026-10-08",
+   "links": {
+    "paper": "https://arxiv.org/abs/2610.11479"
+   },
+   "rating_reason": "受控消融清楚、带机制诊断，直接挑战「流式模型必须从双向 teacher 蒸馏」这一默认配方。",
+   "coverage": {
+    "paper": "full",
+    "demo": "unavailable",
+    "code": "unavailable",
+    "note": "没有找到项目页、demo 或代码。"
+   },
+   "insight": "用互信息链式分解，把历史提供的信息拆成「当前输入本可推出的部分」和「只有历史能给的部分」。teacher forcing 下模型会偷懒从干净历史里抄前者，推理时这部分就累积误差，这是 exposure bias 中**可以避免**的那一块。只让历史分支预测残差，就堵住了这条捷径。",
+   "media": [
+    {
+     "src": "assets/2026-10-09/optica-optica-fig1.webp",
+     "caption": "论文 Fig.1：(a) CRP 的 History-Free / History-Conditioned 两个分支共享权重；(b) 视频 VAE 的时间纠缠；(c) image VAE 让帧间独立。"
+    }
+   ],
+   "context": "- **路线定位**：和 Diffusion Forcing（给历史加噪）、Self-Forcing（用自生成历史训练）不同，CRP 不改训练分布，只限制历史能贡献什么。综述把它列为流式视频线中唯一「不用双向 teacher」的路线。\n- **与 CMD / RMD（综述）**：CMD 指出「双向 teacher 给因果学生打分」本身是错位的，于是改用因果 teacher；RMD 改成 chunk 边际打分。CRP 走得更远，直接不要双向 teacher，可以作为 CMD 这类方法需要的「原生因果 teacher」。\n- **teacher 天花板（综述开放问题 5）**：几乎所有流式工作都蒸馏自 LTX-2.x，学生难以超过 teacher。CRP 是摆脱这一天花板的候选之一，但还没有蒸馏到少步，也没有在长视频上验证。\n- **评测（综述）**：综述指出流式视频的评测几乎只用 VBench / VBench-Long，CRP 也只报了 VBench（5s）。",
+   "method": "同一网络两次 forward：先遮掉历史预测当前 chunk 的 x0；历史分支在 stop-grad 后的结果上只预测残差（latent fusion）。把 Wan VAE 换成逐帧 image VAE，temporal patch 层把 4 帧 latent 合并输入，DiT 计算量不变。x0-prediction，从 SANA 图像模型起步。",
+   "evidence": "受控实验（4M 视频，256p）：双向 77.28，因果基线 71.14，+x0 72.41，+CRP **77.09**，+image VAE **77.48**。rollout 与 teacher forcing 的质量差 0.138 → 0.066 → 0.039。去掉 CRP 时训练 loss 最低但 VBench 最差，与「过度依赖历史」的假设一致。完整 2B 模型（15M 视频）VBench 82.78。",
+   "case_analysis": "**没有可下载的 case**：论文没有项目页或 demo 链接，本次也没有找到。",
+   "code_analysis": "论文没有代码或项目链接，本次也没有找到公开仓库。",
+   "concerns": "1. 只评了 **5s**，CRP 能否在长 rollout 中持续抑制漂移还没验证（作者自己承认）。\n2. 推理每步 2 次 forward，用 50 步，**不实时**，也还没蒸馏。\n3. 评测只有 VBench，Quality 子项仍比蒸馏系模型低 1–4 分。\n4. 没有代码和 demo。",
+   "details": {
+    "file": "2026-10-09/optica-details.md"
+   }
+  },
+  {
+   "id": "sgf-plus",
+   "rating": "fyi",
+   "directions": [
+    "streaming"
+   ],
+   "title": "SGF+",
+   "tldr": "热度高（HF 51 赞）但不扎实：参数翻倍到 2.8B 后再和基线比，「24 小时」生成只有定性展示；综述中 SGF 的后续工作增益都很小。",
+   "links": {
+    "paper": "https://arxiv.org/abs/2610.10429"
+   },
+   "coverage": {
+    "paper": "partial",
+    "demo": "none",
+    "code": "none"
+   }
+  },
+  {
+   "id": "connected-self-forcing",
+   "rating": "fyi",
+   "directions": [
+    "streaming"
+   ],
+   "title": "Connected Self Forcing",
+   "tldr": "增益只在千分位到百分位，部分初始化下动态度反而更低。",
+   "links": {
+    "paper": "https://arxiv.org/abs/2610.12156"
+   },
+   "coverage": {
+    "paper": "partial",
+    "demo": "none",
+    "code": "none"
+   }
+  },
+  {
+   "id": "kandinsky-6-video",
+   "rating": "fyi",
+   "directions": [
+    "video-gen"
+   ],
+   "title": "Kandinsky 6.0 Video",
+   "tldr": "HF 158 赞，MIT 许可开源 29B 双向 AV 底座，5s，不属于流式；值得关注的是它可能成为下一代 AV 流式工作的 teacher。",
+   "links": {
+    "paper": "https://arxiv.org/abs/2610.05608"
+   },
+   "coverage": {
+    "paper": "partial",
+    "demo": "none",
+    "code": "none"
+   }
+  }
+ ],
+ "trend_summary": "1. **配方收敛，争论转向耦合方式。** 流式 AV 都是在双向 AV 底座（LTX-2 / MiniMax-H3）上做后训练。今天的三种答案：串联（Chained-AD/DA）、并行相加（PAC）、在蒸馏目标里对齐上下文（Salt++）。CRP 则干脆不要双向 teacher。**判断：PAC 的受控对比最有说服力，CRP 最可能改变默认配方。**\n2. **代价集中在「说」和「听」上。** PAC 的 WER 是教师的 3 倍、音色掉 41%；Salt++ 三项同步指标全差于教师；HelixWorld 和 WorldSonus 的 DeSync 都不如级联或双向基线。这和综述的判断一致：瓶颈已转向长时语言状态，需要 Vorch 式的 speech plan 或可修改的记忆。\n3. **评测比方法更需要补课。** FaceGAN 的 LSE-C 垫底和肉眼观感相反；WorldSonus 的立体声优势是和伪立体声基线比出来的；HelixWorld 的空间指标是自定义的。「实时」的口径也各不相同（6 卡吞吐、单卡 RTF、不报）。**读今天任何一个同步或空间数字之前，先看它用的是什么指标、和谁比。**"
+}

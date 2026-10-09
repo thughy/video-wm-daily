@@ -46,6 +46,9 @@ ul.quick .s{color:var(--muted);font-size:14.5px;display:block;font-weight:400}
 .card .links a{font-size:14px;margin-right:14px}
 .coverage{font-size:13px;color:var(--muted);margin:8px 0 2px}
 .coverage span{margin-right:12px;white-space:nowrap}
+.coverage span.note{display:block;white-space:normal;margin-top:4px}
+.md code{overflow-wrap:anywhere}
+.md img{max-width:100%}
 .tldr{background:var(--accent-soft);border-radius:8px;padding:10px 14px;margin:14px 0;font-weight:600}
 .card:not(.must) .tldr{background:var(--fyi-soft)}
 .field{margin:14px 0}

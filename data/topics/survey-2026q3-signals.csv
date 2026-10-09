@@ -1,0 +1,48 @@
+﻿paper,arxiv,institution,"citation_count(in-corpus,1567篇Q3语料内被引)",citation_growth,community_discussion,github_repo,stars(2026-10-09),"star_growth(均值/天,自建库起)",forks/open_issues/近30天新issue,HF_upvotes,soundness(我的判断),入选
+Ripple,2607.26818,China Telecom AI (TeleAI),0,新(8月初),X仅arXiv bot转发(0赞)；HF未收录,未找到,-,-,-,未收录,高：三阶段配方+完整对比(teacher/OmniForcing/Hallo-Live)，LSE-C 6.08 vs teacher 6.37；无代码,必读
+Vorch-Streamer,2608.05663,Vorch Team/同济/哈工深/上交,0,新,X仅bot(≤3赞)；HF未收录,Vorch-Project/Vorch-Streamer-project(仅项目页),2,0,1/1/0,未收录,高：speech-plan消融(WER 184%→7.92%)直指核心瓶颈；FPS仅DiT吞吐,必读
+OmniMate,2607.23023,China Telecom AI,0,新,X仅bot(0赞),未找到,-,-,-,未收录,中高：GPC+多参考，240s稳定；作者自述漏词/重复,入选
+TaoMate,2607.24359,淘宝直播AIGC/阿里,0,新,X仅bot(0赞),TaoLiveAIGC/TaoMate; TaoLiveAIGC/TaoMate-H3,499; 669,6.5; 19.7,44/1/0; 67/6/8,未收录,中高：anchor+压缩AV状态；DiT FPS不含VAE，35FPS需3卡流水,入选
+Omni-LiveAvatar,2608.13602,(作者含Guanglu Song/Yu Liu/Jun Zhang；机构未在HTML中确认),0,新,X仅bot(3赞),Aoko955/Omni-LiveAvatar,8,0.1,0/2/0,未收录,中：分钟级Sync-C 6.76 vs OmniForcing 0.28，但代码库几乎空,入选
+StreamAV-Bench,2608.26336,BAAI/PKU (Boxin Shi),3,新，已被3篇引,"X bot(4赞,4收藏)",项目页,-,-,-,未收录,高：13系统、人类Spearman 0.77–0.94；揭示原生流式AV对齐弱于级联,必读
+What Do AV Sync Metrics Actually Measure?,2608.25157,(未确认),0,新,无,无,-,-,-,未收录,高：指标间α=0.066，DeSync最能追踪偏移；评测必读,必读
+PVSync,2610.09223,(未确认),0,新,无,无,-,-,-,未收录,中：Spearman 0.83 vs LSE-C 0.34；需复核,入选
+"OmniForcing (种子,2026-03)",2603.11647,JD Joy Future Academy (Nan Duan),12(在AV子集内12),Q3内持续被当baseline,ECCV 2026 Oral；HF有ckpt,OmniForcing/OmniForcing,200,1.0,5/11/2,-,中：开创性，但多篇独立论文显示lip-sync/WER差(LSE-C~1.4–2.9),种子
+Hallo-Live (种子),2604.23632,Fudan generative vision,8,稳定,-,fudan-generative-vision/Hallo-Live,357,2.2,58/10/0,-,中：同上，30s WER>90%,种子
+LTX-2/2.3 (种子),2601.03233,Lightricks,74(AV子集44),最高共引AV底座,Reddit r/StableDiffusion大量实践：Scope在4090实时LTX-2.3、CLSS流式节点,Lightricks/LTX-2,9633,34.5,1528/51/7,-,高：事实上AV流式teacher,种子
+MiniMax-H3 eval/model,2609.18323,MiniMax,18,2个月内18篇引，增速最快的新底座,Ostris(AI Toolkit)支持H3 LoRA，指出RVQ tokenizer encoder未开源→无法全量微调,MiniMax-AI/MiniMax-H3,9692,136.5,725/43/8,116,中高：开放omni底座；技术细节有限,入选
+Wan-Streamer v0.3 (Video=World+Event Stream),2607.15038,Wan-AI/阿里,0,新,alphaXiv/个人研究者转述(≤4赞),windward47/Wan-Streamer-Replication(非官方),49,0.5,7/1/0,22,低-中：方向最重要(全双工AV)，但论文仅3.6k词，只有延迟+定性观察，无定量质量评测,入选(标注证据弱)
+Vidu S1/S2,2607.03118/2609.11638,清华+生数 (Jun Zhu),3/3,新,AK转发(41–42赞)；HF 148/706(Q3最高),无,-,-,-,148/706,中：产品报告，消融少；HF热度远超内容扎实度,入选(产品线代表)
+JoyAI-Echo-1.5,2608.23383,JD Joy Future Academy,0,新,HF 8,jd-opensource/JoyAI-Echo,2049,15.9,171/7/1,8,中高：长视频AV记忆+因果4步,入选
+EchoWM,2608.23189,JD Joy Future Academy (+Lvmin Zhang参与推广),7,1.5个月7篇引,机器之心X报道；作者X拉票,jd-opensource/JoyAI-Echo,(同上),-,-,61,中：首个开放全模态(视频+环境音+音乐+语音)可进入世界模型；无显式3D记忆,必读
+HelixWorld,2609.38123,HKUST (Qifeng Chen/Wei Xue) + NoizAI,0,新,ArxivSound bot,NoizAI/HelixWorld,624,9.3,45/4/2,37,中：实时AV世界模型；已在10-09日报推送,入选
+WorldSonus,2610.08760,HKUST/NoizAI 同组,0,新,SoundPapers bot,-,-,-,-,33,中：给世界模型配声,入选
+UniSwap,2608.11752,CUHK + Qwen Apps,0,新,bot,项目页,-,-,-,23,中：13.6FPS<25FPS，流式非实时,入选
+TurboT2VA,2608.24674,ZJU/清华 thu-ml,0,新,-,thu-ml/TurboDiffusion,3854,12.6,277/79/0,-,中：4步LTX-2 20×加速；非因果,入选
+CMD (Causal teacher),2608.13391,NVIDIA (Sanja Fidler),0,新,-,项目页,-,-,-,19,高：指出teacher/context失配并给出因果teacher方案,必读
+RMD,2609.37925,CUHK MMLab + 腾讯,0,新,-,项目页,-,-,-,23,中高：60s VBench-Long 81.26 vs SF 70.94,入选
+Self Gradient Forcing,2607.20368,JD (Junhao Zhuang),15,Q3新论文中被引最快之一,HF 26,zhuang2002/Self_Gradient_Forcing (+SGF+ 新库),146,1.8,4/3/1,26,中高：已被EchoWM/Echo-1.5采用,必读
+Mask Forcing,2609.09123,HKUST-GZ (Anyi Rao),0,新,HF 54,delaprada/Mask-Forcing,82,2.2,3/1/2,54,中：针对DMD多样性坍缩,入选
+FlashForward,2609.32540,Meta + NTU,0,新,HF 35,项目页,-,-,-,35,中：流水线/噪声历史,入选
+LongLive-Plug,2609.38154,NVIDIA,0,新,HF 42,(NVlabs/LongLive),2696,7.1,261/23/-,42,中：54个下游模型即插即用，工程价值高,入选
+Can VWMs Track Unobserved States?,2608.30692,SNU/Roblox (Xun Huang),0,新,未见X讨论,无,-,-,-,未收录,高：受控S5实验，揭示append-only KV无法追踪隐状态；对记忆路线有理论意义,必读
+The Seriality Gap,2607.13031,UC Berkeley,0,新,-,-,-,-,-,-,中高：理论+实验，去噪步不增串行计算,入选
+Matrix-Game 3.5,2608.29910,Skywork/Riemann Dynamics 系,0,新,-,SkyworkAI/Matrix-Game,2346,4.5,256/35/-,18,中：权重开源；技术报告,入选
+WorldPlay2,2609.35560,腾讯混元,0,新,-,WorldPlay2/WorldPlay2,61,5.5,1/2/4,31,中：待代码,入选
+ABot-World-0,2607.19191,高德/阿里 AMAP,0,新,HF 113,amap-cvlab/ABot-World,2513,14.3,129/1/0,113,中：720P 16FPS@5090,入选
+AlayaWorld,2607.18367,Alaya Lab/盛大,~5–14(多标题合计),稳定,HF 62,AlayaLab/AlayaWorld,792,8.4,40/1/2,62,中：15B开源,入选
+WorldCrafter,2609.24984,PKU + 腾讯ARC,0,新,AK 201赞/133收藏(本季AK最高之一),TencentARC/WorldCrafter,464,18.6,18/2/2,157,中：隐式3D记忆；热度>证据,入选
+SolarWM,2609.02886,CUHK-SZ (Li Jiang),5,1个月5引,HF 117,Junchao-cs/SolarWM,743,15.2,38/3/10(issue最活跃之一),117,中高：开放数据+4个底座复现，可复现性强,必读
+Waypoint-1.5,2609.37107,Overworld,0,新,-,Overworldai/Biome,145,0.5,20/13/0,未收录,中高：清晰区分rendered/latent FPS与control rate，消费级GPU全表,入选
+Zing-0.5,2609.17909,(Meituan LongCat? 未确认),0,新,HF 47,seedleap/zing-world-model,168,3.7(近30天+37),19/4/3,47,中：机构不确定,备选
+LingBot-World 2.0 (Infinite Worlds),2607.07534,Robbyant/蚂蚁,30,Q3内被引最高的新世界模型,HF 46,Robbyant/lingbot-world-v2,1850,19.9,146/10/0,46,中高,入选
+Addressable Memory/WorldTrace,2608.07408,NVIDIA,9,较快,HF 16,-,-,-,-,16,中高：training-free RoPE可寻址记忆,入选
+Training Object Permanence,2609.28654,CMU 等,0,新,HF 241；X二次传播,-,-,-,-,241,中：合成数据教物体恒常,入选
+Kandinsky 6.0 Video,2610.05608,Kandinsky Lab (Sber),0,刚发布,HF 158,kandinskylab/kandinsky-6,232,58.0(4天),14/2/3,158,中高：MIT许可开源29B AV底座；VABench胜LTX 2.5多数指标(自报),入选
+Video DeltaNet (on MiniMax H3),2609.20744,OpenVDN,0,新,HF 53,OpenVDN/vdn-minimax-h3,590,15.9,37/5/5,53,中：14.5×加速@8×B200,入选
+SANA-Video 2.0,2607.21553,NVIDIA (Enze Xie/Song Han),0,新,HF 38,-,-,-,-,38,中高：hybrid线性注意力，为长流式铺路,入选
+JoyAI-Video-Edit,2608.03974,JD Joy Future Academy,0,新,HF 105,jd-opensource/JoyAI-Video-Edit,1923,29.1,112/13/3,105,中高：16B AR扩散，720p≈30FPS@B200 实时编辑,必读(编辑线)
+VINCIE-NExT,2610.12104,NUS + ByteDance Seed,0,刚发布,-,项目页,-,-,-,未收录,中：图像编辑→视频编辑迁移,入选
+Visko Orbis 1.0,2607.26694,Team Visko,0,新,-,-,-,-,-,未收录,低-中：4K24FPS小时级自报；横向对比商业产品有价值,备选
+Programmable World Model,2609.10540,Alaya Lab,3,新,HF 115,AlayaLab/pwm,197,5.8,7/1/1,115,中：显式状态+渲染器,入选
+AVTR-1,2609.22913,Avaturn Live,0,新,-,avaturn-live/avtr-1,497,3.5,78/1/0,未收录,中：开源实时avatar栈,备选
