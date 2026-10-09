@@ -24,9 +24,16 @@ else
 fi
 
 if [ -z "${NO_WAIT:-}" ] && command -v gh >/dev/null; then
-  sleep 5
-  run=$(gh run list --workflow pages.yml --branch main --limit 1 --json databaseId -q '.[0].databaseId' || true)
-  [ -n "$run" ] && gh run watch "$run" --exit-status >/dev/null && echo "部署完成"
+  sha=$(git rev-parse HEAD); run=""
+  for i in $(seq 1 20); do
+    run=$(gh run list --workflow pages.yml --limit 5 --json databaseId,headSha -q ".[] | select(.headSha==\"$sha\") | .databaseId" 2>/dev/null | head -1 || true)
+    [ -n "$run" ] && break; sleep 3
+  done
+  if [ -n "$run" ]; then
+    if gh run watch "$run" --exit-status >/dev/null 2>&1; then echo "部署完成（run $run）"; else echo "⚠ 部署失败：gh run view $run --log-failed"; exit 1; fi
+  else
+    echo "⚠ 没找到对应的部署 run（可能已部署过或尚未触发）"
+  fi
   base="https://thughy.github.io/video-wm-daily"
   url="$base/"; [ -n "$latest" ] && url="$base/daily/$latest/"
   for i in 1 2 3 4 5 6; do
