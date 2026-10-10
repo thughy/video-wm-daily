@@ -11,17 +11,21 @@
 | `headline` | ✔ | 一句话头条：今天最重要的进展 |
 | `papers` | ✔ | 论文数组，可为空 `[]`（当天没有达标论文） |
 | `trend_summary` |  | 当天趋势总结（Markdown） |
+| `resources` |  | 「可用资源」区：开源工程/工具，`[{"title", "url", "license", "note"}]`，不参与原创性评级 |
+| `redo` |  | 「重做」区：每篇一行，`[{"title", "url", "note"}]`，放在页底 |
 | `draft` |  | `true` 时不发布 |
 | `example` |  | 仅示例数据使用；正式 `data/` 中出现会被 build.py 拒绝 |
 
 ### `papers[]` 每篇论文
 
-页面中卡片按下表顺序固定展示（空字段自动省略）。
+页面中卡片按下表顺序固定展示（空字段自动省略）。手机端（≤600px）超过 160 字的字段默认折叠（`static/fold.js`），`comparison` / `context` 除外；宽表横滑，首列固定。
 
 | 字段 | 必填 | 说明 |
 |---|---|---|
 | `id` | ✔ | 当天唯一的短 slug（小写字母/数字/连字符），用作锚点 `#p-<id>` |
 | `rating` | ✔ | `must`（必读）/ `worth`（值得看）/ `fyi`（了解即可，页底折叠，不进汇总页） |
+| `originality` |  | 原创性：`mechanism`（新机制）/ `finding`（新发现）/ `redo`（重做，一般不单独成卡，放 `redo` 区） |
+| `credibility` |  | 可信度：`solid`（站得住）/ `doubtful`（存疑）/ `insufficient`（证据不足）。`must` 要求原创（非 redo）且 `solid`，build.py 会校验 |
 | `directions` | ✔ | 数组，取值：`av-streaming`（音视频流式，速览置顶专区）、`streaming`、`world-model`、`video-gen`、`video-edit`、`other` |
 | `title` | ✔ | 论文标题（原文） |
 | `tldr` | ✔ | 一句话结论（速览和汇总页显示的就是它） |
@@ -31,14 +35,17 @@
 | `rating_reason` |  | 一句话评级理由 |
 | `coverage` |  | 核查深度：`{"paper": v, "demo": v, "code": v, "note": "..."}`，v ∈ `full` / `partial` / `none` / `unavailable` |
 | `highlight` |  | `true` 时优先进入汇总页「本周最重要」 |
-| `insight` |  | 核心 insight |
-| `media` |  | `[{"src": "assets/YYYY-MM-DD/xxx.webp", "caption": "..."}]`，显示在 insight 之后；可放 ≤2MB 的 `.mp4` |
-| `context` |  | 与已有工作的区别 / 脉络 |
-| `method` |  | 方法要点 |
+| `comparison` |  | **新版首字段**：最接近的 2–3 篇工作对比表 + 一句机制级增量 + 反事实结论（能否预测）。手机端不折叠 |
+| `context` |  | 旧版「与已有工作的区别 / 脉络」（10-09 使用），手机端不折叠 |
+| `insight` |  | 旧版核心 insight |
+| `method` |  | 机制 / 方法要点 |
+| `media` |  | `[{"src": "assets/YYYY-MM-DD/xxx.webp", "caption": "...", "wide": true}]`；有 `comparison` 时显示在 method 之后，否则在 insight 之后。`wide: true` 用于方法图/宽表截图：手机端按 820px 原宽显示、可横滑、点开看原图。可放 ≤2MB 的 `.mp4` |
 | `evidence` |  | 关键证据（数字、表格） |
 | `case_analysis` |  | Case 分析（demo / 项目页） |
 | `code_analysis` |  | 代码分析（文件:行号） |
+| `solidity` |  | 扎实程度 |
 | `concerns` |  | 疑点与信息缺口 |
+| `takeaways` |  | 对 Henry 的启发 |
 | `details` |  | 完整细节，`<details>` 默认折叠 |
 
 媒体文件必须放在 `assets/<同一天日期>/` 下，先用 `optimize_assets.py` 处理：图片 webp、宽 ≤1200px；视频 ≤2MB。

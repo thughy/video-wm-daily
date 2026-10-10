@@ -99,3 +99,41 @@ footer{margin-top:48px;font-size:13px;color:var(--muted)}
   ul.quick li{flex-direction:column;gap:2px}
   .dayhead{gap:4px 10px}
 }
+/* 两维评级 */
+.o-new{background:#e8f5ee;color:#1f6b45;border:1px solid #1f6b45}
+.o-redo{background:var(--fyi-soft);color:var(--fyi);border:1px solid var(--line)}
+.c-solid{background:#e8f5ee;color:#1f6b45;border:1px solid #1f6b45}
+.c-doubt{background:#fff6e0;color:#8a5a00;border:1px solid #c58f1c}
+.c-weak{background:#fbeaea;color:#9b2c2c;border:1px solid #c45a5a}
+@media (prefers-color-scheme:dark){
+  .o-new,.c-solid{background:#16281f;color:#7fd3a5;border-color:#3c8a62}
+  .c-doubt{background:#2b2414;color:#e3b85c;border-color:#8a6a28}
+  .c-weak{background:#2d1a1a;color:#ec8f8f;border-color:#8a4040}
+}
+ul.quick li .badge+.badge{margin-left:-4px}
+/* 可折叠字段 */
+details.field{margin:14px 0}
+details.field>summary.label{font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.04em;margin-bottom:2px;list-style:none;cursor:pointer}
+details.field>summary.label::-webkit-details-marker{display:none}
+details.field>summary.label::after{content:" ▾ 收起";font-weight:400;color:var(--link)}
+details.field:not([open])>summary.label::after{content:" ▸ 展开";}
+details.field.concerns{border-left:3px solid var(--line);padding-left:12px}
+/* 宽表与方法图：保证小字可读 */
+.md table{max-width:100%;-webkit-overflow-scrolling:touch}
+.md th{background:var(--fyi-soft);white-space:nowrap}
+figure.wide .scrollx{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:8px}
+figure .hint{display:none;font-size:12px;color:var(--muted)}
+/* 可用资源 / 重做 */
+ul.res,ul.redo{list-style:none;padding:0;margin:0}
+ul.res li,ul.redo li{padding:7px 0;border-bottom:1px dashed var(--line);font-size:15px}
+ul.res .s,ul.redo .s{display:block;color:var(--muted);font-size:14px}
+ul.redo li{font-size:14px;padding:4px 0}ul.redo .s{display:inline;margin-left:6px}
+.lic{font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 5px;margin-left:6px}
+@media (max-width:600px){
+  .md table{font-size:13.5px}
+  .md td,.md th{min-width:6.5em;padding:5px 7px}
+  .md td:first-child,.md th:first-child{position:sticky;left:0;background:var(--card);z-index:1}
+  figure.wide .scrollx img{max-width:none;width:820px}
+  figure.wide .hint{display:block}
+}
+ul.quick .bdg{white-space:nowrap;flex-shrink:0}@media (max-width:600px){ul.quick .bdg{white-space:normal}}

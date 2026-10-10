@@ -30,15 +30,22 @@ DIRECTIONS = {
 }
 COVERAGE_KEYS = [("paper", "论文"), ("demo", "Demo/Case"), ("code", "代码")]
 COVERAGE_VALUES = {"full": "✔ 已深读", "partial": "◐ 部分", "none": "✘ 未看", "unavailable": "— 未公开"}
-CARD_FIELDS = [  # 固定顺序
-    ("insight", "核心 insight"),
+CARD_FIELDS = [  # 固定顺序（新版：先比较、后机制；旧字段 insight/context 保留以兼容 10-09）
+    ("comparison", "与已有工作的区别：最接近工作 · 增量 · 能否预测"),
     ("context", "与已有工作的区别 / 脉络"),
-    ("method", "方法要点"),
+    ("insight", "核心 insight"),
+    ("method", "机制 / 方法要点"),
     ("evidence", "关键证据"),
     ("case_analysis", "Case 分析"),
     ("code_analysis", "代码分析"),
+    ("solidity", "扎实程度"),
     ("concerns", "疑点与信息缺口"),
+    ("takeaways", "对 Henry 的启发"),
 ]
+NOFOLD = {"comparison", "context"}  # 手机端默认不折叠的字段
+FOLD_MIN_CHARS = 160  # 手机端超过这个长度的字段默认折叠
+ORIGINALITY = {"mechanism": ("新机制", "o-new"), "finding": ("新发现", "o-new"), "redo": ("重做", "o-redo")}
+CREDIBILITY = {"solid": ("站得住", "c-solid"), "doubtful": ("存疑", "c-doubt"), "insufficient": ("证据不足", "c-weak")}
 MAX_IMAGE_BYTES = 600 * 1024
 MAX_VIDEO_BYTES = 2 * 1024 * 1024
 IMAGE_EXT = {".webp", ".png", ".jpg", ".jpeg", ".gif", ".svg"}
@@ -103,6 +110,12 @@ def load_days(data_dir, assets_dir, errors, warnings):
             ids.add(pid)
             if p.get("rating") not in RATINGS:
                 errors.append(f"{pw}: rating 必须是 {list(RATINGS)}")
+            if p.get("originality") and p["originality"] not in ORIGINALITY:
+                errors.append(f"{pw}: originality 必须是 {list(ORIGINALITY)}")
+            if p.get("credibility") and p["credibility"] not in CREDIBILITY:
+                errors.append(f"{pw}: credibility 必须是 {list(CREDIBILITY)}")
+            if p.get("rating") == "must" and p.get("originality") and (p.get("originality") == "redo" or p.get("credibility") != "solid"):
+                errors.append(f"{pw}: 必读要求 originality 为新机制/新发现且 credibility=solid")
             for dname in p.get("directions", []):
                 if dname not in DIRECTIONS:
                     errors.append(f"{pw}: 未知方向 {dname}，可选 {list(DIRECTIONS)}")
@@ -130,6 +143,10 @@ def load_days(data_dir, assets_dir, errors, warnings):
                     warnings.append(f"{pw}: 图片 {src} {size/1e3:.0f}KB 偏大，建议 optimize_assets.py 压缩成 webp")
                 elif ext not in IMAGE_EXT | VIDEO_EXT:
                     errors.append(f"{pw}: 不支持的媒体类型 {src}")
+        for key in ("resources", "redo"):
+            for j, r in enumerate(d.get(key, []) or []):
+                if not r.get("title"):
+                    errors.append(f"{where} {key}[{j}]: 缺少 title")
         try:
             d["trend_summary"] = resolve_text(d.get("trend_summary"), data_dir)
         except DataError as ex:
@@ -209,6 +226,7 @@ def page(title, body, rel, desc=""):
 <header class="site"><a class="brand" href="{rel}index.html">{e(SITE_TITLE)}</a>
 <nav><a href="{rel}index.html">汇总</a><a href="{rel}index.html#topics">专题</a><a href="{rel}index.html#weekly">周度脉络</a></nav></header>
 {body}
+<script src="{rel}static/fold.js" defer></script>
 <footer>纯静态页面 · 每个工作日更新 · 评级：必读 / 值得看 / 了解即可</footer>
 </div></body></html>
 """
@@ -217,6 +235,18 @@ def page(title, body, rel, desc=""):
 def badge(r):
     label, cls = RATINGS[r]
     return f'<span class="badge {cls}">{label}</span>'
+
+
+def dual_badge(p):
+    """两维评级：原创性 × 可信度（旧数据没有这两个字段时不显示）。"""
+    out = []
+    if p.get("originality"):
+        lab, cls = ORIGINALITY[p["originality"]]
+        out.append(f'<span class="badge {cls}">原创性：{lab}</span>')
+    if p.get("credibility"):
+        lab, cls = CREDIBILITY[p["credibility"]]
+        out.append(f'<span class="badge {cls}">可信度：{lab}</span>')
+    return " ".join(out)
 
 
 def tags(dirs):
@@ -259,8 +289,13 @@ def media_html(p, rel):
         if Path(m["src"]).suffix.lower() in VIDEO_EXT:
             el = f'<video src="{e(src)}" controls preload="metadata" playsinline></video>'
         else:
-            el = f'<img src="{e(src)}" alt="{e(m.get("caption") or p["title"])}" loading="lazy">'
-        out.append(f"<figure>{el}{cap}</figure>")
+            img = f'<img src="{e(src)}" alt="{e(m.get("caption") or p["title"])}" loading="lazy">'
+            if m.get("wide"):  # 方法图/宽表截图：手机上按原宽显示、可左右滑动，点开看原图
+                el = (f'<div class="scrollx"><a href="{e(src)}" target="_blank" rel="noopener">{img}</a></div>'
+                      '<div class="hint">手机上可左右滑动；点图看原图</div>')
+            else:
+                el = f'<a href="{e(src)}" target="_blank" rel="noopener">{img}</a>'
+        out.append(f'<figure class="{"wide" if m.get("wide") else ""}">{el}{cap}</figure>')
     return "".join(out)
 
 
@@ -272,17 +307,25 @@ def card_html(p, rel):
     if p.get("published"):
         meta.append(e(p["published"]))
     fields = []
+    media_after = "method" if p.get("comparison") else "insight"
+    media_done = False
     for k, label in CARD_FIELDS:
         if p.get(k):
             cls = " concerns" if k == "concerns" else ""
-            fields.append(f'<div class="field{cls}"><div class="label">{label}</div><div class="md">{md(p[k])}</div></div>')
-        if k == "insight":
-            fields.append(media_html(p, rel))
+            body = md(p[k])
+            if k in NOFOLD or len(str(p[k])) < FOLD_MIN_CHARS:
+                fields.append(f'<div class="field{cls}"><div class="label">{label}</div><div class="md">{body}</div></div>')
+            else:  # 桌面端默认展开；手机端由 fold.js 默认收起
+                fields.append(f'<details class="field fold{cls}" open><summary class="label">{label}</summary><div class="md">{body}</div></details>')
+        if k == media_after:
+            fields.append(media_html(p, rel)); media_done = True
+    if not media_done:
+        fields.append(media_html(p, rel))
     details = (f'<details><summary>完整细节</summary><div class="md">{md(p["details"])}</div></details>'
                if p.get("details") else "")
     reason = f'<div class="meta">评级理由：{e(p["rating_reason"])}</div>' if p.get("rating_reason") else ""
     return f"""<article class="card {p['rating']}" id="p-{e(p['id'])}">
-<div>{badge(p['rating'])} {tags(p.get('directions', []))}</div>
+<div>{badge(p['rating'])} {dual_badge(p)} {tags(p.get('directions', []))}</div>
 <h3 style="margin-top:8px">{e(p['title'])}</h3>
 <div class="meta">{' ｜ '.join(meta)}</div>
 {links_html(p)}{coverage_html(p)}{reason}
@@ -292,8 +335,14 @@ def card_html(p, rel):
 
 
 def quick_li(p):
-    return (f'<li>{badge(p["rating"])}<a href="#p-{e(p["id"])}"><span class="t">{e(p["title"])}</span>'
+    return (f'<li><span class="bdg">{badge(p["rating"])} {dual_badge(p)}</span><a href="#p-{e(p["id"])}"><span class="t">{e(p["title"])}</span>'
             f'<span class="s">{e(p["tldr"])}</span></a></li>')
+
+
+def res_li(r):
+    t = f'<a href="{e(r["url"])}" target="_blank" rel="noopener">{e(r["title"])}</a>' if r.get("url") else e(r["title"])
+    lic = f'<span class="lic">{e(r["license"])}</span>' if r.get("license") else ""
+    return f'<li>{t}{lic}<span class="s">{e(r.get("note"))}</span></li>'
 
 
 # ---------------------------------------------------------------- 页面
@@ -333,6 +382,11 @@ def render_day(d, prev_d, next_d, weeks_by_id):
     if fyi:
         body.append(f'<details class="fyi" id="fyi"><summary>了解即可（{len(fyi)} 篇，默认折叠）</summary>'
                     + "".join(card_html(p, rel) for p in fyi) + "</details>")
+    if d.get("resources"):
+        body.append('<h2 id="resources">可用资源</h2><p class="sub">开源工程/工具，原创性不在此评，只说能拿来做什么。</p><ul class="res">'
+                    + "".join(res_li(r) for r in d["resources"]) + "</ul>")
+    if d.get("redo"):
+        body.append('<h2 id="redo">重做（每篇一行）</h2><ul class="redo">' + "".join(res_li(r) for r in d["redo"]) + "</ul>")
     if d.get("trend_summary"):
         body.append(f'<h2 id="trend">趋势总结</h2><div class="md">{md(d["trend_summary"])}</div>')
     pv = (f'<a href="{rel}{day_url(prev_d)}">← 前一天 {prev_d}</a>' if prev_d else '<span class="disabled">← 没有更早的了</span>')

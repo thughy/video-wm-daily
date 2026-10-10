@@ -1,0 +1,149 @@
+{
+ "date": "2026-10-10",
+ "headline": "今天只有一篇站得住的新知识：堆到 3 万小时第一视角视频，物体交互保真度的上限也只到 0.565，模型放大 4 倍几乎无用；音视频方向只有 CrossEdit 一篇“原创但存疑”。",
+ "papers": [
+  {
+   "id": "egogap",
+   "rating": "must",
+   "originality": "finding",
+   "credibility": "solid",
+   "directions": [
+    "world-model"
+   ],
+   "title": "What 30,000 Hours of Ego-centric Video Does Not Teach",
+   "tldr": "同一套 Cosmos 3 从 300 小时扩到 3 万小时第一视角视频：手部保真度很快饱和，物体交互保真度的渐近线只有 0.565（测量范围的 63%），模型放大 4 倍只 +0.034——\"堆人类视频就能学会交互\"的主流假设在这里被量化地否掉了。",
+   "institutions": [
+    "Toyota Research Institute",
+    "UIUC",
+    "CMU",
+    "JHU"
+   ],
+   "published": "arXiv 2610.12464（2026-10-09 列表）",
+   "links": {
+    "paper": "https://arxiv.org/abs/2610.12464",
+    "project": "https://fidelity-gap.github.io/"
+   },
+   "coverage": {
+    "paper": "full",
+    "demo": "partial",
+    "code": "unavailable",
+    "note": "全文已读（第 4–5 节和表 1 逐条核对）；项目页 34 个视频下载了 15 个并抽关键帧；代码和 benchmark 标注 soon。最接近工作 DreamDojo / EgoWM / PhysisForcing 只读了本文对它们方法的复述，没读原文方法节。"
+   },
+   "rating_reason": "新发现 × 站得住：结论与领域主流预期（数据越多越好）相反，而且用骨架条件作“仪器”把物体渐近线测出来了，有随机区域对照和 5 个 seed。",
+   "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| DreamDojo（44k 小时人类视频预训练） | 报告“更多人类视频→更好的世界模型”，用策略排序一致性等聚合指标 | 拆成“手/物体”两轴分别测，发现两轴饱和点完全不同 |\n| EgoWM / Pallotta 等分割式指标 | 提出用分割一致性（SCS）直接比结构 | 沿用这一指标，但第一次沿 300→30k 小时的数据阶梯做缩放曲线并拟合渐近线 |\n| PhysisForcing（物理信息区域 + 追踪/V-JEPA 对齐损失） | 第三人称固定相机下改善交互 | 复现后在第一视角下**无效**（0.515 vs 0.513）；本文改为在动态区域抬高噪声，0.532 |\n\n**能否预测？** 方向上部分可预测（LeCun 对像素目标的批评暗示容量会流向背景），但没人给出过量化结果：物体渐近线 0.565、模型放大 4 倍只 +0.034、按此外推需约 6 次 4 倍放大。而且主流工业结论正好相反。所以算**新发现**，不是新机制。",
+   "method": "- 数据阶梯：Mecka 提供的 30,012 小时第一视角操作视频，按平衡顺序嵌套成 300 / 1k / 3k / 10k / 30k 小时预算；同一架构训练 Edge / Nano / Super（Super 为 Nano 的 4 倍规模）。\n- 指标：分割一致性 SCS，手和被操作物体分别算；LPIPS 等感知指标作对照。\n- 骨架条件做“仪器”：把手部骨架投影成彩色图，用同一冻结 VAE 编码后加到视频 token 上。它让手轴提前饱和，从而在现有预算内测出物体轴的渐近线。\n- 动态区域噪声：用 D4RT 追踪网格点，结合 3D 位移、可靠度和手部先验得到动态区域图；在区域内把有效噪声从 σ 提高到 σ+δ，模型输入的噪声级仍为 σ，目标仍指向同一干净 latent。",
+   "media": [
+    {
+     "src": "assets/2026-10-10/egogap-permanence.webp",
+     "caption": "项目页“物体恒常性”对比视频的关键帧（每 2 秒一帧）。上：真值；中：Cosmos 3（手里的胶带卷在后几帧消失）；下：本文（胶带卷保留）。为作者挑选的案例，不代表平均水平。",
+     "wide": true
+    },
+    {
+     "src": "assets/2026-10-10/egogap-scaling.webp",
+     "caption": "项目页缩放示例。上：真值；下：30k 小时模型，作者标注“手一致、纸张运动仍不一致”，与论文结论一致。",
+     "wide": true
+    }
+   ],
+   "evidence": "| 结论 | 数字（论文原文） |\n|---|---|\n| 手轴饱和 | 300→3k 小时 +0.12 SCS，3k→30k 只 +0.06；拟合渐近线 0.811 |\n| 骨架条件省数据 | 300 小时达到基线约 15k 小时的手部保真度（约 50×）；两者渐近线 0.811 vs 0.800 |\n| 物体天花板低 | 骨架条件下物体轴渐近线 0.565，30k 已实现 93%；归一化后手 86%、物体 63% |\n| 模型放大无用 | Super（4×）物体 +0.034，手几乎不变；补齐 0.205 的差距需约 6 次 4 倍放大 |\n| 动态区域噪声（10k 小时，5 seeds） | 物体 0.513→0.532；**随机区域同面积只到 0.517**；纯重加权 0.516；PhysisForcing 0.515 |\n| 全阶梯 | 30k 小时 0.546 vs 0.527（+3.7%），增益在各预算基本恒定——抬高天花板，不改变趋近速度 |",
+   "case_analysis": "下载了 15 个项目页视频（对比 9 个、缩放 2 个、失败案例 3 个、teaser 1 个），用 ffmpeg 每 2 秒抽帧查看：物体恒常性、纸张交互两组里 Cosmos 3 的物体丢失 / 不跟手，本文版本保持住；缩放示例中 30k 模型手部对齐、纸张形变仍错，和论文叙述一致。全部是作者挑选的案例，无音轨。",
+   "code_analysis": "代码与 benchmark 在项目页标注 soon；论文写明会公开 OOD 评测集（150 段），训练数据来自合作方 Mecka，未声明公开。",
+   "solidity": "实验设计是今天最扎实的：同架构、嵌套数据预算、指标与感知指标分开报、有骨架丢弃检验“捷径”（附录 C.1）、有随机区域对照、5 个 seed。",
+   "concerns": "- 单一数据源（Mecka），换数据分布后渐近线是否相同未知。\n- 渐近线只用 5 个点拟合，外推“需 6 次 4 倍放大”是作者自己说的下界估计。\n- 数据量与训练计算量耦合，没有等计算量对照。\n- OOD 评测只有 150 段手工挑选片段。\n- SCS 依赖分割器，对小物体和遮挡的测量上限本身可能偏低（作者用“可测范围”归一化部分缓解）。",
+   "takeaways": "- 做 world model 的数据配比时，“人类视频小时数”不是物体交互的主杠杆；骨架/姿态条件对“手”这一轴约有 50× 的数据效率。\n- 可以直接借用“用条件把一个轴先打满、再测另一轴渐近线”的诊断方法，评我们自己的音视频模型（例如先把口型对齐固定，再看场景声的上限）。\n- 区域性加噪是零成本、可插拔的训练技巧，值得在交互密集的数据上试；要配随机区域对照。"
+  },
+  {
+   "id": "crossedit",
+   "rating": "worth",
+   "originality": "finding",
+   "credibility": "doubtful",
+   "directions": [
+    "av-streaming",
+    "video-edit"
+   ],
+   "title": "CrossEdit: Cross-Modal Transfer for Instruction-Based Audio-Visual Editing",
+   "tldr": "只加“纯音频”的合成编辑对，统一音视频编辑模型在零样本 AV2AV 场景编辑里的视觉指令遵循和一致性反而提升（人评 Ins 2.85→3.31，Cons 2.37→2.94）。跨模态迁移这个现象是新的，但没有“同步数继续训练”的对照。",
+   "institutions": [
+    "Adobe Research",
+    "CMU"
+   ],
+   "published": "arXiv 2610.10264",
+   "links": {
+    "paper": "https://arxiv.org/abs/2610.10264",
+    "project": "https://wanchichen.github.io/crossedit/"
+   },
+   "coverage": {
+    "paper": "full",
+    "demo": "partial",
+    "code": "unavailable",
+    "note": "全文已读；最接近工作 EditVerse、SpongeBob、InstructAV2AV 已拉全文读方法节。项目页下载了 rebuttal 场景编辑区全部 56 个视频，3 条指令抽帧，2 条指令做逐秒响度和与源音频的相关性。模型为内部 12B MoE，不开源。"
+   },
+   "rating_reason": "新发现 × 存疑：现象与 EditVerse（图像→视频迁移）同一谱系，但“音频数据改善视觉”方向是新的；增益可能部分来自额外 10K 步训练。",
+   "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| EditVerse | 统一模型里图像编辑数据迁移到视频编辑（同模态内跨任务） | 迁移跨**模态**：音频编辑数据→视觉编辑 |\n| SpongeBob | 掩码重建式音视频编辑 | 掩码重建部分基本可由它预测；本文把它作为训练配方的一部分 |\n| InstructAV2AV | 合成成对 AV 编辑数据 + 双流结构 | 本文不靠成对 AV 编辑数据，零样本做 AV2AV 场景编辑 |\n\n**能否预测？** 掩码重建能预测；“只加音频编辑对、视觉编辑变好”不能从这三篇直接推出，算**新发现**。但有两个削弱：没有“在原数据配比上继续训练同样步数”的对照；纯音频数据单独加时，同步类编辑反而变差（0.31→0.18、0.19→0.06）。",
+   "method": "- 内部 12B MoE 音视频联合生成模型做底座，统一成指令编辑格式。\n- 训练配方三件：掩码重建（类 SpongeBob）、纯音频合成编辑对、原有图像/视频编辑数据。\n- 额外训练 10K 步，64 张 H100，约 2.5 天。\n- 发布 CrossEditBench（100 段电影片段的人工标注 AV 编辑）和 AV-FES 指标（联合打分编辑成功与跨模态一致）。",
+   "media": [
+    {
+     "src": "assets/2026-10-10/crossedit-row67.webp",
+     "caption": "指令“Add a dinosaur roaring”。每行 4 帧，自上而下：源视频 / base / 去掉掩码 / CrossEdit。base 把场景整个换掉；去掉掩码没加恐龙；CrossEdit 加了恐龙、保住了树。但它的音频包络与源音频相关 0.999，是否真的加了吼声需要听（未核实）。",
+     "wide": true
+    },
+    {
+     "src": "assets/2026-10-10/crossedit-row30.webp",
+     "caption": "指令“Change the man to a dog astronaut”（纯视觉编辑）。自上而下：源 / base / 去掉掩码 / CrossEdit。CrossEdit 的音频与源波形相关 0.96，说明非编辑模态保留得好；但宇航服颜色也被改了，视觉一致性并不比“去掉掩码”版本好。",
+     "wide": true
+    }
+   ],
+   "evidence": "| 消融（人评，95% CI 约 ±0.2） | 变化 |\n|---|---|\n| AV-FES：base → +掩码重建 → +纯音频编辑数据 | 0.26 → 0.35 → 0.43 |\n| 视觉指令遵循 Ins（加入音频编辑数据前 → 后） | 2.85 → 3.31 |\n| 视觉一致性 Cons（同上） | 2.37 → 2.94 |\n| 同步类编辑（单独加音频数据） | 0.31 → 0.18，0.19 → 0.06（变差） |\n\n同步只用 LSE 一个指标支撑。",
+   "case_analysis": "- 下载 rebuttal 场景编辑区全部 56 个视频（7 条指令，源 + 7 种方法/变体，部分方法只有 4 条），每 0.67 秒抽帧（见上图）。\n- 逐秒响度（volumedetect）：row67 源音频 −18.4 / −17.0 / −69.2 dB，CrossEdit −18.7 / −17.9 / −67.3 dB，几乎一样；row47“去掉音乐并改台词”中 CrossEdit 第 0 秒降到 −78.8 dB、后两秒 −18.6 / −20.7 dB，与源的时序结构不同，有改动。\n- 声道：测过的样例都是 48kHz 双声道；两条 CrossEdit 输出左右 RMS 差 ≤0.2 dB，基本是中置声，没有空间化。\n- 听感判断一律未核实。",
+   "code_analysis": "无代码、无权重（内部模型）。只承诺发布 CrossEditBench 评测集，不发布训练数据。",
+   "solidity": "人评有置信区间、有逐组件消融；judge（Gemini）与人评一致性只在 4–5 个系统上验证，judge 的一致性分在 4 封顶。",
+   "concerns": "- **关键混淆**：+音频数据那一行多训了 10K 步，没有“原数据继续训练 10K 步”的对照，增益可能部分来自更多训练。\n- 内部 12B MoE，外部无法复现。\n- CrossEditBench 只有 100 段。\n- 纯音频数据损害同步编辑，说明迁移不是单向收益。\n- 项目页案例挑选过，且 row67 音频疑似基本照搬源音频。",
+   "takeaways": "- 如果我们做音视频编辑，可以先低成本试“加纯音频编辑对”看视觉指标，但一定要加同步数继续训练对照。\n- AV-FES 的“编辑成功 × 跨模态一致”联合打分思路可借鉴到评测；不要只用 LSE 判同步。"
+  }
+ ],
+ "resources": [
+  {
+   "title": "UnStep（Meta）：无需训练的因果视频扩散加速",
+   "url": "https://github.com/facebookresearch/UnStep",
+   "license": "CC-BY-NC-4.0（部分 Apache-2.0）",
+   "note": "包在 Self-Forcing 类 Wan2.1 少步模型外层，减少步数 + 缩小 KV 窗口 + 干净缓存修正；README 写 H100 两步 50 FPS（832×480），未本地复测。已 clone 到 /workspace/repos_UnStep。"
+  },
+  {
+   "title": "Elastic Forcing 代码（gitee）",
+   "url": "https://gitee.com/liu-yueyi/elastic-forcing",
+   "note": "Self-Forcing 回滚 + 表征空间 MMD 的后训练实现，14B 在 8×H200 上 23.2 小时；仓库页面可访问，内容未逐文件核查。"
+  }
+ ],
+ "redo": [
+  {
+   "title": "Elastic Forcing (2609.35491)",
+   "url": "https://arxiv.org/abs/2609.35491",
+   "note": "Self-Forcing + Drifting 式表征空间 MMD，自己的相关工作已列出解耦估计/多编码器 MMD；VBench 83.80→84.64。"
+  },
+  {
+   "title": "MosaiChunk (2610.02153)",
+   "url": "https://arxiv.org/abs/2610.02153",
+   "note": "冻结模型可吃非连续 token 级 KV，可由 MoC 和 LLM KV 选择预测。"
+  },
+  {
+   "title": "StereoBind (2609.38748)",
+   "url": "https://arxiv.org/abs/2609.38748",
+   "note": "LTX-2.3 + LoRA 做双声道音视频；评测参考是自家重空间化结果（循环评测），基线没给运动轨迹。"
+  },
+  {
+   "title": "VINCIE-NExT (2610.12104)",
+   "url": "https://arxiv.org/abs/2610.12104",
+   "note": "先编关键帧再传播到视频（AnyV2V / I2VEdit 路线）+ 上下文图像对；唯一有信息量的是“只用图像编辑数据训练不能泛化到视频”（1.14 分）。"
+  },
+  {
+   "title": "AVE (2610.11037)",
+   "url": "https://arxiv.org/abs/2610.11037",
+   "note": "图像编辑 + 关键帧插值的两阶段，同一路线。"
+  },
+  {
+   "title": "AVIO (2609.36503)",
+   "url": "https://arxiv.org/abs/2609.36503",
+   "note": "音视频物体增删，SpongeBob 路线；基线没在 AVIOBench 上训练，比较不对等。"
+  }
+ ],
+ "trend_summary": "今天的有效信号：①世界模型的“数据缩放叙事”开始被分轴测量拆开，接下来值得看谁在机器人/音视频上复现这种分轴渐近线；②统一编辑模型的跨任务迁移从“图像→视频”走到“音频→视觉”，但缺等计算量对照。其余候选多为已知机制组合（Self-Forcing + X、关键帧编辑 + 传播），按新标准归入重做。"
+}
