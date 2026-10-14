@@ -1,0 +1,187 @@
+{
+ "date": "2026-10-15",
+ "headline": "今天必读只有一篇：AGF 用未来块 DMD 梯度挑对抗历史，5 秒训练却在 60s/240s 同协议压过 SF/CF/LongLive/SGF；值得看 World-T3（pose 键 TTT 记忆）和 PhyAVBench（物理敏感评测缺口）。没有联合 AV 流式新底座；SyncReward 整包转 RL。",
+ "papers": [
+  {
+   "id": "agf",
+   "rating": "must",
+   "originality": "mechanism",
+   "credibility": "solid",
+   "directions": [
+    "streaming"
+   ],
+   "title": "Adversarial Gradient Forcing for Robust Few-Step Autoregressive Video Generation",
+   "tldr": "把 Self-Forcing 系的「历史误差敏感」写成 local history robustness gap：用未来块的 DMD 损失对自生成历史选对抗扰动，再在干净/对抗历史上联合训练——只训 5s rollout，60s Total 81.47（SF 79.56 / CF 79.83 / LL 79.81），240s Q5 84.82 同协议第一；代码里有 AdversarialHistoryDMD。",
+   "institutions": [
+    "Zhejiang University",
+    "Alibaba Group",
+    "Nanjing University"
+   ],
+   "published": "arXiv 2610.14553（2026-10-14 列表）",
+   "links": {
+    "paper": "https://arxiv.org/abs/2610.14553",
+    "project": "https://wuli-art.github.io/Adversarial-Gradient-Forcing/",
+    "code": "https://github.com/wuli-art/Adversarial-Gradient-Forcing",
+    "other": [
+     {
+      "label": "weights",
+      "url": "https://huggingface.co/Wuli-art/Adversarial-Gradient-Forcing"
+     }
+    ]
+   },
+   "coverage": {
+    "paper": "full",
+    "demo": "none",
+    "code": "partial",
+    "note": "全文 HTML；最接近工作 Self-Forcing / Causal Forcing / SGF 对照；clone 仓库核实 AdversarialHistoryDMD 与 future-guided attack；无 GPU 未跑推理；未做 demo ffmpeg。"
+   },
+   "rating_reason": "新机制 × 站得住：选扰动用的是未来 DMD 梯度（论文明确区分于最大化预测差），Gaussian 消融在 60s 崩到 68.60，同 Wan2.1-1.3B 同评测协议。",
+   "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| Self-Forcing (2506.08009) | 训练时自回放消除曝光偏差；随机/噪声式历史 | 在自回放历史上加「按未来分布匹配误差选的」对抗扰动 |\n| Causal Forcing (2602.02214) | ODE 初始化的因果化 + DMD | 同协议长窗基线；AGF 5s 略低、60s/240s 更高 |\n| SGF / SVI 误差回收 | 写 context 与去噪解耦，或回收已发误差 | AGF 不回收已生成块，而是主动构造最伤后续的历史再训 |\n\n**能否预测？** 「扰动历史再训」可部分预测；**未中**：扰动方向由未来 DMD（非预测差）决定，且短训长稳幅度在同协议上全面压过 CF/LongLive/SGF。→ **新机制**。\n\n**预测（Codex 盲测只看摘要+方法）：** 60s+ 相对 SF +1–3、相对 LL/CF +0–1。实际 60s Total +1.9 vs SF、+1.6 vs CF；**中**。",
+   "method": "- 无梯度 AR rollout 记轨迹；随机选历史块 j，用后续块的 DMD score-diff 反传得到 δ（DMD-FGSM 一步）。\n- 干净历史与对抗历史各 0.5 联合更新 generator；prediction-consistency 正则把扰动拉回生成流形。\n- 底座 Wan2.1-T2V-1.3B，教师 14B；ODE-init 自 Self-Forcing；训练 5s rollout，8×H20；推理仍 4 步（3 sink + 9 rolling）。\n- 框架格：**3. 模型自生成上下文（Self-Forcing 系）**——按这一格预期在长窗漂移处出手，实测主要抬 60s/240s。",
+   "evidence": "| 设定 | 数字（论文 Table 1，同协议） |\n|---|---|\n| 5s Total | AGF 82.03 / SF 82.21 / CF 82.94（短窗不占优） |\n| 60s Total | **AGF 81.47** / OPSD-V 80.06 / CF 79.83 / LL 79.81 / SF 79.56 |\n| 240s Q5 | **AGF 84.82** / SGF 84.07 / LL 83.62 |\n| Gaussian 扰动消融 60s | 崩到 68.60（说明不是「随便加噪」） |\n| 训练 | 5s rollout；200 iter 带 consistency + 200 不带；batch 64；8×H20 |",
+   "case_analysis": "项目页有长对比 demo，本轮无 GPU、未下载做像素/漂移实测；未核实。",
+   "code_analysis": "本地 clone `/workspace/paper-digest/2026-10-15/repos/AGF/`（Apache-2.0）。`model/adversarial_history_dmd.py` 定义 `AdversarialHistoryDMD(DMD)`，强制 `attack_future_only`、一步 DMD-FGSM；`pipeline/self_gradient_forcing_training.py` 的 `grad_mode=adversarial_self_gradient_forcing`；`prediction_consistency.py` 有对抗 context 正则。权重 HF `Wuli-art/Adversarial-Gradient-Forcing` 已声明；未下载权重跑通。",
+   "solidity": "同骨干、同评测协议、强基线（含复现的 SGF）；消融显示随机高斯扰动无效；代码机制与论文一致。弱项：主表仍是 VBench；Dynamic Degree 作者自己警告不可当质量；人评协议细节未完整抽到。",
+   "concerns": "- 5s 不占优，增益集中在长窗——可能部分是「更不怕坏历史」而非全面更强。\n- 无独立 GPU 复现；人偏爱 digests 与正文表未完全对齐抽到。\n- 蒸馏外壳仍是标准 DMD（少步理论无新）。",
+   "takeaways": "- **对我们 AR + history corruption 线：** 优先做「DMD/分布匹配梯度选对抗历史 vs 高斯/均匀加噪历史」等步数对照；仍用短 rollout（~5s）训，看长窗漂移。双向 FM / CD 不必先动。\n- 蒸馏配方细节可给少步蒸馏助手；主贡献归流式/抗漂。"
+  },
+  {
+   "id": "world-t3",
+   "rating": "worth",
+   "originality": "mechanism",
+   "credibility": "solid",
+   "directions": [
+    "world-model",
+    "streaming"
+   ],
+   "title": "World-T3: Test-Time Training as Persistent Memory for Real-Time Video World Models",
+   "tldr": "相机可控视频世界模型里，用 pose-keyed TTT fast-weight 做持久记忆（不只靠 KV sink），再以双向教师 + 带 TTT 的 AR 教师做双教师 DMD：4 步 revisit Semantic 0.961 / PSNR 18.31（Stage2 50 步 0.948 / 16.69），单卡 B200 上 20.6 FPS @1280×704；无开源权重。",
+   "institutions": [
+    "Meta Reality Labs",
+    "University of Illinois Chicago",
+    "Brown University"
+   ],
+   "published": "arXiv 2610.17434（2026-10-14 列表）",
+   "links": {
+    "paper": "https://arxiv.org/abs/2610.17434",
+    "project": "https://adreamwu.github.io/World-T3/"
+   },
+   "coverage": {
+    "paper": "full",
+    "demo": "none",
+    "code": "unavailable",
+    "note": "全文 HTML + Table 1/2；最接近 TTT/WorldMem/Memory Forcing；无代码权重；未下 demo。"
+   },
+   "rating_reason": "新机制 × 站得住（应用层）：TTT 本体已知，但 pose 键写入 + 双教师蒸馏后 revisit 升而 VBench 略降，说明记忆与短时画质可分。",
+   "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| TTT Layers / Longhorn | 测试时更新 fast-weight 当记忆 | 接到相机可控视频 WM，并用 **pose 键** 缓解空间冗余 |\n| WorldMem | 显式 pose 检索外部记忆库 | 改成参数化 TTT 记忆，推理时在线写 |\n| Memory Forcing (2610.11756，已落选) | KV bank + bank-aware RoPE | 不扩 KV，改写 fast-weight；且配双教师少步 |\n\n**能否预测？** 「TTT 当记忆」可预测；蒸馏后 revisit **升**（0.9476→0.9610）同时 VBench 略降不完全可预测。→ **新机制（应用）**。",
+   "method": "- Stage1 双向 SFT 加相机控制；Stage2 AR + TTT 记忆（50 步教师）；Stage3 双教师 DMD（短时双向 + 长时带 TTT 的 AR）压到 4 步。\n- 框架：**记忆/TTT**；按格子预期失败在「记忆写入错误累积」——本文未充分展示失败模式。",
+   "evidence": "| Revisit Set（论文 Table 1） | Semantic Sim. | PSNR | FPS | Mem |\n|---|---|---|---|---|\n| World-T3 Stage2 (50) | 0.9476 | 16.69 | 4.4 | 54GB |\n| **World-T3 Stage3 (4)** | **0.9610** | **18.31** | **20.6** | 54GB |\n| SANA-WM | 0.9200 | 13.52 | 14.2 | 48GB |\n| DreamX-AR | 0.8768 | 11.66 | 11.0 | 76GB |\n\n扫视角 tercile（Table 2）：Stage3 T3−T1 = +0.002，几乎不掉。硬件：**单卡 NVIDIA B200**，含 live memory update。",
+   "case_analysis": "有项目页；本轮未下载 demo 做像素核实。",
+   "code_analysis": "未见公开训练/推理代码与权重；训练称 Stage1 用 512 GPU 量级——复现门槛极高。",
+   "solidity": "Revisit 与扫视角分层表完整；实时口径绑 B200，换卡未知；向通用 AV 流式迁移有限。",
+   "concerns": "- 无权重；算力极大。\n- 相机世界模型，不是联合音视频。\n- TTT 写入错误累积的失败模式披露不足。",
+   "takeaways": "- 可回访/交互场景可试「pose/状态键的在线 fast-weight vs 纯 history corruption / KV sink」。\n- Stage3 双教师（短时 bidir + 长时 memory teacher）对 DMD 线有对照价值。→ 转世界模型训练追踪。"
+  },
+  {
+   "id": "phyavbench",
+   "rating": "worth",
+   "originality": "finding",
+   "credibility": "solid",
+   "directions": [
+    "av-streaming",
+    "video-gen"
+   ],
+   "title": "PhyAVBench: A Challenging Audio Physics-Sensitivity Benchmark for Physically Grounded Text-to-Audio-Video Generation",
+   "tldr": "相对偏同步/语义的 AV 评测，用 337 组控制变量物理维（材料/流体/传播/观察者/时序因果/耦合）证明 Sora2/Veo/Kling/Seedance 与开源 Ovi/LTX 等物理敏感度全面弱；CPRS 与人评 PVR-MOS 相关 0.92，高于 −DeSync 的 0.60；PhyAV-Sound-11K 与代码已开源。",
+   "institutions": [
+    "HKUST (Guangzhou)",
+    "Tencent"
+   ],
+   "published": "arXiv 2512.23994（v5，2026-10-11；本窗口列表）",
+   "links": {
+    "paper": "https://arxiv.org/abs/2512.23994",
+    "project": "https://imxtx.github.io/PhyAVBench/",
+    "code": "https://github.com/imxtx/PhyAVBench",
+    "other": [
+     {
+      "label": "dataset",
+      "url": "https://huggingface.co/datasets/imxtx/PhyAV-Sound-11K"
+     }
+    ]
+   },
+   "coverage": {
+    "paper": "full",
+    "demo": "unavailable",
+    "code": "partial",
+    "note": "全文 + Table 3 相关；clone 评测仓库；数据集入口已核；未跑全量评测。"
+   },
+   "rating_reason": "新发现 × 站得住：物理差是常识，但量化缺口与 CPRS 校准（0.92 vs −DeSync 0.60）是新的可操作知识。",
+   "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| StreamAV-Bench / JavisBench | 流式或同步/语义向 AV 评测 | 控制变量的**物理维** + 成对 prompt |\n| VABench / T2AV-Compass | 生成质量与对齐 | 不测物理敏感；本文补上 |\n| DeSync / LSE 族 | 时序同步 | CPRS 与人评相关更高，同步≠物理 |\n\n**能否预测？** 「模型物理差」可预测；**不可完全预测**的是缺口幅度与 CPRS 校准。→ **新发现**。",
+   "method": "- PhyAV-Sound-11K：11,605 新录音频视频，184 人，25.5h；337 成对 prompt 组，6 维 41 测点。\n- APST + CPRS（对比物理响应）；17 个 SOTA 模型 + 74 人人评。\n- 框架格：**AV 耦合评测**。",
+   "evidence": "| 指标 | 与人评 PVR-MOS 的 Pearson（Table 3，T2AV） |\n|---|---|\n| **CPRS** | **0.92** |\n| −DeSync | 0.60 |\n| Javis | 0.71 |\n| AVH | 0.72 |\n| CLAP | 0.86 |\n\n数据与代码 MIT；HF `imxtx/PhyAV-Sound-11K`。",
+   "case_analysis": "评测基准，无生成 demo 需核。",
+   "code_analysis": "`repos/PhyAVBench/` 可算 CPRS；未在本机跑全模型。",
+   "solidity": "新人录数据避泄漏；人评样本够；相关在模型级均值上算——单样本噪声未展开。",
+   "concerns": "- 不含极端/危险声学场景（作者自述）。\n- 无直接改训练损失的处方。\n- 与流式延迟无关。",
+   "takeaways": "- 联合 AV 评测栈应加物理敏感维，不只 DeSync/LSE。\n- 数据已开源 → 转数据追踪；对我们训练无直接损失处方。"
+  }
+ ],
+ "resources": [
+  {
+   "title": "AGF 代码+权重（Apache-2.0）",
+   "url": "https://github.com/wuli-art/Adversarial-Gradient-Forcing",
+   "license": "Apache-2.0",
+   "note": "训练/推理脚本完整；HF Wuli-art/Adversarial-Gradient-Forcing；已核实 AdversarialHistoryDMD。"
+  },
+  {
+   "title": "SyncReward + 80K 人评（转 RL 主读）",
+   "url": "https://github.com/GuanYunzi/SyncReward",
+   "license": "Apache-2.0",
+   "note": "AV sync reward + bench + ckpt；HF Guan123/SyncReward 与 SyncReward-Data；本站不作必读。"
+  },
+  {
+   "title": "PhyAVBench / PhyAV-Sound-11K",
+   "url": "https://github.com/imxtx/PhyAVBench",
+   "license": "MIT",
+   "note": "物理敏感 AV 评测；数据集 HF imxtx/PhyAV-Sound-11K。"
+  },
+  {
+   "title": "Ultra Flash（级联流式超分，仅观察）",
+   "url": "https://xin1u.github.io/UltraFlash/",
+   "note": "宣称 1K~30FPS / 2K~18FPS；Table 2 未写测速 GPU 型号 → 不进必读。"
+  }
+ ],
+ "redo": [
+  {
+   "title": "EmbodiedHead (2604.17211)",
+   "url": "https://arxiv.org/abs/2604.17211",
+   "note": "RF-DiT 听讲头像+单流状态；相对 DualTalk/UniLS 工程整合，非联合 AV 新机制；59FPS/3090。"
+  },
+  {
+   "title": "Prospective Forcing (2610.14654)",
+   "url": "https://arxiv.org/abs/2610.14654",
+   "note": "Rolling Forcing+未来头+speculative verify（接受率 32%）；Drift 不如 LongLive。"
+  },
+  {
+   "title": "LongForcing (2610.18289)",
+   "url": "https://arxiv.org/abs/2610.18289",
+   "note": "拉长 DMD 监督视界；可预测。训练含义：视界消融→训练追踪。"
+  },
+  {
+   "title": "RAR (2610.16302)",
+   "url": "https://arxiv.org/abs/2610.16302",
+   "note": "Stride-RoPE + 多速率 Self-Forcing ≈ FPS conditioning × SF。"
+  },
+  {
+   "title": "FrameFold / TGuide / TempoKV / Frequency-Step Cache",
+   "url": "https://arxiv.org/abs/2610.14568",
+   "note": "KV 压缩/轨迹引导/量化/分频缓存——已知缓存变体。"
+  },
+  {
+   "title": "Demiurge / Multics / CineMem / PWM / Programmable WM",
+   "url": "https://arxiv.org/abs/2610.14685",
+   "note": "4D 重渲染、多人 WM、细粒度记忆、在线 RL 个性化、可编程状态——系统组合或可预期。"
+  }
+ ],
+ "trend_summary": "覆盖 arXiv 10-14 列表（10-13 无新帖、10-15 尚未出）。Self-Forcing 抗漂线今天唯一机制增量是 **AGF 的对抗历史**；相机 WM 的 TTT 记忆（World-T3）和 AV **物理**评测（PhyAVBench）各贡献一块可操作知识。联合音视频流式底座本窗口空白；SyncReward 完整开源但主读归 RL。"
+}
