@@ -1,0 +1,55 @@
+{
+ "week": "2026-W42",
+ "range": [
+  "2026-10-12",
+  "2026-10-16"
+ ],
+ "title": "抗漂（AGF）→ pose/slot 记忆（World-T3/SMART）→ ODE/服务效率（Glance/Spec）→ 记忆与物理评测（WorldMemBench/PhyAVBench）；周中无必读日，联合 AV 流式底座仍空白。",
+ "summary": "## 本周一日历\n\n- **周一 10-12～周二 10-13（无结果日，未更站）：** arXiv 10-12 列表精读后无达标新知。主候选 Avatar-Forever 判定为重做×存疑（RRT≈SVI/Helios/SF++ 组合；ForeverCache 对比 demo 有 md5 相同问题）；另有 Invisible Hand / GLIMPSE / CORAL-KV / ForcingBooster / AV-FlowEdit 等落选。频道侧：首次打通 OpenReview search API（ICLR 2027 标题可用），单篇 PDF 仍卡 Cloudflare。\n- **周三 10-14：** 列表空窗（10-13 无新帖）；例行补跑落到周四。\n- **周四 10-15：** **AGF 必读**（未来块 DMD 梯度选对抗历史，5s 训撑 60s/240s）；值得看 **World-T3**（pose-keyed TTT）与 **PhyAVBench**（物理敏感 AV 评测）。联合 AV 流式底座仍空；SyncReward 整包转 RL。\n- **周五 10-16：** **无必读**。值得看 = Glance / Speculative / RepForcing（效率·服务·rep-init）+ SMART / WorldMemBench / EqF（记忆机制·评测·噪声条件）。AV 开源底座 Kandinsky S2V、DAO+JING 仅资源（无实时延迟证据）。\n\n## 训练主线（可串）\n\n1. **历史鲁棒：** AGF 对抗历史（相对 SF/CF 长窗）  \n2. **空间记忆底物：** World-T3 pose-TTT ↔ SMART pose-slot（同「where not when」，不同实现）  \n3. **ODE / 服务效率：** Glance 1-traj ODE + Slow/Fast；Speculative window≠commit（H3 服务）  \n4. **评测补洞：** WorldMemBench（静态≠动态记忆）+ PhyAVBench（物理≠同步）  \n5. **正交轴：** EqF 去掉噪声条件（与 history corruption 正交）；RepForcing rep-space init（存疑，需等预算对照）\n\n## 频道复盘（本周）\n\n| 渠道 | 表现 |\n|---|---|\n| **arXiv 全量扫描** | 主通道；按方向定义相关，不靠关键词 |\n| **HF Daily** | 漏掉多数 AV/流式候选；ATAS 322 赞属热度噪声 |\n| **Semantic Scholar** | 间歇 429；种子引用补洞仍有用但不全 |\n| **OpenReview** | 标题/摘要 search OK；单篇 note/PDF Cloudflare |\n| **GitHub watchlist** | WorldMemBench 先于 arXiv 入观察，本周落地 |\n| **X** | 信号弱 |\n\n",
+ "highlights": [
+  {
+   "date": "2026-10-15",
+   "paper_id": "agf",
+   "title": "Adversarial Gradient Forcing (AGF)",
+   "note": "本周唯一必读：对抗历史鲁棒"
+  },
+  {
+   "date": "2026-10-15",
+   "paper_id": "world-t3",
+   "title": "World-T3",
+   "note": "pose-keyed TTT 记忆"
+  },
+  {
+   "date": "2026-10-15",
+   "paper_id": "phyavbench",
+   "title": "PhyAVBench",
+   "note": "物理敏感 AV 评测"
+  },
+  {
+   "date": "2026-10-16",
+   "paper_id": "speculative-sampling",
+   "title": "Speculative Sampling",
+   "note": "服务层 window≠commit；Sol-H3 L50↓"
+  },
+  {
+   "date": "2026-10-16",
+   "paper_id": "glance-forcing",
+   "title": "Glance Forcing",
+   "note": "1-traj ODE 效率发现"
+  },
+  {
+   "date": "2026-10-16",
+   "paper_id": "smart",
+   "title": "SMART",
+   "note": "pose-slot recurrence 记忆"
+  },
+  {
+   "date": "2026-10-16",
+   "paper_id": "worldmembench",
+   "title": "WorldMemBench",
+   "note": "静态≠动态记忆评测"
+  }
+ ],
+ "threads": "- **Self-Forcing 抗漂：** AGF（对抗历史）为本周机制高峰；Prospective/LongForcing/RAR 等已在 10-15 重做区。\n- **记忆：** World-T3（TTT）↔ SMART（slot）对照题；WorldMemBench 给评测尺。\n- **效率/服务：** Glance（训练侧 ODE 数据量）+ Speculative（推理侧提交粒度）。\n- **噪声条件轴：** EqF 与 SF 历史轴正交。\n- **AV 流式底座：** 本周仍空白；Kandinsky S2V / DAO+JING 仅工程资源。\n",
+ "watchlist": "- OpenReview：DuplexAvatar / 各类 Forcing 变体（标题已召回，PDF 待过 challenge 或登录）\n- Kandinsky S2V 全量 2B/21B 权重是否落地\n- AGF 引用者与复现\n- StreamErase vs JoyAI-Video-Edit / EditStream 同台（目前缺）\n- OneLA 若接到实时视频 WM 控制再看\n- Speculative 在真实 H3 AV 交互负载下的 discard 率\n"
+}

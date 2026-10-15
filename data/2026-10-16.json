@@ -1,0 +1,301 @@
+{
+ "date": "2026-10-16",
+ "headline": "今天无必读；值得看簇是 Self-Forcing 效率/服务（Glance、Speculative）+ 记忆评测/机制（WorldMemBench、SMART、EqF）；音视频流式只有开源底座资源（Kandinsky S2V / DAO+JING），尚无实时延迟证据。",
+ "papers": [
+  {
+   "id": "speculative-sampling",
+   "rating": "worth",
+   "originality": "mechanism",
+   "credibility": "solid",
+   "directions": [
+    "streaming"
+   ],
+   "title": "Speculative Sampling in Interactive Video Generation",
+   "tldr": "把建模窗口与提交粒度拆开：大双向窗联合采样、缓存未提交未来、细粒度交付，条件变化时 FSM 替换后缀——去掉 chunk 边界等待地板；Sol-H3 L50 4.49→1.42s（Long–Spec 反超 Short-Baseline 1.87s）；Apache 服务代码已开源（含 H3 路径）。",
+   "institutions": [
+    "USTC",
+    "CUHK",
+    "Independent"
+   ],
+   "published": "arXiv 2610.20556（2026-10-15 列表）",
+   "links": {
+    "paper": "https://arxiv.org/abs/2610.20556",
+    "project": "https://yubo-shankui.github.io/speculative_sampling",
+    "code": "https://github.com/Yubo-Shankui/SpeculativeSampling"
+   },
+   "coverage": {
+    "paper": "full",
+    "demo": "none",
+    "code": "partial",
+    "note": "全文 HTML；clone 仓库核实 SpeculativeSamplingController / H3SpeculativeSamplingLiveSession；依赖外部 Sol-H3 + FastH3-4-step；无 GPU 未跑端到端。"
+   },
+   "rating_reason": "新机制（系统层）× 站得住：modeling window≠commit 的服务分解 + 多模型实测延迟；非生成训练新损失，故不进必读。",
+   "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| Rolling Forcing (2509.25161) | 小 chunk 交互 AR 的质量–延迟折中 | 不缩小建模窗，用投机缓存隐藏边界等待 |\n| LongLive (2509.22622) | 交互 KV recache | 把未提交未来预测缓存并按条件变化替换 |\n| Self-Forcing / CausVid 族 | chunk-AR 流式训练 | 本文 **推理侧 only**，不改 post-training |\n\n**能否预测？** 一旦分清「联合窗」与「提交粒度」，投机缓存对 LLM 投机解码类比是可预期的系统工程；价值在干净的 R+C+Q 延迟账本与多模型实测。→ **新机制（系统）**。\n\n**预测（读方法后）：** 去掉边界等待地板；长窗+投机逼近短窗延迟。实测 Sol-H3 / Wan 均大幅降 L50；**中**。",
+   "method": "- 下一 latent 用 K−1 噪声 pad，联合采样大双向窗；缓存未提交未来；细粒度交付（q=1）。\n- 条件变化时 Produce/Consume FSM 替换后缀。\n- 适用于 chunk-AR 与改造后的双向 clip 模型；对 Sol-H3 / FastH3-4-step 有集成路径。\n- 框架格：**推理侧**（不改训练损失）。注：Sol-H3 路径对 H3 交互 AV 服务可用，论文主表仍是视频交互。",
+   "evidence": "| 设定（论文 Table 3） | L50 |\n|---|---|\n| Wan Long-Baseline → Long–Spec（低频） | 3.23 s → **1.32 s** |\n| Wan Short-Baseline → Short–Spec | 1.13 → 1.01 |\n| **Sol-H3** Long-Baseline → Long–Spec | **4.49 → 1.42** |\n| Sol-H3 Short-Baseline → Short–Spec | 1.87 → **1.11**（Long–Spec 反超 Short-Baseline） |\n| 质量（Wan 4-step 480p） | K1 Total 79.00 → K3 **81.66**（非单调） |\n| 硬件 | H200 profiling；B300 服务 DiT；Wan 另卡 VAE |\n\n理论 R+C+Q 分解与实测降幅一致。",
+   "case_analysis": "项目页有对比；本轮未下 demo 做像素/延迟复测。",
+   "code_analysis": "本地 clone `/workspace/paper-digest/2026-10-16/repos/speculative-sampling/`（Apache-2.0）。`SpeculativeSamplingController` + 单测；`H3SpeculativeSamplingLiveSession` 机制在场。依赖外部 Sol-H3 runtime 与 FastH3-4-step 权重。**无 GPU 跑通。**",
+   "solidity": "延迟账本与硬件口径清楚；多模型一致方向。弱项：LTX 短窗无 CUDA Graph 仍 underflow；高频更新丢弃率 w 抬升；质量表未与 Rolling Forcing 学生同台；无 AV sync 指标。",
+   "concerns": "- 推理系统文，不是训练机制必读。\n- 端到端含 VAE 的单卡 FPS、生产更新混合下的 discard 率未核实。\n- 无 GPU 本地复现。",
+   "takeaways": "- **对我们训练：** 不改损失；做交互 demo 时在同等 few-step H3 上试 speculative commit，对照 L50 vs 小 chunk 基线。\n- 若服务能藏边界等待，训练仍可偏大双向窗质量。→ 转世界模型训练追踪（Sol-H3 服务路径）。"
+  },
+  {
+   "id": "glance-forcing",
+   "rating": "worth",
+   "originality": "finding",
+   "credibility": "doubtful",
+   "directions": [
+    "streaming"
+   ],
+   "title": "Glance Forcing",
+   "tldr": "继承 Causal Forcing 的 AR-teacher→ODE→DMD，但主张 ODE 主要拉直少步流形故 **1 条 PF-ODE 轨迹 ≈ 3k** 几何，再用 Slow/Fast LoRA + TFS/HP，后接 DMD：相对 CF Total +0.18～0.29、Dyn 68→75/78；代码+LoRA 已开源。增益小且 LoRA 容量混淆 → 存疑。",
+   "institutions": [
+    "Wuhan University",
+    "UESTC",
+    "SYSU",
+    "University of Washington",
+    "NUS",
+    "Central South University"
+   ],
+   "published": "arXiv 2610.20220（2026-10-15 列表）",
+   "links": {
+    "paper": "https://arxiv.org/abs/2610.20220",
+    "project": "https://zhuobaidong.github.io/Glance-Forcing/",
+    "code": "https://github.com/CSU-JPG/Glance-Forcing",
+    "other": [
+     {
+      "label": "weights",
+      "url": "https://huggingface.co/CSU-JPG/Glance-Forcing"
+     }
+    ]
+   },
+   "coverage": {
+    "paper": "full",
+    "demo": "none",
+    "code": "partial",
+    "note": "全文；clone 核实 slow/fast LoRA 按 step 切换与 ODE 轨迹生成；HF LoRA+ar_diffusion.pt；无 GPU。"
+   },
+   "rating_reason": "新发现（窄）× 存疑：1-traj 几何主张有轨迹拉直图支撑，但 VBench 增量小、相对 CF 全参微调的 LoRA 容量未对齐。",
+   "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| Causal Forcing (2602.02214) | AR-teacher PF-ODE init + asymmetric DMD | ODE 数据量压到 1-traj + Slow/Fast 阶段专家 |\n| CausVid (2412.07772) | ODE init + asymmetric DMD | 同上效率/专家轴 |\n| Self-Forcing (2506.08009) | 自回放 DMD | 管线外壳相同，改 ODE 与调度适配器 |\n\n**能否预测？** Slow-Fast 专家可从 CD/slow-fast 预测；「1 sample 够几何、DMD 管分布」不完全可预测——若轨迹指标成立则是窄发现。→ **新发现（窄）**。\n\n**预测：** 相对 CF 小 Total、更大 Dyn。实测 1-sample→DMD +0.18 Total、Dyn 75；**中**。",
+   "method": "- 保留 CF：TF AR teacher → ODE init → Self-Forcing 式 DMD。\n- 主张 ODE 主要拉直少步流，故可用 **1 条 PF-ODE** 替代大规模轨迹集。\n- 高噪/低噪用 **Slow/Fast LoRA**；加 temporal-spectrum（TFS）与空间 high-pass（HP）辅助损失，再 DMD。\n- 框架格：不改上下文来源格，改 ODE 数据量与相位专家。",
+   "evidence": "| 设定 | Total | Dyn | Vision |\n|---|---|---|---|\n| Causal Forcing distilled | 84.04 | 68 | 6.326 |\n| Glance (25k) | **84.33** | **78** | 6.921 |\n| Glance* 1-sample→DMD | **84.22** | **75** | 6.870 |\n| 人偏爱 vs CF / SF | 63.3% / 91.3% | | |\n| 消融 | SF alone 83.73→84.05；TFS/HP 约 +0.1–0.3 | | |\n| 延迟（**不含 VAE**，H100） | 0.75 s / 16.4 FPS | | |",
+   "case_analysis": "有项目页；本轮未下 demo 做感知核实。",
+   "code_analysis": "`/workspace/paper-digest/2026-10-16/repos/glance-forcing/`：`inference.py` 按 step_index 切 slow_lora↔fast_lora；`utils/ode_generation.py` CausalODETrajectoryGenerator。HF 权重已声明。**无 GPU。**",
+   "solidity": "轨迹拉直图与 one-sample 敏感性表诚实（高运动/特定域伤 ODE、DMD 可回）。弱：表编号混乱；相对 CF 参数预算未对齐；增益小。",
+   "concerns": "- LoRA 额外容量 vs CF 全参微调混淆。\n- 延迟口径排除 VAE。\n- 蒸馏细节转少步蒸馏助手；主线只记效率发现。",
+   "takeaways": "- **对我们训练：** 等 DMD 下对照 1 vs 100 vs 3k ODE 轨迹（拉直度+最终 VBench）；4-step H3 试 Slow/Fast 双适配器 vs 等秩单适配器。\n- TFS/HP 作 ODE 阶段可选辅助损失。→ 少步蒸馏助手跟配方。"
+  },
+  {
+   "id": "repforcing",
+   "rating": "worth",
+   "originality": "mechanism",
+   "credibility": "doubtful",
+   "directions": [
+    "streaming"
+   ],
+   "title": "RepForcing",
+   "tldr": "用冻结 Wan2.1-14B 特征空间的 teacher-forced cosine 匹配，替换 Causal Forcing 的中间 AR-teacher + causal ODE；Stage2 仍 asymmetric DMD。报告相对 CF Total +0.62、VisionReward 6.3→10.1，但 Semantic 掉、基线多抄他文未等预算重训、无公开代码 → 存疑。",
+   "institutions": [
+    "Joy Future Academy",
+    "Zhejiang University"
+   ],
+   "published": "arXiv 2610.20111（2026-10-15 列表）",
+   "links": {
+    "paper": "https://arxiv.org/abs/2610.20111"
+   },
+   "coverage": {
+    "paper": "full",
+    "demo": "unavailable",
+    "code": "unavailable",
+    "note": "全文 HTML；论文声称 Code at RepForcing，本轮未找到公开 URL；无权重。"
+   },
+   "rating_reason": "新机制（窄）× 存疑：用 rep-space 丢掉 AR-teacher+ODE 值得对照实验，但无匹配重训与无代码，不能当 SOTA 定论。",
+   "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| Causal Forcing | AR-teacher + causal ODE 再 DMD | 用冻结 DiT 特征 cosine 直接替掉 AR-teacher+ODE |\n| CausVid / Self-Forcing | ODE init + asymmetric DMD | Stage2 外壳不变 |\n| REPA 族 | 特征对齐辅助生成 | 接到视频 AR 蒸馏管线的 **init 替换** |\n\n**能否预测？** 「别回归 latent 后验均值、对齐中层特征」大半可从 REPA 预测；不可完全预测的是能否稳定 **整段丢掉** AR-teacher+ODE。→ **新机制（窄）/偏重做**。\n\n**预测：** 4-step 细部赢、DMD 后 Total 小涨 Vision 大涨。实测 +0.62 / Vision 10.07；**中**。",
+   "method": "- Stage1：干净前缀 teacher forcing + 冻结 Wan2.1-14B 特征 token-wise cosine（L=8, τ=0）。\n- Stage2：不变的 asymmetric DMD（自生成）。\n- 框架：Stage1 TF + Stage2 self-gen；蒸馏增量转少步蒸馏。",
+   "evidence": "| Model (chunk 4-step) | Total | Dyn | Vision | Instruct | Semantic |\n|---|---|---|---|---|---|\n| Causal Forcing | 84.04 | 68 | 6.326 | 56 | 81.84 |\n| Causal-rCM | 84.37 | 71 | 8.211 | 64 | 81.73 |\n| **RepForcing** | **84.66** | 69 | **10.074** | **78** | 81.10 |\n| Frame-wise Rep vs CF++ | 84.38 vs 84.10；Vision 10.598 vs 6.798；Instruct 80 vs 47 | | | | |\n| 消融 | Wan14B ≫ InternVid ≫ DINOv2；depth 1/5 最好 | | | | |",
+   "case_analysis": "无公开 demo/代码可核。",
+   "code_analysis": "本轮未找到公开仓库或权重；无法核实 rep loss 接线与等预算对照。",
+   "solidity": "主表数字完整，但基线多来自他文、非匹配重训；Semantic 掉与 Vision 涨并存需警惕。无代码是硬伤。",
+   "concerns": "- 无公开代码/权重。\n- 冻结 14B 抽取器 Stage1 算力未与 AR-teacher+ODE 等预算比。\n- Pre-DMD 数值主表缺失。",
+   "takeaways": "- **对我们训练：** 等 Stage1 步数下对照 **rep-space cosine（H3/Wan 中层）vs latent-MSE / ODE-init**，再同一 DMD——优先训练追踪实验；勿把 VisionReward 涨当成 Semantic 涨。\n- 配方转少步蒸馏；抽取器选择主导（Wan14B vs DINO）。"
+  },
+  {
+   "id": "smart",
+   "rating": "worth",
+   "originality": "mechanism",
+   "credibility": "solid",
+   "directions": [
+    "world-model",
+    "streaming"
+   ],
+   "title": "Long-horizon Video Generation with Slot Memory Addressed By Region Tokens (SMART)",
+   "tldr": "用相机几何路由的固定容量 slot recurrence 做写读（地址来自 pose、内容另路），读出带 confidence 的粗 draft 再条件 chunk-causal DiT；Memory Maze 823 帧 PSNR 29.9 vs DFoT 28.4 / Causal-Full 24.3，且算力远低；与昨 World-T3（pose-keyed TTT）同题不同底物。",
+   "institutions": [
+    "ETH Zurich",
+    "Google"
+   ],
+   "published": "arXiv 2610.19257（2026-10-15 列表）",
+   "links": {
+    "paper": "https://arxiv.org/abs/2610.19257",
+    "project": "https://eren-cetin.github.io/SMART/"
+   },
+   "coverage": {
+    "paper": "full",
+    "demo": "none",
+    "code": "unavailable",
+    "note": "全文 method+exp；最接近 WorldMem / World-T3 / Addressable Memory / Memory Forcing；无公开训练代码；无 GPU。"
+   },
+   "rating_reason": "新机制 × 站得住（域：Maze+Minecraft）：在 recurrence 内部把「在哪看见」与「何时看见」解耦；稀疏写消融相对 dense SSM 不可完全事先预测。",
+   "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| WorldMem (2504.12369) | 增长/检索外部帧库 + pose | 改成 **常数容量** slot recurrence 内部寻址 |\n| World-T3 (2610.17434，昨推) | pose-keyed TTT fast-weight | 底物不同：slot vs TTT |\n| Addressable Memory / WorldTrace (2608.07408) | 训练免费 KV 寻址 | 本文是可写 recurrence + confidence draft |\n| Memory Forcing (2610.11756) | 时间 bank | 空间/pose 路由，非时间 bank |\n\n**能否预测？** 「pose 键记忆」可预测；**不完全可预测**：稀疏 slot 写使过训练视野仍稳、同容量 dense SSM 崩。→ **新机制**。\n\n**预测（Codex 盲测）：** 回访优于时间基线。实测 Maze 823 PSNR 29.9；**中**。",
+   "method": "- 每帧 tile→region token；**地址只来自相机几何**，内容另路；按 pose 写入单一 slot（其余不动）。\n- 读：目标相机 query→粗 draft+confidence；chunk-causal DiT 按 confidence 信任记忆 vs 先验。\n- SE(3) value transform；生成 chunk 写回→常数存储/步。\n- 实例：Memory Maze（Wan 风格相机）+ Minecraft（MilliVid DiT-B）；12×RTX4090 训记忆。",
+   "evidence": "| Maze 823 帧（Tab1） | PSNR | SSIM | PFLOPs |\n|---|---|---|---|\n| **Smart** | **29.9** | **0.900** | **0.213** |\n| DFoT | 28.4 | — | 1.13 |\n| Causal-Full | 24.3 | — | — |\n| 更长 1623/3223 | 作者称时间基线掉、Smart 维持；dense SSM 同容量过视野崩（Tab3） |\n| Minecraft 257–2048 | PSNR/SSIM 全面最高；FID/FVD 部分落后 MilliVid；算力约 2.7× 更低 |\n| 消融 | 去 SE(3) 全面掉；halve heads 长序列掉 |",
+   "case_analysis": "项目页有可视化；本轮未下 demo、无 GPU。",
+   "code_analysis": "未见公开训练/推理代码与权重。",
+   "solidity": "回访表与稀疏写消融完整；域窄（Maze/Minecraft），非通用 AV 底座；相对昨 World-T3 不重复必读。",
+   "concerns": "- 无开源权重。\n- 感知指标（FID/FVD）在 Minecraft 上不全面领先。\n- 无 GPU 核实。",
+   "takeaways": "- **对我们训练：** 交互回访对照 **pose-slot vs World-T3 TTT vs history corruption/KV sink**；优先短训看 revisit。→ 转世界模型训练追踪。"
+  },
+  {
+   "id": "worldmembench",
+   "rating": "worth",
+   "originality": "finding",
+   "credibility": "solid",
+   "directions": [
+    "world-model"
+   ],
+   "title": "WorldMemBench: A Comprehensive Benchmark for Memory of Video World Models",
+   "tldr": "260 cases 协议拆开静态保持 vs 动态离屏演化：HY-WorldPlay 静态全第一但事件启动仅 31.7%；多回访累积退化，换轴 Environment Visible 再掉 0.152；人评动态 Spearman 0.732；同模型 FoV 检索优于 FullKV。代码+数据已开源（原 watchlist，今日 arXiv）。",
+   "institutions": [
+    "Zhejiang University",
+    "Ant Group",
+    "Fudan University",
+    "Nanjing University"
+   ],
+   "published": "arXiv 2610.19063（2026-10-15 列表；此前 GitHub/OR watchlist）",
+   "links": {
+    "paper": "https://arxiv.org/abs/2610.19063",
+    "project": "https://zju-real.github.io/WorldMemBench/",
+    "code": "https://github.com/ZJU-REAL/WorldMemBench",
+    "other": [
+     {
+      "label": "dataset",
+      "url": "https://huggingface.co/datasets/rescuerz/WorldMemBench"
+     }
+    ]
+   },
+   "coverage": {
+    "paper": "full",
+    "demo": "unavailable",
+    "code": "partial",
+    "note": "全文；代码/HF 数据集入口已核；未跑全量九模型评测。"
+   },
+   "rating_reason": "新发现 × 站得住（评测）：静态≠动态与多回访/换轴剖面是可行动诊断（类 PhyAVBench），非新生成机制。",
+   "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| LoopBench（Addressable Memory 文） | 记忆回访评测 | 更强调多回访持久 + 动态 checklist + 九模型横向 |\n| Can VWMs Track Unobserved States (2608.30692) | 未观测状态追踪 | 本文补静态/动态分离与换轴 |\n| WorldScore / MIND | 世界一致性/记忆相关 | 协议与剖面更可操作 |\n\n**能否预测？** 「WM 记忆差」可预测；**不可完全预测**的是量化剖面与协议带来的诊断（类昨 PhyAVBench）。→ **新发现**。\n\n**预测：** 九模型剖面分化；人机相关>0.7；FoV>FullKV。**中**。",
+   "method": "- 260 cases / 23 类：静态 200 + 动态 60；固定初始参考多回访；同轴/换轴。\n- 九模型横向；同模型上下文策略对照 FoV（sink+recent+retrieved）vs FullKV。\n- 框架格：**WM 记忆评测**。",
+   "evidence": "| 发现 | 数字 |\n|---|---|\n| HY-WorldPlay 动态事件启动 | **31.7%**（静态七项全第一） |\n| 换轴 Environment Visible 再掉 | **0.152** |\n| 人评静态 pairwise | **78.5–92.5%** |\n| 人评动态 Overall Spearman | **ρ=0.732**（PLCC 0.808） |\n| FoV vs FullKV | 多数记忆指标更好且延迟更低（LingBot World v2，H20-3e×8） |\n| 规模 | 260 cases / 23 类 |",
+   "case_analysis": "评测基准，无生成 demo 需核。",
+   "code_analysis": "GitHub ZJU-REAL/WorldMemBench + HF `rescuerz/WorldMemBench`；未在本机跑全模型。",
+   "solidity": "人机相关中等偏上；协议设计清楚。弱：单样本噪声未展开；动态子集 60 例相对静态更少。",
+   "concerns": "- 评测发现，无直接改损失处方。\n- 与流式延迟无关。",
+   "takeaways": "- **对我们训练：** 把 WorldMemBench（或子集）纳入交互 WM 评测；试 **FoV/view-relevant retrieval vs FullKV/滑动窗**。无直接损失改动。"
+  },
+  {
+   "id": "eqf",
+   "rating": "worth",
+   "originality": "finding",
+   "credibility": "solid",
+   "directions": [
+    "streaming"
+   ],
+   "title": "Equilibrium Forcing: Adaptive Video Generation Without Noise Conditioning",
+   "tldr": "诊断 AR Flow Matching 上调度 σ 与真实噪声发散并驱动误差累积；训练去掉噪声条件学均衡场，推理用内部 σ 估计闭环自适应采样。Minecraft 300 帧 FVD 64.3 vs FM 104.1；Wan2.1-1.3B Re10K FID 15.15 vs FM-FT 18.91。与 Self-Forcing 上下文轴正交。",
+   "institutions": [
+    "UC San Diego",
+    "MIT",
+    "Harvard University"
+   ],
+   "published": "arXiv 2608.14706（v2；本窗口精读）",
+   "links": {
+    "paper": "https://arxiv.org/abs/2608.14706",
+    "project": "https://equilibriumforcing.github.io/"
+   },
+   "coverage": {
+    "paper": "full",
+    "demo": "none",
+    "code": "unavailable",
+    "note": "全文 §3–5 + Tab1/4；最接近 Diffusion Forcing / EqM / FM；无 GPU；未见公开训练代码本轮。"
+   },
+   "rating_reason": "新发现（+机制）× 站得住（域/规模存疑）：σ 发散诊断与去条件后闭环采样幅度不完全可事先预测；非通用视频预训练规模故不进必读。",
+   "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| Diffusion Forcing (2407.01392) | 每帧独立噪声 + 混合上下文，**保留**噪声条件框架 | 攻击 **噪声条件开环**，训练去 σ |\n| Self-Forcing (2506.08009) | 自生成上下文 | 轴正交：本文不管历史误差来源 |\n| Equilibrium Matching (图像) | 图像均衡/无噪声条件 | 接到 AR 视频 + 闭环 σ 估计采样 |\n\n**能否预测？** 图像噪声无条件已知；**不完全可预测**的是 AR 视频上「σ 发散→误差累积」诊断强度与 Minecraft/Wan-FT 幅度。→ **新发现（兼机制）**。\n\n**预测（Codex）：** 长 Minecraft FVD 低于 FM。实测 64.3 vs 104.1；**中**。",
+   "method": "- 诊断：AR FM 调度 σ 与真实噪声水平发散且随 rollout 增大。\n- EqF：训练丢 σ 条件，学单一均衡场；推理用激活上 h_ω 估 σ，η warp + 可选 NAG / budget-adaptive 步长。\n- 理论：高维噪声后验集中 → EqF 与 FM Bayes 目标接近（Prop 4.1）。\n- 非少步蒸馏主贡献（仍可多步）。",
+   "evidence": "| 设定 | 数字 |\n|---|---|\n| Minecraft 300 帧 FVD（5 seeds, Tab1） | **EqF+NAG 64.3** / FM Euler 104.1 / Diffusion 106 / NU-FM 101 |\n| Re10K Wan2.1-1.3B FID（Tab4） | **EqF-FT 15.15** / FM-FT 18.91 |\n| Droid Wan2.2-5B | 同法；budget-adaptive 低步数前沿更好 |\n| 规模自承 | 主实验偏 Minecraft/域数据，非通用视频预训练 |",
+   "case_analysis": "项目页有可视化；本轮未下 demo。",
+   "code_analysis": "本轮未见可用公开训练/推理代码与可跑权重。",
+   "solidity": "诊断+主表完整；域窄与规模自承诚实。弱：向通用 AV 流式迁移证据有限；无独立复现。",
+   "concerns": "- 域/规模存疑，非必读。\n- 无 GPU；代码未核实。\n- 仍可多步，不是少步新配方。",
+   "takeaways": "- **对我们训练：** AR/双向 FM 线对照 **噪声条件 dropout→EqF 微调 vs 标准 FM**；推理试闭环 σ 估计步长。与 history corruption **正交**（一个管噪声条件，一个管历史误差）。→ 转世界模型训练追踪。"
+  }
+ ],
+ "resources": [
+  {
+   "title": "Kandinsky S2V 1.0（开源 S2V 技术报告；全量权重待落地）",
+   "url": "https://kandinskyavatar.github.io/",
+   "note": "arXiv 2610.19290；cascade speech→video。Lite distilled 1×H100 **43s/5s chunk**（非实时）；Sync-C/D only。GitHub kandinskylab/kandinsky-s2v 本轮 404；HF 目前仅 tiny-* test pipes。"
+  },
+  {
+   "title": "DAO + JING（H3 交互 AV-WM 产品栈 / jing_flash_v1）",
+   "url": "https://huggingface.co/XGENlabs/XGEN-JING",
+   "note": "arXiv 2610.19726；WBench 强；**无 latency/FPS/hardware/sync 定量**。HF jing_flash_v1（MiniMax-H3 community license）；blog xgenlabs.ai。demo 有真实音轨，未测唇形对齐。"
+  },
+  {
+   "title": "Speculative Sampling 服务代码（Apache-2.0）",
+   "url": "https://github.com/Yubo-Shankui/SpeculativeSampling",
+   "license": "Apache-2.0",
+   "note": "与值得看卡片同一工作；Sol-H3 / FastH3-4-step 集成路径；已 clone 核实 controller。"
+  },
+  {
+   "title": "Glance Forcing 代码+LoRA（可选）",
+   "url": "https://github.com/CSU-JPG/Glance-Forcing",
+   "license": "Apache-2.0",
+   "note": "HF CSU-JPG/Glance-Forcing；slow/fast LoRA 切换已在推理脚本核实。"
+  },
+  {
+   "title": "StreamErase（流式物体擦除）",
+   "url": "https://github.com/zhuobaidong/StreamErase",
+   "note": "arXiv 2610.20137；Wan1.3B+Causal Forcing→1-step DMD；**26.06 FPS / 0.87s @ 单卡 H200**，832×480。HF zhuobai/StreamErase。机制=SF/CF 任务迁移；**未比 JoyAI-Video-Edit/EditStream 等**。无 GPU 未复测 FPS。"
+  },
+  {
+   "title": "ATAS（Agent 多镜世界状态框架）",
+   "url": "https://github.com/ziplab/ATAS",
+   "note": "arXiv 2610.20571；scene 点云+event 时间库+校验后写状态；HF Daily 322 upvotes偏热度。项目页 http://lhmd.top/atas。工程组合，非新记忆原语。"
+  },
+  {
+   "title": "WorldMemBench 代码+数据",
+   "url": "https://github.com/ZJU-REAL/WorldMemBench",
+   "note": "与值得看卡片同一工作；HF datasets/rescuerz/WorldMemBench。"
+  }
+ ],
+ "redo": [
+  {
+   "title": "StateCraft (2610.19795)",
+   "url": "https://arxiv.org/abs/2610.19795",
+   "note": "GUI/文件管理器抽象图状态+VLM→DiT；域外生成软件 WM，相对 NeuralOS 可预测。"
+  },
+  {
+   "title": "PAWA (2610.20240)",
+   "url": "https://arxiv.org/abs/2610.20240",
+   "note": "Minecraft 多智能体全景动作 WM；域 OUT。"
+  },
+  {
+   "title": "OneLA (2610.20160，观察)",
+   "url": "https://arxiv.org/abs/2610.20160",
+   "note": "跨域共享 latent action 字典；非流式主线。若后续接到实时/流式视频 WM 控制接口再看。"
+  },
+  {
+   "title": "PRIMEdit (2412.12877)",
+   "url": "https://arxiv.org/abs/2412.12877",
+   "note": "Adobe 离线多物体编辑+bench；非实时。"
+  }
+ ],
+ "trend_summary": "周五无必读。Self-Forcing 线今天增量在 **效率与服务**（Glance 的 1-traj ODE、Speculative 的 window≠commit），训练侧窄机制是 RepForcing（存疑）与 EqF（噪声条件轴，与历史误差正交）；记忆线是 SMART（pose-slot）与 WorldMemBench（静态≠动态评测）。联合 AV 流式仍无新底座——Kandinsky S2V / DAO+JING 只进可用资源。完整周脉络见 [2026-W42](../weekly/2026-W42/)。"
+}
