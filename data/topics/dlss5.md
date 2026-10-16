@@ -258,6 +258,10 @@ f(r) ≈ argmax_{x∈C(r)} p_photo(x)，并且要求 p_photo(f(r)) ≫ p_photo(r
 - **对照数据本身可能有问题**：[issue #3](https://github.com/maanHimself/OpenDLSS-NR/issues/3) 的评论里有人指出，官方 `nvngx_dlssnr.dll` 只带 sm_120（Blackwell）的 kernel，在别的架构上会原样输出输入。如果某些「官方截图」是在非 Blackwell 卡上录的，就不能当真值。同一个 issue 里，作者的快速路径也出过输出几乎全红的 bug（已关闭）。
 - **我们这边复现不了**：没有权重，没有 Blackwell 或 Ada GPU，CPU 参考实现也只覆盖 block 0。以上关于对齐的所有结论都是**作者自报**。
 
+## 十、全链路 demo 方案
+
+能不能用阿里云 5090 把 CG 视频跑一遍 DLSS 5？结论：目前官方没有公开 NR 的 SDK 或插件，社区方案都要用提取出来的 DLL，不推荐。完整的路线、评测设计和需要 Henry 提供的东西见 → [DLSS 5 全链路 demo 方案](../dlss5-demo-plan/index.html)
+
 <details><summary>阅读记录与覆盖面</summary>
 
 - PDF 通过 curl 下载（HTTP 200，280 MB），pdftotext 全文通读，Fig.1–11 全部渲染成图逐张看过。
