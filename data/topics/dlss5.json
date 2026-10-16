@@ -1,0 +1,7 @@
+{
+  "slug": "dlss5",
+  "title": "DLSS 5 深读：实时生成式渲染（3D-Guided Neural Rendering）",
+  "desc": "NVIDIA 2026-09 技术报告：一步像素空间流式扩散，4K 8ms；输入输出、原理、设计取舍、官方案例、证据缺口与对我们训练的启示",
+  "updated": "2026-10-16",
+  "summary": {"file": "topics/dlss5.md"}
+}
