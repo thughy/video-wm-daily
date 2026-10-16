@@ -1,5 +1,5 @@
 > 来源：[NVIDIA 技术报告 PDF](https://research.nvidia.com/labs/adlr/files/DLSS5_Report.pdf)（24 页，2026-09-01）· [项目页](https://research.nvidia.com/labs/adlr/DLSS5/) · [官方视频](https://www.youtube.com/watch?v=58FagrSqC4M) · [开发者博客](https://developer.nvidia.com/blog/whats-new-for-game-developers-dlss-5-with-3d-guided-neural-rendering-nvidia-ace-updates-and-new-rtx-kit-capabilities/) · [NBA 2K27 发布页](https://www.nvidia.com/en-us/geforce/news/dlss-5-3d-guided-neural-rendering/)。
-> 标注：**[原文 §x]** 出自报告；**[官方视频/博客]** 出自 NVIDIA 宣传材料；**[推断]** 是我们的判断。报告和视频都标注 © NVIDIA 保留所有权利，所以本页**不转载图片**，只给出图号或时间点链接，并用文字描述每个案例。
+> 标注：**[原文 §x]** 出自报告；**[官方视频/博客]** 出自 NVIDIA 宣传材料；**[推断]** 是我们的判断。报告标注 © NVIDIA 保留所有权利。经 Henry 同意，本页少量引用 10 张截图，每张都注明来源，仅用于研究评述。
 
 ## 一、先说结论
 
@@ -44,32 +44,108 @@ f(r) ≈ argmax_{x∈C(r)} p_photo(x)，并且要求 p_photo(f(r)) ≫ p_photo(r
 | 空间 | 像素空间，无 VAE | VAE 往返会挪边缘、重画纹理；连输入的锯齿都要原样保留 [§2.4] | 4K 像素空间能做到 8 ms，说明网络大量依赖局部计算 [推断] |
 | 步数 | 一步、确定性 | 强条件任务里多步收益不大；同样的输入序列必须得到同样的输出 [§2.3] | 和「一对多」越弱、少步越容易的经验一致 |
 | 时序 | 逐帧因果，O(1) 显存，不用 chunk | chunk 要缓冲 K 帧，增加延迟，显存也随 K 增长 [§2.5, Fig.2] | 稠密 RGB 每帧都重新锚定，漂移问题天然小很多 [推断] |
-| 主干 | 约 154M 参数的 Transformer，注意力沿用 DLSS 4；自动架构搜索 [§2.6, Fig.3] | 速度和质量的平衡点，软件栈也成熟 | 具体结构（patch 大小、窗口注意力等）没披露 |
+| 主干 | 约 154M 参数的 Transformer，注意力沿用 DLSS 4；自动架构搜索 [§2.6]；Fig.3 只是没有坐标数值的示意散点，不是实测数据 | 速度和质量的平衡点，软件栈也成熟 | 具体结构（patch 大小、窗口注意力等）没披露 |
 | 数值 | 大部分 GEMM 和 attention 用 FP8，少数敏感层 FP16，约 2× 提速 [§2.6] | Blackwell 的 TMA 和 FP8 Tensor Core | — |
 | 控制 | 强度、mask 都作为**学到的条件通道**；structure 和 tone 在行为上对应高频和低频 [§3.2] | 把昂贵的多频分解融进网络里，运行时零额外开销 | 「把后处理旋钮学进模型」很值得借鉴 [推断] |
 | 多风格 | 几个分别训练的外观模型（A/B/C），而不是一个连续可控的模型 [§3.1] | 单个模型覆盖整个照片分布太难 | 说明他们的可控性还是离散的 |
 
 **训练链路**：报告披露的只有三点：①从照片数据学先验，再构造「任务专用学生」[§2.2]；②G-buffer 一致性监督 [§2.1]；③「为逐帧时序稳定而训练」[Abstract]。教师是谁、蒸馏用 DMD、对抗还是一致性模型、成对数据从哪来、怎么防曝光偏差，**全部没写**。「student」这个词暗示是从大模型蒸馏来的 [推断]。
 
-## 五、官方案例逐个解读
+## 五、官方案例逐个解读（按实际图像描述）
 
-| 案例 | 去哪看 | 展示了什么 | 说明了什么 |
-|---|---|---|---|
-| ① 渲染 vs DLSS 5，带放大裁切 | 报告 Fig.1（第 1 页） | 材质和光照更真实，构图不变 | 「改外观，不改内容」的核心卖点 |
-| ② chunk 和逐帧对比示意 | 报告 Fig.2（第 7 页） | chunk 方式要等 K 帧、显存 O(K)；逐帧方式一帧进一帧出、显存 O(1) | 解释为什么放弃视频模型常用的 chunk 联合注意力 |
-| ③ 性能和质量的架构搜索散点 | 报告 Fig.3（第 8 页） | 大量候选架构的速度与质量折线 | 选 154M 是搜出来的工程点，不是理论推出来的 |
-| ④ 三个外观模型 A/B/C | 报告 Fig.4–5（第 9 页） | 同一输入在色调、植被、皮肤上的不同处理 | 「照片」本身也是一个分布，用离散模型去采样它 |
-| ⑤ structure × tone 网格（西瓜静物） | 报告 Fig.6（第 10 页） | S 从 0 到 1 时表面细节和局部对比增强；T 控制整体明暗是否贴合原图 | 高频和低频两个旋钮可以独立调；S=T=0 时原样输出 |
-| ⑥ 手动 mask | 报告 Fig.7（第 11 页） | 只在开发者画的区域增强，边界过渡平滑 | 模型懂物体和材质，mask 边缘不会生硬 |
-| ⑦ 自动皮肤 mask | 报告 Fig.8（第 12 页） | 只增强皮肤 / 只增强非皮肤 / 全增强 | 语义 mask 学进了模型；脚注说外星人和爬行动物的皮肤也被当成皮肤 |
-| ⑧ 和 GPT Image 2、Gemini 3 Pro 比 | 报告 Fig.9（第 15 页） | 两个编辑模型会改脸、改构图，DLSS 5 不会 | 对应 Table 1 的对齐优势 |
-| ⑨ 同帧时间下比 4× 光线追踪 | 报告 Fig.10（第 17 页） | 多加光线只是降噪；DLSS 5 加出接触阴影、地面纹理和树叶的环境光 | 生成补的是渲染器本来就没模拟的东西，而不是采样误差 |
-| ⑩ 低质量输入 | 报告 Fig.11（第 20 页） | 窗框锯齿和细节缺失在输出里被保留 | 局限：输入里没有的信息补不出来，故意「宁可保留缺陷也不改含义」 |
-| ⑪ 拉面厨师 | [官方视频](https://www.youtube.com/watch?v=58FagrSqC4M) | 脸部几何和结构不变，皮肤和头发有次表面散射，眼睛里有反光 [官方视频] | 角色身份保持，是人评里角色类内容大幅领先的直观原因 |
-| ⑫ Zorah 白模场景、光栅化、光追、路径追踪 | 同一视频 | 没有材质的白模也会被「补」上外观；输入越好（光栅化→光追→路径追踪），输出越好 [官方视频] | 它和渲染器是互补关系：上游质量直接决定上限，对应 §1.2 和 Table 3 |
-| ⑬ NBA 2K27 实装 | [发布页](https://www.nvidia.com/en-us/geforce/news/dlss-5-3d-guided-neural-rendering/) 的 4K 对比 | 用 tone/style 控制加逐像素 uplift mask 微调球员脸，保证还认得出是本人 [官方博客] | 首个商用落地；肖像权场景强依赖 mask 控制 |
+每张图都放在它要证明的论点旁边。截图都是我们自己从报告 PDF 和 NVIDIA 发布页的原图里裁出来、压缩过的。官方视频都托管在 YouTube，box 上用 yt-dlp 下载时被 YouTube 的「Sign in to confirm you're not a bot」拦下，**一个都没下载成功**；我没有用 cookie 绕过。所以视频案例只能用发布页的官方对比静帧代替。
 
-注意：案例都是 NVIDIA 挑出来的，没有失败案例统计，也**没有可下载的时序对比视频可以量化闪烁** [推断]。
+### ① 只改外观，不改内容（Fig.1）
+
+![DLSS 5 Report Fig.1](../../assets/topics/dlss5/fig1.webp)
+
+*图片来源：NVIDIA（DLSS 5 Report Fig.1），仅用于研究评述 · [原始出处](https://research.nvidia.com/labs/adlr/files/DLSS5_Report.pdf)*
+
+实际看到的：一位戴头巾的男性角色。DLSS 5 版本的面部皮肤明暗和光泽更丰富，头巾和衣服的布料褶皱阴影更深，背景整体压暗、对比度更高。脸型、五官、项链和构图完全没变。三组放大裁切分别是脸、项链和前景的水果。
+**能证明**：「保内容、改外观」在角色上成立。**不能证明**：整体压暗、提对比有多少是调色、多少是真正补出来的光照，单靠这张图分不出来 [推断]。
+
+### ② 为什么放弃 chunk（Fig.2）
+
+![DLSS 5 Report Fig.2](../../assets/topics/dlss5/fig2.webp)
+
+*图片来源：NVIDIA（DLSS 5 Report Fig.2），仅用于研究评述 · [原始出处](https://research.nvidia.com/labs/adlr/files/DLSS5_Report.pdf)*
+
+这是一张示意图，不是实验结果。chunk 方式要先缓冲 K 帧，额外延迟是 K−1 个帧间隔，显存 O(K)；逐帧方式一帧进一帧出，显存 O(1)。它说明的是设计动机，**不是**两种方式在质量上的对比。
+
+### ③ 外观模型是离散的几个点（Fig.5）
+
+![DLSS 5 Report Fig.5](../../assets/topics/dlss5/fig5.webp)
+
+*图片来源：NVIDIA（DLSS 5 Report Fig.5），仅用于研究评述 · [原始出处](https://research.nvidia.com/labs/adlr/files/DLSS5_Report.pdf)*
+
+实际看到的：同一位穿皮甲的女性角色，CG 和 Model A/B/C 四列。A 偏暖、偏柔；B 对比最强，偏冷灰；C 最亮，饱和度最高。脸和服饰结构四列一致。
+**能证明**：一张渲染图可以对应多种合理的「照片」外观，靠选模型来决定；单个模型的输出是确定的。
+
+### ④ structure 和 tone 两个旋钮（Fig.6）
+
+![DLSS 5 Report Fig.6](../../assets/topics/dlss5/fig6.webp)
+
+*图片来源：NVIDIA（DLSS 5 Report Fig.6），仅用于研究评述 · [原始出处](https://research.nvidia.com/labs/adlr/files/DLSS5_Report.pdf)*
+
+实际看到的：西瓜和芒果静物，2 行 × 3 列。行是 T=0 和 T=1，列是 S=0、0.5、1.0，左上角是 CG 原图。沿 S 方向，西瓜表皮纹理和芒果表面的细节、局部对比逐渐变强，但缩小后差异比较**细微**。T=1 那行的整体亮度和色调更贴近 CG 原图，T=0 那行更暗、对比更重。
+**能证明**：高频（细节）和低频（整体色调）两种增强可以分开调。
+
+### ⑤ 自动皮肤 mask（Fig.8）
+
+![DLSS 5 Report Fig.8](../../assets/topics/dlss5/fig8.webp)
+
+*图片来源：NVIDIA（DLSS 5 Report Fig.8），仅用于研究评述 · [原始出处](https://research.nvidia.com/labs/adlr/files/DLSS5_Report.pdf)*
+
+实际看到的：一位戴黑色头巾的亚洲中年男性。(b) 只增强非皮肤时，脸基本保持 CG 的样子；(d) 只增强皮肤时，脸部出现明显的皱纹、毛孔和高光，衣服不变；(c) 全图增强。
+**能证明**：皮肤语义已经学进模型，一个全局参数就能只作用于皮肤，不需要画 mask。手动 mask（Fig.7，静物里的水壶、葡萄和瓶子）是同一个机制的逐像素版本，这里没有放图。
+
+### ⑥ 和通用图像编辑模型比（Fig.9）
+
+![DLSS 5 Report Fig.9](../../assets/topics/dlss5/fig9.webp)
+
+*图片来源：NVIDIA（DLSS 5 Report Fig.9），仅用于研究评述 · [原始出处](https://research.nvidia.com/labs/adlr/files/DLSS5_Report.pdf)*
+
+实际看到的：5 行场景，依次是女性角色、头巾男子、光头男子、室内吧台、街道停车场；4 列是 CG、Gemini 3 Pro、GPT Image 2、DLSS 5。缩小到页面尺寸后，**四列的构图都很接近**，只有放大裁切里能看出编辑模型的脸、局部物体有变化。DLSS 5 那列整体更暗、对比更强。
+**能证明**：和 Table 1 的对齐优势一致，但从图上看，差距远没有 LPIPS 0.06 vs 0.34 显得那么悬殊。
+
+### ⑦ 同帧时间下比 4× 光线追踪（Fig.10）
+
+![DLSS 5 Report Fig.10](../../assets/topics/dlss5/fig10.webp)
+
+*图片来源：NVIDIA（DLSS 5 Report Fig.10），仅用于研究评述 · [原始出处](https://research.nvidia.com/labs/adlr/files/DLSS5_Report.pdf)*
+
+实际看到的：3 行，依次是盆栽灌木、地面上一个镂空灯球投下的光斑、室外桌椅；3 列是 CG、4× 光线追踪、DLSS 5。4× 光线追踪那列和 CG 几乎看不出区别。DLSS 5 那列灌木叶子之间的暗部更深，灯球光斑边缘和地砖纹理更清楚，椅子下的接触阴影更重。
+**能证明**：多加光线主要是降噪；生成补的是渲染器没模拟出来的外观线索。差异是真实的，但幅度不大，而且只有定性图。
+
+### ⑧ 输入差，输出也好不了（Fig.11）
+
+![DLSS 5 Report Fig.11](../../assets/topics/dlss5/fig11.webp)
+
+*图片来源：NVIDIA（DLSS 5 Report Fig.11），仅用于研究评述 · [原始出处](https://research.nvidia.com/labs/adlr/files/DLSS5_Report.pdf)*
+
+实际看到的：窗框加长椅的局部。CG 输入里窗框的锯齿和模糊在 DLSS 5 输出里**原样保留**，只是长椅木纹和颜色稍微更有质感。
+**能证明**：它不会去「修」输入里的缺陷。这是刻意的设计，不是失败。
+
+### ⑨ 官方对比静帧：Zorah 庭院（发布页对比 001）
+
+![NVIDIA 发布页 Zorah comparison 001，左 Off / 右 On](../../assets/topics/dlss5/zorah1.webp)
+
+*图片来源：NVIDIA（NVIDIA 发布页 Zorah comparison 001，左 Off / 右 On），仅用于研究评述 · [原始出处](https://www.nvidia.com/en-us/geforce/news/dlss-5-3d-guided-neural-rendering/)*
+
+实际看到的：石质花坛、红花、龟背竹和地被植物。On 版的暗部更深，阳光照到的叶片高光更亮，石材的凹凸阴影更明显，整体是「更硬的直射光加更深的环境遮蔽」的感觉。植物的数量和位置完全一致。
+**能证明**：植被和石材上的光照补全。这是官方挑选的展示图。
+
+### ⑩ 官方对比静帧：Zorah 坐姿男子（发布页对比 002）
+
+![NVIDIA 发布页 Zorah comparison 002，左 Off / 右 On](../../assets/topics/dlss5/zorah2.webp)
+
+*图片来源：NVIDIA（NVIDIA 发布页 Zorah comparison 002，左 Off / 右 On），仅用于研究评述 · [原始出处](https://www.nvidia.com/en-us/geforce/news/dlss-5-3d-guided-neural-rendering/)*
+
+实际看到的：和 Fig.1 是同一个角色的全身坐姿。On 版的白袍阴影层次更多，脸部更立体，背景的花和陶器颜色更饱和。姿态和道具不变。
+**能证明**：Fig.1 的效果在全身尺度上同样成立。
+
+### 没能核实的视频案例
+官方视频（[介绍视频](https://www.youtube.com/watch?v=58FagrSqC4M)、[开发者讲解](https://www.youtube.com/watch?v=79D8SVjB3HQ)、[NBA 2K27 开发者](https://www.youtube.com/watch?v=yeMtCvxBiIM)、[发布页另一段](https://www.youtube.com/watch?v=5khwlu2qD9U)）都没能下载。之前文字稿里提到的拉面厨师、无材质的 Zorah 白模、从光栅化到路径追踪的对比，以及**任何时序闪烁表现**，本页都**没有亲眼核实**。
 
 ## 六、证据
 
@@ -120,7 +196,7 @@ f(r) ≈ argmax_{x∈C(r)} p_photo(x)，并且要求 p_photo(f(r)) ≫ p_photo(r
 
 <details><summary>阅读记录与覆盖面</summary>
 
-- PDF 通过 curl 下载（HTTP 200，280 MB），pdftotext 全文通读，Fig.6 和 Fig.10 渲染成图看过。
-- 官方视频只读了检索到的文字稿片段，没有下载、也没逐帧抽取（版权不允许转载，而且文字稿已经足够说明案例）。
+- PDF 通过 curl 下载（HTTP 200，280 MB），pdftotext 全文通读，Fig.1–11 全部渲染成图逐张看过。
+- 官方视频：YouTube 要求登录验证，用 yt-dlp 下载失败，没有用 cookie 绕过；改用发布页的 4 张官方对比原图。
 - Richter 2021 的描述凭已有知识，这次没有重读原文。
 </details>
