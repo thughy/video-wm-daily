@@ -194,6 +194,70 @@ f(r) ≈ argmax_{x∈C(r)} p_photo(x)，并且要求 p_photo(f(r)) ≫ p_photo(r
 - **可以借的设计**：把引导强度或风格旋钮做成**学到的条件**，而不是固定 CFG，在 DMD 蒸馏时一并学进去，推理零开销 [推断]。
 - **评测上的提醒**：只报单帧对齐和单帧人评，证明不了流式稳定。我们自己的报告要一直带长窗时序指标。
 
+## 九、OpenDLSS-NR 能对齐，是不是等于 DLSS 5 被逆向了？
+
+> 仓库：[maanHimself/OpenDLSS-NR](https://github.com/maanHimself/OpenDLSS-NR)（commit 9d08f41，4 个提交，2026-09-21）。我们只读克隆，没有运行：既没有权重，也没有带 FP8 cooperative-matrix 的 Ada/Blackwell GPU。下面的行号来自该 commit。
+> 证据标注：**[代码 文件:行]**、**[文档 文件:行]**（仓库自带的 docs）、**[官方文档]**、**[作者自报]**、**[推断]**。
+
+### 9.1 先回答：只逆向了「推理这一半」，训练方法完全没有
+
+| 层面 | 是否被还原 | 依据 | 证据等级 |
+|---|---|---|---|
+| 单帧推理的网络结构和数值（71 个 block、FP8 舍入、注意力的指数近似、padding 规则） | **如果作者的逐比特对照属实**，就等于把 build 310.8.0 推理图的结构和算术完整还原了，连舍入顺序都一致 | 512×512 下 75 个边界逐比特一致；和官方 8-bit 截图比，786,180 个通道一致、252 个差一级；另有 11 组到 4K 的 RGB 逐比特一致 [文档 numerics.md:110-115] | **作者自报，我们没法核实**：对照数据不在仓库里，权重也要自备 |
+| 时序回路（上一帧输出重投影后喂回网络，再按逐像素门控融合） | 作者自己重建，**没有多帧逐比特对照**。parity 工具只跑不带历史的单帧 [README] | [文档 frame.md]；[代码 demo/shaders/nr_composite.comp:177-184] | 作者重建，未验证 |
+| 前后处理（LDR 代理图、风格算子、色调回升、显示变换） | 代理图公式和输入层对得上；风格算子是作者「按官方运行时」写的；色调回升和 ACES 是 demo 自己的显示链 | [文档 frame.md:36-38, 108-120] | 部分推测 |
+| **训练算法**（数据、教师、损失、蒸馏、G-buffer 监督怎么做） | **完全未知** | 仓库里没有任何训练代码；权重里只有训练的结果，不包含方法 | 未知 |
+
+**要点**：逐比特对齐最多证明「同一组权重、同一个计算图、同样的数值」。它证明不了 NVIDIA 是怎么训出这组权重的。几个具体问题都还没有答案：一步扩散是蒸馏来的还是直接训的？教师是谁？albedo、法线、光照的一致性损失怎么写？时序稳定是怎么训出来的？报告里这些都是空白，这个仓库同样补不上 [推断]。
+
+### 9.2 从代码拆解推理算法
+
+| 模块 | 做法 | 出处 |
+|---|---|---|
+| 输入预处理（LDR 代理图） | v = scene / max(paperWhite, 0.05)；v > 0.75 时 v = 0.75 + 0.25·(1 − e^(−5.77·(v − 0.75)))；sRGB 编码后存成 f16；再做 (c − 0.5)·0.125 居中 | [文档 frame.md:36-38]；[代码 demo/shaders/nr_common.glsl:66-68]；[代码 shaders/preprocess.comp:67-70] |
+| 16 路输入 | 0–2 高斯噪声；3 常数 1；4–6 当前帧代理图；7–9 重投影后的上一帧输出（没有历史时复制当前帧）；10 style/128；11 local tone；12–14 structure / skin / auto-mask 三元组；15 恒为 0 | [文档 network.md:12-21]；[代码 shaders/preprocess.comp:71-87] |
+| 噪声注入和种子 | 用像素坐标（含 padding）和每帧种子做整数 hash，再经 Box-Muller 得到 3 路高斯；padding 区的图像按镜像取值，噪声仍按原坐标 hash | [代码 shaders/preprocess.comp:41-42, 60-63] |
+| 主干 | 71 个 block 的 U-Net：block 0 和 block 70 在原分辨率上运行，中间 6 级 2×2 池化（每级下采样后宽度翻倍），底部是全局 ViT（1024 通道、32 头，对 level 5 的所有 token 做注意力） | [README]；[文档 network.md:36, 186-190] |
+| 窗口注意力 | 8×8 窗口，四种位移相位（Swin 式）；q、k 做 L2 归一化后乘每头可学习的温度（cosine 注意力）；再加每头一张 64×64 可学习相对偏置；指数用 f16 位技巧近似 | [代码 src/nr_graph.cpp:15-17]；[代码 shaders/qkv_attention.comp:2, 47, 81-100]；[文档 network.md:124-134] |
+| FFN | 32 通道是 32→128→32；64–256 通道是 C/32 条并行瓶颈支路（没有路由器，不是 MoE）；512 通道分 8 组；ViT 是 1024→4096→1024 | [文档 network.md:110-118] |
+| 条件注入 | **只作为输入的常数通道**（10–14 路）在 block 0 进入网络。代码里看不到 AdaLN、FiLM 或时间步 embedding。style 是离散 id 除以 128；skin 和 auto-mask 用 −1 表示关闭 | [代码 shaders/preprocess.comp:81-85]；没有时间步通道这一点是读代码得出的 [推断] |
+| 输出 | 32→4 的 f16 GEMM：RGB 残差加 1 个融合 logit | [文档 network.md:191-196] |
+| 合成 | neural = clamp(proxy + rgb/4, 0, 1)；w = clamp(sigmoid(logit)·blendScale, 0, 1)；out = lerp(neural, history, w)；没有历史时 w = 0；存给下一帧的历史截断到 f16 | [代码 demo/shaders/nr_composite.comp:177-184]；[文档 frame.md:99-107]，模型里 blendScale = 0.7397 |
+| 数值 | 激活和权重用 FP8 E4M3，f16 累加；残差作为第一次 MMA 的累加初值 | [代码 shaders/gemm_fp8.comp:23, 73]；[文档 network.md:91-118] |
+
+### 9.3 对照报告看出的设计思路
+
+- **「一步扩散」在推理侧的样子**：输入纯高斯噪声，加上代理图作为条件，**没有时间步输入**，一次前向直接输出相对代理图的残差。这符合「固定 t、一步生成器」的做法。噪声由 hash 种子决定，所以结果是确定的，和报告说的「deterministic」一致 [推断]。
+- **「时序状态」的真实形态**：就是上一帧**输出**经运动矢量重投影后，作为 3 路输入，再加一个网络逐像素预测的融合门（上限 blendScale）。没有隐状态，也没有 KV cache。作者在 Bistro 场景里测到，相机静止时平均融合权重 0.69，转动时降到 0.15，说明网络学会了在运动时少信历史 [文档 frame.md:76-78，作者自报]。
+- **条件很「薄」**：tone、structure、skin 和 mask 都是常数通道，没有调制层。这说明报告里的艺术控制，主要靠训练时随机采样这些条件来学，而不是靠复杂的架构设计 [推断]。
+- **参数量对得上**：141 MiB 的 E4M3 权重约合 148M 参数，报告说约 154M [推断]。
+- **对我们的启示**：「历史 = 上一帧自己的输出 + 一个学到的逐像素门」，和我们 AR 线用自生成历史作条件是同一类结构。区别在于 DLSS 5 每帧都有稠密的代理图重新锚定，所以门可以放心地关掉历史。可以试的对照：在我们的历史条件上加一个逐 token 的可学习门，看后段漂移会不会减小 [推断]。
+
+### 9.4 输入输出逐项对比
+
+| 字段 | OpenDLSS-NR（= DLSS 5 NR 310.8.0 推理接口） | DLSS 5 报告 | DLSS SR（Streamline） | DLSS RR（Streamline） |
+|---|---|---|---|---|
+| 颜色 | 同分辨率 LDR 代理图 | 当前帧渲染 RGB | 渲染分辨率的输入颜色（`kBufferTypeScalingInputColor`）[官方文档] | **带噪声的光追颜色**，输入分辨率，必须是 HDR [官方文档] |
+| 输出 | 同分辨率：RGB 残差 + 融合 logit，合成后得到 RGB | 最终显示 RGB | 输出分辨率的颜色 [官方文档] | 输出分辨率的去噪颜色 [官方文档] |
+| 运动矢量 | 只用于重投影历史，不直接喂进网络 | 引擎运动矢量 | 必需 [官方文档] | 必需，稠密 [官方文档] |
+| 深度 | 不用 | 未提 | 必需 [官方文档] | 必需 [官方文档] |
+| 抖动 / 曝光 | 不用 | 未提 | 要提供抖动偏移；曝光可选，不提供就走自动曝光 [官方文档] | 要提供抖动；会忽略 autoExposure [官方文档] |
+| albedo / 法线 / 粗糙度 | 不用 | 只在训练时监督 | 不用 | 必需：漫反射和高光 albedo、法线、粗糙度 [官方文档] |
+| 高光运动矢量 / 命中距离 | 不用 | — | — | 二选一必需 [官方文档] |
+| 历史 | 上一帧输出，重投影后作为 3 路输入 | 「携带的时序状态」 | SDK 内部维护 | SDK 内部维护 |
+| 噪声 | 3 路高斯，种子确定 | 一步扩散 | 无 | 无 |
+| 条件 | style、tone、structure / skin / auto-mask | 外观模型、strength、mask | 质量模式、preset（K/L/M 等）[官方文档] | 质量模式、preset D/E [官方文档] |
+
+官方文档出处：[Streamline DLSS 指南 v2.14.1](https://github.com/NVIDIA-RTX/Streamline/blob/main/docs/ProgrammingGuideDLSS.md) 第 4–6 节，[Streamline DLSS-RR 指南 v2.14.1](https://github.com/NVIDIA-RTX/Streamline/blob/main/docs/ProgrammingGuideDLSS_RR.md) 第 4.1–5 节。表中 SR 和 RR 列都已对照原文核过。DLSS 5 NR 目前没有公开的 Streamline 文档。
+
+**结论**：这个复现只能对齐 DLSS 5 NR，和 SR、RR 的输入根本不同。SR 和 RR 是在低分辨率上做重建，需要深度、抖动和 G-buffer；NR 是同分辨率的生成，只吃代理图和历史。
+
+### 9.5 风险和局限
+
+- **法律风险**：[issue #7](https://github.com/maanHimself/OpenDLSS-NR/issues/7)（仍开着）在问专利和知识产权风险。权重实际上只能从 NVIDIA 的驱动或 DLL 里提取，README 也声明不提供权重，由用户自己负责许可问题。**我们不应该去提取或使用这些权重。**
+- **对照数据本身可能有问题**：[issue #3](https://github.com/maanHimself/OpenDLSS-NR/issues/3) 的评论里有人指出，官方 `nvngx_dlssnr.dll` 只带 sm_120（Blackwell）的 kernel，在别的架构上会原样输出输入。如果某些「官方截图」是在非 Blackwell 卡上录的，就不能当真值。同一个 issue 里，作者的快速路径也出过输出几乎全红的 bug（已关闭）。
+- **我们这边复现不了**：没有权重，没有 Blackwell 或 Ada GPU，CPU 参考实现也只覆盖 block 0。以上关于对齐的所有结论都是**作者自报**。
+
 <details><summary>阅读记录与覆盖面</summary>
 
 - PDF 通过 curl 下载（HTTP 200，280 MB），pdftotext 全文通读，Fig.1–11 全部渲染成图逐张看过。
