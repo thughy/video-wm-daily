@@ -1,0 +1,430 @@
+{
+ "date": "2026-10-19",
+ "headline": "必读 1 篇：AVC-Reward 量出 DeSync 在复杂 AV 场景和人评几乎不相关（SRCC 0.061），RL 队友已复跑核实；AV 少步蒸馏出现「打破模态对称」方向卡（其中一篇直接在 MiniMax-H3 上做）。",
+ "papers": [
+  {
+   "id": "avc-reward",
+   "rating": "must",
+   "originality": "finding",
+   "credibility": "solid",
+   "directions": [
+    "av-streaming"
+   ],
+   "highlight": true,
+   "title": "AVC-Reward: Event-Centric Audio-Video Consistency Evaluation",
+   "tldr": "复杂音视频场景里，DeSync 和人评的秩相关只有 SRCC 0.061（人评上限 0.497），PLCC 0.280。也就是说，我们当同步主指标用的 DeSync，在多事件场景里基本排不出好坏。RL 队友已用官方脚本复跑，数字对得上。它自己的奖励模型提升有限：SRCC 0.244，Pairwise 0.586，AGAV-Rater 是 0.580。",
+   "institutions": [
+    "浙江大学等（10-18 精读时核对）"
+   ],
+   "published": "arXiv 2026-10（10-16 批次，10-18 已精读）",
+   "links": {
+    "paper": "https://arxiv.org/abs/2610.22321",
+    "project": "https://tsuki0512.github.io/AVC-Reward.github.io/"
+   },
+   "rating_reason": "新发现（指标审计）×站得住：10-18 我判「站得住偏存疑」，10-19 RL 队友复跑官方评测脚本，复现了 Table 2，可信度升为站得住，所以评必读。必读的是「DeSync 在复杂场景几乎不相关」这条发现，不是它的奖励模型。",
+   "coverage": {
+    "paper": "full",
+    "demo": "none",
+    "code": "partial",
+    "note": "论文全文（10-18）；Table 2 的数字我回原文核过（DeSync SRCC 0.061 / PLCC 0.280 / Pairwise 0.521；AVC-Reward 0.244 / 0.494 / 0.586；人评上限 0.497 / 0.781）；官方脚本复跑是 RL 队友做的【转述】"
+   },
+   "comparison": "| 工作 | 测什么 | 和人评的关系 |\n|---|---|---|\n| DeSync（Synchformer 偏移） | 全局音画偏移 | 本文：复杂场景 SRCC 0.061 |\n| AGAV-Rater | 多维 LMM 打分 | Pairwise 0.580，SRCC 0.226 |\n| AV-Consistency Evaluator / AV-Align | 事件级对齐 | Δ-Pairwise 0.674（AV-Align） |\n\n**增量**：用人评校准的复杂多事件 AV 集，直接量出现有同步指标几乎排不出好坏。**反事实**：我们早就知道 LSE-C/Sync-C 是弱证据，但以为 DeSync 够用。0.061 这个量级事先预测不到，所以是新发现。",
+   "evidence": "- Table 2【原文，已核】：DeSync Pairwise 0.521 / Δ-Pairwise 0.580 / PLCC 0.280 / SRCC 0.061；AVC-Reward 0.586 / 0.728 / 0.494 / 0.244；人评上限 0.756 / 0.920 / 0.781 / 0.497。\n- Table 3：拿 AVC-Score 当 RL 奖励，在 3 个 bench 上 AVC-Score 都高于 OmniNFT（DeSync 奖励），但 DeSync 有 2 个 bench 变差（0.081 vs 0.073，0.089 vs 0.074）。\n- RL 队友 10-19 复跑官方脚本，复现了上述数字【转述】。",
+   "concerns": "人评集的规模和场景分布决定了 0.061 能推广多远；它自己的奖励模型只比 AGAV-Rater 高 0.006（Pairwise），当 RL 奖励时存在被 hack 的风险；没有放出权重。",
+   "takeaways": "- **对我们训练的含义**：H3 的 AV 同步评测别再只看 DeSync。先跑对照：同一批 AR、DMD checkpoint，按「单事件」和「多事件/复杂」两档分开报 DeSync，再配 50 条人评或 ASR-WER，看两档的排序是否一致。如果复杂档排序翻转，以后 sync 结论要按档报。\n- 将来做 RL 时，DeSync 不能单独当奖励（Table 3 显示 DeSync 奖励会被优化到自身指标上）。已转 RL 队友，他们复跑过。"
+  },
+  {
+   "id": "av-asym-distill",
+   "rating": "worth",
+   "originality": "finding",
+   "credibility": "insufficient",
+   "directions": [
+    "av-streaming"
+   ],
+   "highlight": true,
+   "title": "方向卡：音视频少步蒸馏要「打破模态对称」（Modality-decoupled DMD H3ndlmRluy · Horses for Courses GpT7BPei8K · CAVC eXi9xDxcDo）",
+   "tldr": "3 篇 ICLR27 投稿各自独立得出同一个结论：音频和视频在蒸馏和推理里不该共用同一套加噪尺度、目标和步数。Modality-decoupled DMD 在 LTX-2.3 4 步上，给音频、视频分开加噪并分开训 fake score，VBench 0.642→0.674，CLAP 0.268→0.306。Horses for Courses 在 MiniMax-H3（33B）上，给音频加只复用视觉 KV 的子步（多 6% 算力），MuQ FAD 11.37→4.58。CAVC 发现音频比视频收敛早。三篇都只有摘要，评级是暂定的。",
+   "published": "OpenReview ICLR 2027 投稿（无 arXiv 孪生：arXiv 标题检索 + OpenAlex 均未命中，10-19）",
+   "links": {
+    "paper": "https://openreview.net/forum?id=GpT7BPei8K",
+    "other": [
+     {
+      "label": "Modality-decoupled DMD（OR H3ndlmRluy）",
+      "url": "https://openreview.net/forum?id=H3ndlmRluy"
+     },
+     {
+      "label": "CAVC（OR eXi9xDxcDo）",
+      "url": "https://openreview.net/forum?id=eXi9xDxcDo"
+     }
+    ]
+   },
+   "rating_reason": "同一机制方向第 3 次出现，按规则自动升为方向卡。新发现在于「重加噪对音频跨时相关信息的抑制是二次方的」（理论）和「两个模态偏好的加噪尺度不同」（实测）。全部只有摘要，看不到消融和同步指标，所以可信度是证据不足。",
+   "coverage": {
+    "paper": "none",
+    "demo": "none",
+    "code": "unavailable",
+    "note": "只有 OR 摘要；OR PDF 被 Cloudflare 拦，没有绕过；复核截止 2026-10-21"
+   },
+   "comparison": "| 工作 | 打破对称的位置 | 底座 | 报的数 |\n|---|---|---|---|\n| Modality-decoupled DMD（H3ndlmRluy） | DMD 里音频、视频各用一套加噪尺度；fake score 按分支在各自尺度上训练 | LTX-2.3，4 步 | VBench 0.642→0.674；CLAP 0.268→0.306 |\n| Horses for Courses / MAAD（GpT7BPei8K） | 目标和步数都分开：音频子步复用视觉 KV；SCTA 让教师在学生的视觉 cache 下给音频速度 | **MiniMax-H3 33B** | 唱歌 9 项指标全胜；MuQ FAD 11.37→4.58；6 项歌质里 4 项追平或超过 50 步教师 |\n| CAVC（eXi9xDxcDo，10-18 暂定） | 推理时只缓存音频分支，最后几步联合恢复 | 多步 AV | 1.10–1.35× |\n| 对照：One-Forcing / Self Forcing | 单模态，同一套调度 | Wan2.1 | — |\n\n**反事实**：「两个模态该区别对待」这个方向懂的人能猜到；猜不到的是 MAAD 给出的机理（Fisher 信息里，跨时相关项随信号占比 ρ² 衰减，一阶统计只按 ρ 衰减），以及在 H3 上 FAD 降一半多的幅度。",
+   "method": "- H3ndlmRluy：联合生成器出 (x_v, x_a) → DMD 重加噪时按模态各取 t_v、t_a，同时保证联合评估仍在分布内 → fake score 按分支各算损失。\n- GpT7BPei8K：同一个学生，在视频步之间插只算音频 token 的子步，复用视觉 KV（音频 token 少，所以只多 6%）；SCTA 让教师在学生 detach 掉的视觉 cache 下给音频速度，消掉跨模态条件错位。",
+   "concerns": "Codex 盲评（只看摘要）把 H3ndlmRluy 判为重做×存疑（「分开加噪尺度」方向能猜到），把 GpT7BPei8K 判为新机制×存疑。我同意 H3ndlmRluy 单看是可预测的，方向卡的新知识主要来自 MAAD 的机理分析和在 H3 上的幅度。两篇摘要都**没有报任何 AV 同步指标**（DeSync / 人评 / WER），而结合今天的 AVC-Reward 必读，DeSync 本身在复杂场景也靠不住。MAAD 只测了唱歌。H3ndlmRluy 的 VBench 是归一化分。对这类独立音频子步，流式场景下的延迟账没算。",
+   "takeaways": "- **对我们训练的含义（直接）**：我们 H3 的 DMD 少步线现在音频、视频共用一个重加噪 t（推断，需训练追踪确认配置）。先跑一个便宜的对照：同 ckpt、同步数，比较「t_a=t_v」和「t_a 单独采样」，fake score 按分支算损失，看音频 FAD/CLAP 和 DeSync（按单事件/复杂两档）。\n- 推理侧：「音频子步复用视觉 KV」和 CAVC 的「音频先收敛」是同一个信号，可以和 Speculative Forcing 方向卡里的逐 token 早停合并测：先统计中间步音频 token 离 4 步输出还差多远。\n- 已在全量转交单里标给少步队友（H3ndlmRluy、GpT7BPei8K），按分工，主评级在我这边。"
+  },
+  {
+   "id": "routed-forcing",
+   "rating": "worth",
+   "originality": "finding",
+   "credibility": "doubtful",
+   "directions": [
+    "av-streaming",
+    "streaming"
+   ],
+   "title": "Where and When to Force: Routed Forcing for Streaming Avatars",
+   "tldr": "DMD 的「动态塌缩」在空间和噪声上分布不均：嘴部靠音频驱动，自己会动；身体其他部分会僵。把 DFD（教师改看加噪的真视频）只用在非嘴人体区域、高噪声段（t≥0.832），同起点训 200 步：RAFT 运动 5.62→7.80，FID 27.17→25.43，Sync-C 4.03→4.07（不动）。",
+   "institutions": [
+    "清华大学",
+    "JD Joy Future Academy",
+    "东南大学"
+   ],
+   "published": "arXiv 2609.30963 v1（2026-09-25）",
+   "links": {
+    "paper": "https://arxiv.org/abs/2609.30963"
+   },
+   "rating_reason": "「塌缩分区域」是一条可以拿来用的发现；机制是 DFD 加 mask 和噪声门控，属于组合。测试只有每集 100 个视频 × 4 种子、没有置信区间，AV 同步只报了 Sync-C（按硬门槛 4 是弱证据），没有代码，所以是存疑。",
+   "coverage": {
+    "paper": "full",
+    "demo": "none",
+    "code": "unavailable",
+    "note": "Codex 初稿 + 我核了 Table 1、Table 3 的数字和 t≥0.832（附录）"
+   },
+   "comparison": "| 工作 | 教师看什么 | 用在哪 |\n|---|---|---|\n| Self Forcing | 学生 rollout | 全图、全噪声段 |\n| DFD | 加噪的真视频 | 全图随机混合 |\n| DynaForcing / Reward Forcing | 加噪真 latent 初始化 + 奖励加权 | 全图 |\n| **Routed Forcing** | 加噪真视频 | **只在非嘴人体区域 × 高噪声** |\n\n**反事实**：能猜到运动会变好；猜不到的是 Sync-C 不掉、FID 同时变好（嘴区不动就保住了同步）。",
+   "evidence": "Table 3（SF-1000 起点，各 200 步）：仅 SF，RAFT 5.62 / FID 27.17 / Sync-C 4.03；+区域路由 6.27 / 26.97；+噪声路由 7.50 / 26.61；两者都加 7.80 / 25.43 / 4.07。Table 1：SpeakerVid RAFT 7.80，Reward Forcing 5.79。推理 24.82 FPS、首帧 0.33 s，硬件和是否含 VAE 都没写。",
+   "concerns": "没有「同面积随机区域」对照；嘴部 mask 来自 rollout，人体 mask 来自真视频，两者不对齐时怎么处理没说；没有长时流式测试和人评。",
+   "takeaways": "- **对我们训练的含义**：H3 DMD 如果出现「嘴在动、身体僵」，先别全局加 DFD 或奖励，先做分区统计：按人体、嘴、背景 mask 分别算 RAFT/动态度，看塌缩是不是集中在非嘴区域。是的话，再做「高噪声 × 非嘴区」的路由对照（同步数）。\n- 和少步队友的分歧：他们评必读·先跑（同协议打赢 DynaForcing 和 Reward Forcing）。我同意值得先跑，但测试规模和同步证据不够，评级只到值得看。"
+  },
+  {
+   "id": "one-forcing",
+   "rating": "worth",
+   "originality": "finding",
+   "credibility": "doubtful",
+   "directions": [
+    "streaming"
+   ],
+   "title": "One-Forcing: Towards Stable One-Step Autoregressive Video Generation",
+   "tldr": "逐帧 1 步的 AR 学生（Self Forcing 式 DMD，加一个吃真实视频的 GAN 头）。两条受控消融最有用：一是 CD 初始化会把动态度从 52.76 砍到 23.61（ODE 初始化总分 83.76，CD 是 82.36）；二是首块多给 4 步（FFE），单样本总分 80.69→83.30。GAN 头单独贡献 75.27→80.36。",
+   "institutions": [
+    "清华大学",
+    "UCLA"
+   ],
+   "published": "arXiv 2605.23458 v2（2026-09-28）",
+   "links": {
+    "paper": "https://arxiv.org/abs/2605.23458",
+    "code": "https://github.com/Aurora-edu/One-Forcing",
+    "project": "https://aurora-edu.github.io/one-forcing/"
+   },
+   "rating_reason": "主机制是 DMD2 的 GAN 项搬进因果 rollout，加上 AAPT 式逐帧对抗，可以预测。新知识在两条消融：CD 初始化伤动态、首块预算。消融只用每 prompt 1 个样本、单次训练，所以是存疑。",
+   "coverage": {
+    "paper": "full",
+    "demo": "none",
+    "code": "partial",
+    "note": "Codex 初稿；我核了 Table 2、4a、ODE vs CD 段落（l.476–538）；代码链接存在，没有跑"
+   },
+   "comparison": "| 工作 | 上下文 | 监督 |\n|---|---|---|\n| Self Forcing | 自生成 | DMD |\n| DMD2 | — | DMD + 真实数据 GAN |\n| AAPT | 自生成、逐帧 | 对抗 |\n| **One-Forcing** | 自生成、逐帧 1 步 | DMD + 真实数据 GAN + 首块 4 步 |\n\n**反事实**：1 步时加 GAN 更清晰，能猜到；CD 初始化伤动态的幅度（52.76→23.61）事先想不到，而且和 Alive-Avatar（CD 初始化）的路线有冲突。",
+   "evidence": "Table 2：本方法逐帧 83.76，ASD 79.12，Wan2.1 50 步 84.26，chunkwise 81.60。Table 4a（单样本协议）：DMD-only 75.27 → +GAN 80.36；无 FFE 80.69 → 有 FFE 83.30。初始化：ODE 83.76 / 动态 52.76，CD 82.36 / 23.61。单 H200 端到端（含 VAE）4.19 s（Table 11）。",
+   "concerns": "「单步」其实首块是 4 步；逐帧和 chunkwise 的对比同时改了训练轮数和 R1/R2 正则；真实训练数据的来源和规模没交代。",
+   "takeaways": "- **对我们训练的含义**：两个便宜对照。① 首块加步（FFE）：只在推理端改，同一个 DMD ckpt，比较首 chunk 4 步、其余 N 步和全程 N 步，测 60 s 后段漂移。TRAC 和 One-Forcing 两篇都支持这一点。② 我们 CD/ODE 线如果要给 DMD 做初始化，加测动态度（RAFT），看 CD 初始化会不会也伤动态。\n- 和少步队友的分歧：他们评必读·先跑。我同意先跑，但机制可以预测，评级只到值得看。另外，队友引的 FFE「83.76」是主表分数，消融表里的分数是 83.30。"
+  },
+  {
+   "id": "acedit",
+   "rating": "worth",
+   "originality": "finding",
+   "credibility": "doubtful",
+   "directions": [
+    "streaming",
+    "other"
+   ],
+   "title": "ACEdit: Stable Multi-Turn Image Editing via Asymmetric Conditioning",
+   "tldr": "把 Self-Forcing 搬到多轮图像编辑：学生在自己的输出上连续编辑，teacher 只看干净原图 + 复合指令。10 轮后整图一致性 3.85，底座 FLUX.2-klein 为 3.03（作者自建 EdiVal-10，VLM 评分），只用了 100 次学生更新 / 4.4 B200·小时。更有信息量的是：teacher 一旦以学生自己的历史为条件，一致性跌到 2.28–2.81，比完全不训练还差。在 MT-OPSD 自己的 LME-Bench 上，对同底座没有显著提升。",
+   "institutions": [
+    "Tel Aviv University"
+   ],
+   "published": "arXiv 2026-10-15 (v1)",
+   "links": {
+    "paper": "https://arxiv.org/abs/2610.22328",
+    "project": "https://saradorfman1.github.io/ACEdit/",
+    "other": [
+     {
+      "label": "最接近工作 MT-OPSD",
+      "url": "https://arxiv.org/abs/2609.35611"
+     }
+    ]
+   },
+   "rating_reason": "主方法是 Self-Forcing + MT-OPSD（clean 源图 teacher）的可预测组合；新知识在于「打分网络以学生上下文为条件会训得比不训还差」的消融，以及训练极其便宜。但主基准是自建的、只有单一 VLM 评委、外部基准不显著、也没有代码，所以只评值得看。",
+   "coverage": {
+    "paper": "full",
+    "demo": "partial",
+    "code": "unavailable",
+    "note": "项目页 3 组 demo 逐轮帧做了颜色偏移和细节实测；代码标注 Coming soon"
+   },
+   "comparison": "| 工作 | 自生成上下文 | teacher 看什么 | 损失 |\n|---|---|---|---|\n| Self-Forcing 2506.08009 | AR rollout | 整段视频，只条件于文本（不以学生上下文为条件） | DMD |\n| MT-OPSD 2609.35611 | 「保持不变」指令自 rollout，只积累误差 | 干净原图 I0 + 同一条单指令 | 逐点速度匹配 |\n| AnchorEdit 2606.11751 | AR 编辑 self-rollout | 监督（GT 序列） | 监督 + CD |\n| **ACEdit** | 真实语义编辑链自 rollout | **I0 + 复合指令**（teacher 与 aux 相同） | DMD（aux LoRA） |\n\n**增量**：把 MT-OPSD 的 clean 源图 teacher 推广到语义编辑链，用复合指令构造一条干净的等价路径，再用 DMD 做分布匹配。**反事实**：主结果（变稳）可以预测；预测不到的是幅度：对称条件比不训还差（2.28/2.81 < 3.03），而且 100 次更新就够。→ 发现级。",
+   "method": "学生 = FLUX.2-klein-9B（4 步蒸馏）+ rank-16 LoRA，在自己的输出上连续执行 10 条编辑（turn 之间传 latent）。第 e 轮随机取一个出口步，只对这一步回传梯度。teacher = 未蒸馏的 FLUX.2-klein-base-9B（冻结，CFG 2），aux = base + LoRA，两者都以 (I0, c1..ce 复合指令) 为条件，对加噪的 x̂ 打分，两者之差作为 DMD 梯度。aux 与学生按 5:1 交替更新，共 100 次学生更新。训练数据是 96 张合成图 × 每张 1 条 10 步局部编辑链。",
+   "evidence": "- EdiVal-10（252 条链，真实照片，第 10 轮）：一致性 3.85 vs 底座 3.03；背景 LPIPS 0.254 vs 0.351；锚点 DINOv2 0.203 vs 0.314；指令遵循 3.38（与 FreqEdit 3.39 无显著差异）。\n- 消融（等 100 次学生更新）：teacher 额外看上一轮输出 → 2.81；只看上一轮 + 当前指令 → 2.28；学生也看源图 → 一致性 4.08，但指令遵循 2.80（前面的编辑被撤回）；5 步 rollout → 3.29（约 1/3 增益）。\n- LME-Bench：第 10 轮全成功 0.53 vs 同底座 0.49，不显著；1024 分辨率下每列持平。\n- 单轮 GEdit：HPSv3 降 0.18 vs 底座 0.41。",
+   "case_analysis": "实测项目页 cat / picnic / otter 三组（作者自选）：最后一轮全图颜色均值偏移 base 0.33 / 0.39 / 0.39 vs ours 0.12 / 0.22 / 0.11；拉普拉斯方差（过锐）base 涨到 2.1× / 1.2× / 5.5×，ours 是 1.0× / 0.9× / 1.8×。肉眼看：base 偏橙、发硬，ours 色调基本保持。",
+   "code_analysis": "未发布（项目页写 Code Coming soon），也没有权重和数据发布声明，无法核对实现。",
+   "solidity": "Tel Aviv（Cohen-Or / Patashnik）。按链配对的显著性检验，同一固定种子；但只训了一次。评测只有单一 Gemma-4-31B 评委、没有人评；主基准自建，且和训练一样全是局部编辑。MT-OPSD 对比用的是不同底座、不同分辨率；免训练基线是作者移植的。",
+   "concerns": "1) 在含全局编辑的外部基准 LME-Bench 上不显著；2) 缺「只做单轮 DMD」（E=1）对照，一部分增益可能只是用未蒸馏 base 重新蒸馏一遍，修好了 4 步模型的画质；3) 复合指令无法约束学生前几轮自己生成的细节，没有测前几轮编辑结果的身份一致性；4) 没有分编辑类型、分轮次的分项。",
+   "takeaways": "- Self-Forcing / DMD 里的打分网络不应以学生自生成的上下文为条件，应该给它一条干净的等价路径。视频 Self-Forcing 整段打分天然满足；但超出 teacher 窗口、以生成前缀为条件打分的长视频扩展，正好落在这个坑里（推断）。\n- 训练 rollout 长度要等于推理视界。\n- **对我们训练的含义**：DMD-AR 若超出 teacher 窗口，先跑等步数、等数据的对照：A = 打分以学生前缀为条件；B = 整窗口整体加噪打分；（可选）C = GT 前缀锚定。看后 1/3 时段的漂移和 AV DeSync。再加一组「rollout 长度 = 目标视界 vs 一半」。不改变当前的 history-corruption 路线。\n- 少步角度：在已蒸馏的 4 步学生上，用未蒸馏 base 再做一次条件错位的 DMD（TTUR 5:1），单轮能力不降反升（已转少步队友）。"
+  },
+  {
+   "id": "rigen",
+   "rating": "fyi",
+   "originality": "redo",
+   "credibility": "doubtful",
+   "directions": [
+    "av-streaming",
+    "world-model"
+   ],
+   "title": "RIGen: Beyond Action Following with Reciprocal Interaction in Generative Gameplay",
+   "tldr": "Xonotic FPS 交互世界模型：外部状态机 + VLM 在生成前判命中、生成后核对，接 LTX-2.3 22B 音视频 AR 生成器；同一生成器下「生成前预判」把最终存活/死亡正确率从 Incantation 式生成后更新的 64% 提到 81%（死亡目标 42%→72%），VLM 文本记账死亡正确率 0%；方向可由 Incantation/LingBot-World 2.0 预测，属系统整合。真正可用的是已开源的 176.8 h 带动作+引擎状态+游戏音频的 FPS 数据集与 22B 权重。",
+   "institutions": [
+    "HKUST",
+    "Vivix Group Limited"
+   ],
+   "published": "arXiv 2026-10-14 (v1)，标注 ICLR 2027",
+   "links": {
+    "paper": "https://arxiv.org/abs/2610.20811",
+    "project": "https://murphylmf.github.io/RIGen/",
+    "code": "https://github.com/murphylmf/RIGen",
+    "other": [
+     {
+      "label": "权重 HF Murphyyyy/RIGen（LTX-2.x Community License）",
+      "url": "https://huggingface.co/Murphyyyy/RIGen"
+     },
+     {
+      "label": "数据集 HF RIGen-Xonotic-Dataset",
+      "url": "https://huggingface.co/datasets/Murphyyyy/RIGen-Xonotic-Dataset"
+     },
+     {
+      "label": "数据引擎",
+      "url": "https://github.com/murphylmf/RIGen-Xonotic-Data-Engine"
+     }
+    ]
+   },
+   "rating_reason": "机制是 Incantation（生成后记账）与 LingBot-World 2.0（VLM 导演提前给事件）的可预测组合，预测三条全中；音频零定量、评委全靠 VLM 无人评、发布代码关掉了敌人回击和准星预判；价值在开源数据与权重（建议进「可用资源」）。",
+   "coverage": {
+    "paper": "full",
+    "demo": "partial",
+    "code": "partial",
+    "note": "论文全文+附录精读；7 个 demo 做 ffmpeg 信号实测；代码静态审阅（commit 3fb2a14），未运行、未下 55.7 GB 权重；评测脚本未发布。"
+   },
+   "comparison": "| 工作 | 状态从哪来 | 何时定结果 | 音频 | 与 RIGen 差别 |\n|---|---|---|---|---|\n| Incantation 2605.18601（读 §A.16） | 外部 HP 计数，VLM 从已生成画面判伤害 | 生成后（影响下一段） | 无 | RIGen 把判定挪到生成前并加生成后纠正；Table 3「Post-hoc」行即此式对照 |\n| LingBot-World 2.0 2607.07534（读 §4.2） | 无数值状态，VLM Director 提事件 | 生成前（语义） | 无 | RIGen 加可执行规则（HP/弹药/死亡/撤退）与核对 |\n| MASS 2608.06257（读摘要+§1） | 学习式权威类型化状态 + 渲染器 | 状态先行 | 无 | 同为状态/渲染分离；MASS 学规则，RIGen 手写规则 + VLM 感知 |\n\n**机制级增量**：在「外部状态 + 文本提示驱动视频模型」范式里，把命中/死亡判定从生成后移到生成前（VLM 看准星圈），并接到联合音视频 AR 生成器。\n\n**反事实**：懂 Incantation（其 A.16 已写明生成器不会自己把多次伤害累积成死亡）和 LingBot 2.0 的人能预测「提前给结果 > 事后补救 > 不给」；我的预测（生成前比生成后高 10–20 点、reconcile 小幅、音频无定量）全中，Codex 盲评也判可预测 → **重做（系统整合）**。",
+   "method": "- 每 0.8 s 一块（16 帧 @20fps + 20 个音频 latent），块间因果、块内联合去噪；上下文 = 首帧锚 + 最近 4 块 + 角色参考图。\n- 块边界：InternVL3-8B 核对上一块（开火帧+末帧）→ 规则引擎从生成前状态重算 HP；再对本块每次开火平移上一帧、画准星圈让 VLM 判命中 → 规则引擎出临时状态 → 写成局部文字提示。\n- 生成器：LTX-2.3 22B；摇杆 32 维 → FiLM 调视频流；按钮走因果交叉注意力（未来 mask）；每块只看全局 + 本块提示（chunk-wise prompt routing）；动作只进视频流，音频经 AV 注意力间接响应。\n- 训练：双向 → CausVid 式干净历史 AR（音频损失权重 0.16）；Arena 版 Causal-rCM（TF 一致性蒸馏 → 自展开 DMD）4 步 + 视频 refiner。\n- 敌人回击 = 规则引擎按频率和预设命中率掷骰扣血；HUD 由规则引擎叠加。",
+   "evidence": "【原文】Table 3（100 场景：50 存活 + 50 死亡目标，Qwen3.8-27B 判）：\n\n| 方法 | EB | FSA | FSA-S | FSA-D |\n|---|---|---|---|---|\n| SCOPE（未在 Xonotic 训练） | 35.71 | 4 | 6 | 2 |\n| LingBot-World 2.0（未在 Xonotic 训练） | 55.32 | 29 | 58 | 0 |\n| **RIGen** | 78.91 | **81** | 90 | **72** |\n| 只给运动提示 | 76.59 | 39 | 78 | 0 |\n| VLM 文本维护状态 | 75.49 | 35 | 70 | 0 |\n| 生成后更新 | 77.74 | 64 | 86 | 42 |\n| 去掉纠正 | 78.02 | 76 | 88 | 64 |\n\n- 只有固定生成器的推理期消融是干净对比；外部基线未同数据训练、参数 5B/14B vs 22B。n=50 时 FSA-D 置信区间约 ±12 点：+30（72 vs 42）稳，reconcile 的 +5 在噪声内。\n- 主表 checkpoint 未蒸馏；4 步版无定量。速度：单卡 GB300、832×480、含 refiner，Online 3.93 FPS / Replay 4.41 FPS，未写是否含 VAE，作者自承非实时。\n- 音频：零定量，仅一句「也联合生成音频」。",
+   "case_analysis": "【实测】项目页 7 个 demo（ffmpeg 信号，脚本 cases/2610.20811/av_signal.py）：\n- 音频真实存在、非单声道复制：6/7 段 RMS −13.8 至 −25.8 dBFS，L/R 相关 0.72–0.94；无人开火的 002 近乎静音（−62.5 dBFS）。\n- 开火↔起音：004 六次开火全部在 ±100 ms 内有起音，中位 −25 ms（随机基线 29%，p=0.001）；006 3/3，中位 −40 ms；互相关最佳滞后 −30～−40 ms（1 帧以内）。\n- 弹药耗尽：005 第 3 次按键被规则引擎拦下，其后 150 ms −70.4 dBFS，真实开火后 −6.4/−12.6 dBFS（独立复算一致）。\n- 解读：这说明生成器只在收到执行的开火按钮时出枪声（易学的局部相关）；「没子弹不响」是规则引擎没发按钮，不代表模型懂弹药。Arena 长片段对齐弱（001 中位 −340 ms，p=0.24），有敌方枪声混入。全是作者挑选的 demo。",
+   "code_analysis": "【实测】github.com/murphylmf/RIGen（3fb2a14，无 LICENSE 文件；含大量训练代码；无 Table 3 评测脚本）。机制存在：FiLM transformer.py:290；按钮因果 mask action.py:115；prompt routing ar_teacher_masks.py:297；音视频每块联合去噪 rigen_ar_runner.py:2876；音频无直接动作注入（transformer.py:411 仅 video_to_audio）。\n\n⚠️ 发布默认路径与论文不符（已核对）：rigen_loop.py:185 强制敌人不开火、合约 `enemy_fire_allowed: False, respawn_enabled: False`；rigen_loop.py:190 敌人可见即把每一枪都预测为命中（无论文 A.4 的准星圈 VLM 预判）；run_rigen.py:282 致命命中可覆盖 VLM 末帧判定；默认 30 步 Euler、全前缀历史、无 KV cache，4 步路径未选用；refiner 整段后处理、用官方 LoRA。→ 论文关键机制无法用发布代码复现。\n\n权重：HF Murphyyyy/RIGen（BF16 55.7 GB + FP32，Stage-2 AR step 10000，LTX-2.x Community License）。数据：HF RIGen-Xonotic-Dataset（视频 + 64 Hz 动作 parquet + prompt + visibility，含 GPL 上游许可）。",
+   "solidity": "- 机构：HKUST + Vivix Group（与 SenseTime 关系未确认）；ICLR 2027 标注。\n- 基线不公平（未同数据训练），只能信固定生成器消融；缺 Incantation/GameNGen 定量对比。\n- 交互指标自定义，评委全靠 Qwen3.8-27B，无人评校准，无置信区间/多 seed；FSA 只看最后 0.8 s。\n- 主表里敌人运动直接用源标注，「自主规划」只在 demo 展示。\n- 硬门槛：延迟未写是否含 VAE；音频同步证据为零。",
+   "concerns": "1. FSA 实测的是「生成器服从局部文字 + 规则引擎在对的时刻给提示」，评委与提示同源。\n2. 准星圈预判准确率、VLM 核对误判率未报。\n3. 4 步蒸馏版、分钟级长时无定量。\n4. 发布代码关掉了敌人回击和预判，与论文多处不一致。\n5. 音频只有 demo。",
+   "takeaways": "- 交互世界模型「生成器 + 外部可执行状态 + VLM 感知」路线在收敛（Incantation → LingBot 2.0 → RIGen → MASS）。最有用的定量信号：结果要在生成前定好写进提示（事后补救死亡正确率只有 42%）；VLM 文本记账完全不行（0%）。\n- **对我们训练的含义**：可试 chunk-wise prompt routing（每个 chunk 只 cross-attend 全局 + 本 chunk caption，历史保留原 caption；现成实现 ar_teacher_masks.py:297）。先跑对照：同数据同步数，「全局 caption 广播」vs「逐 chunk 路由」，测局部事件是否落在对应 0.8 s 内与音频起音时刻（可复用 av_signal.py 的开火↔起音法）。音频损失权重 0.16 可作一个等步数配比对照参考。无新蒸馏（Causal-rCM 现成配方）、无 RL；无同模型等量数据替换消融。\n- 资源：首个带动作 + 引擎状态 + 同步游戏音频 + 真值位姿 + 逐块文本的 FPS 数据集（176.8 h，HF 已上线）→ 建议转「多模态开源数据追踪」。"
+  },
+  {
+   "id": "orbia",
+   "rating": "fyi",
+   "originality": "redo",
+   "credibility": "doubtful",
+   "directions": [
+    "world-model"
+   ],
+   "title": "Orbia: Do Generated Videos Form a Consistent 3D World?",
+   "tldr": "720 个「出发–回访」案例测 27 个模型的 3D 一致性：一分钟探索后「自己新生成内容」的回访一致性掉 15–27 点，画质与 3D 一致性秩相关仅 0.33；「TI2V 3D 自洽比世界模型高 10 点」大概率是相机没怎么动的伪影（代码里 T4/T5 无运动量门槛）。发现大多可由 WorldMemBench/WorldRoamBench 预测；它公开测了 MiniMax-H3（TI2V 8 个中第 5，控制 32.48）。",
+   "institutions": [
+    "National University of Singapore",
+    "LightSpeed Studios",
+    "HKU",
+    "ZJU",
+    "University of Macau",
+    "CUHK(SZ)",
+    "Aalto University",
+    "HKUST(GZ)"
+   ],
+   "published": "arXiv 2026-10-14 (v1)",
+   "links": {
+    "paper": "https://arxiv.org/abs/2610.20693",
+    "project": "https://orbia-bench.github.io",
+    "code": "https://github.com/worldbench/Orbia",
+    "other": [
+     {
+      "label": "数据 HF Orbia/Orbia（CC BY-NC-SA 4.0）",
+      "url": "https://huggingface.co/datasets/Orbia/Orbia"
+     }
+    ]
+   },
+   "rating_reason": "评测整合：单个指标都是现成的，可靠发现基本可预测，唯一意外（TI2V 自洽更高）指向指标缺运动量门槛；价值在 Apache-2.0 评测代码与 27 模型公开分数（建议进「可用资源」）。",
+   "coverage": {
+    "paper": "full",
+    "demo": "partial",
+    "code": "partial",
+    "note": "正文 + 关键附录精读、Table 2 全表复算；项目页 2 个案例 12 段对比视频做粗运动代理；代码静态审阅评分/配对逻辑，需 GPU（DA3/SAM3.1/gsplat）未运行。"
+   },
+   "comparison": "| 工作 | 回访参照 | 3D 怎么测 | 与 Orbia 差别 |\n|---|---|---|---|\n| WorldMemBench 2610.19063（读摘要+§1） | 静态内容对固定初始参照、动态事件对期望状态；多次回访 | 外观 + 几何 + 事件判定 | Orbia 新增「对模型自己首次生成做参照」测输入外区域，加留出视角高斯重建 |\n| WorldRoamBench 2606.31672（读摘要+§1） | 转场局部点云重建 | 点云 + 滑窗漂移，10–60 s | Orbia 用配准 RGB-D 真值 + 锚点逐个打分 |\n| WBench 2605.25874（读摘要） | 多轮一致性 | specialist + LMM | 统一 text/6DoF/动作接口的做法被沿用 |\n\n**机制级增量**：把回访一致性拆成「对输入真值」与「对自己首次生成」两种参照，并用 DA3 跨视角重投影 + 留出视角高斯重建测 3D 自洽；组合新，组件全现成。\n\n**反事实**：我的 4 条预测中 3 条中（长时掉分、画质≠一致性、输入保持>生成持久），落空的「显式 3D 领先自洽」对应的反例（TI2V 更高）大概率是伪影；Codex 也判可预测 → **重做（评测整合）**。",
+   "method": "- 数据：ScanNet++/SpatialVID/Sekai/MiraData/自采/48 个 UE 场景，110k+ 源样本、300+ 小时标注 → 480 短例 + 240 一分钟版；6 种轨迹（前后、横移、偏航、弧线、绕物、探头回看）。\n- 输入保持：回到 P0 / 到 Pq 时与配准 RGB-D 和锚点比 DINO/PSNR/SSIM/LPIPS/AbsRel，SAM3.1 跟踪锚点身份。\n- 生成内容持久：首访 vs 回访，3D 重投影后比 DINO 与 AbsRel，点云 F-score。\n- 3D 自洽：8/32 帧间隔跨视角深度/特征、4×4 区域尺度、64 帧→16 留出视角高斯渲染。\n- 总分 = 25% 控制 + 25% 画质 + 各 10% 三个一致性 + 20% 时间稳定（代码 scoring.json 同，合计 1.00）。",
+   "evidence": "- 【原文】总分：SolarWM-H3 76.32、Lyra2 74.77、EVOKE 72.70；TI2V：Seedance2.5 67.44 … **MiniMax-H3 62.00**（8 个中第 5）… LongCat 57.18。【实测】用论文权重从各列复算 27 个总分，误差 ≤0.01。\n- 【实测】组均值复算：控制 世界模型 57.29 vs TI2V 32.48；3D 自洽 59.74 vs 69.88；与正文一致。\n- 【原文】画质–一致性秩相关 0.33（世界模型）/ 0.21（TI2V）；控制–3D 自洽 0.09/−0.04；输入保持–生成持久 模型级 0.87、单模型内案例级 0.35。\n- 【原文】一分钟版生成持久：前后轨迹 世界模型 66.21→40.96、TI2V 67.74→44.58；领先世界模型控制首窗→末窗平均掉 26.98（SolarWM-H3 91.91→64.50）。\n- 【原文】人评 20 人 × 90 例 × 6 个模型，模型级 Spearman 0.859–0.921（n=6，弱）。\n- 【原文】MiniMax-H3（Base FL2VA，49 步，768p，长视频末帧续接 3 段）：控制 32.48、持久 55.79、自洽 69.42；回访同视角 LPIPS 归一化 17.32 vs 异视角 DINO 77.27（语义对、纹理变）。",
+   "case_analysis": "【实测】项目页对比视频 case_0164、case_0223（cases/2610.20693/media/）粗运动代理（160 px 灰度逐帧平均绝对差）：Seedance2.5 1.48 vs 同例世界模型 2.63–4.37；Cosmos3-Super 0.97 vs 2.81–6.92。即 TI2V 逐帧变化只有世界模型的 1/2–1/7，与「控制低、自洽高」吻合。仅 2 例、粗指标，作为疑点佐证。",
+   "code_analysis": "【实测】github.com/worldbench/Orbia（Apache-2.0）；数据 HF 1.04 GB + 4.73 GB（CC BY-NC-SA 4.0）。⚠️ 已核对：生成持久配对按**请求的**回访帧取（revisit_direct.py:1）；contract.py:100 声明了到位阈值 `completion_translation_threshold_normalized = 0.10` 但全仓库无引用；运动量门槛只在数据构建（construction/pose_selection.py）→ 几乎不动的视频在 T4/T5 上会拿高分，只被控制分（25%）扣。需 GPU（DA3-GIANT-1.1、SAM3.1、gsplat 编译；worker.py:131 无条件调 CUDA），未运行。",
+   "solidity": "- 机构 NUS 主导（Shou、Yan、Ooi 通讯）。\n- 27 个模型含闭源 API，基线新；但尺寸/步数/分辨率/续接方式各异，排名不等于架构结论；TI2V 长视频靠末帧续接，持久性结构性吃亏。\n- 无置信区间/多 seed；DA3 估计误差混入所有几何指标且无换估计器消融；长视频 DA3 切流式模式。\n- 人评只覆盖 6 个模型。\n- 排名与长时退化站得住；T4/T5 跨组比较存疑。",
+   "concerns": "1. T4/T5 无运动量/到位门槛（代码核实），「TI2V 3D 自洽更强」可能是伪影，论文的解读证据不足。\n2. 人评 6 个模型未点名、逐维相关未给。\n3. 闭源模型版本未固定。\n4. 场景偏静态、有显著地标。",
+   "takeaways": "- 3D 一致性评测已到第 4–5 个基准；Orbia 有用之处是「对自己首次生成做参照」的协议、Apache-2.0 代码和 27 个模型的公开分数（含 MiniMax-H3）。使用时配一个「静止视频」下限对照。\n- 可靠规律：长时回访里新生成内容比输入画面难保得多（一分钟后掉 15–27 点）；画质高不代表 3D 一致。\n- **对我们训练的含义**：可把 Orbia 短集当 AR 线回访一致性评测。先跑对照：同适配器（文字运动脚本、同分辨率、同步数）基础 MiniMax-H3 vs 我们 history-corruption AR checkpoint，看 T4 同视角 LPIPS/PSNR 与一分钟版 T4 掉幅，并加「首帧重复」静止视频对照校准 T4/T5 下限。无少步/RL 角度；无同模型等量数据替换消融。"
+  }
+ ],
+ "resources": [
+  {
+   "title": "RIGen Xonotic FPS 数据集 + 22B 权重",
+   "url": "https://huggingface.co/datasets/Murphyyyy/RIGen-Xonotic-Dataset",
+   "license": "LTX-2.x Community License（权重）",
+   "note": "176.8 h，含动作、引擎状态、同步游戏音频、真值位姿和逐块文本。是首个这类 FPS 数据集，已转数据助手（文本，待发）。"
+  },
+  {
+   "title": "Orbia 3D 一致性评测代码 + 27 模型公开分数",
+   "url": "https://github.com/worldbench/Orbia",
+   "license": "代码 Apache-2.0；数据 CC BY-NC-SA 4.0",
+   "note": "含 MiniMax-H3（TI2V 8 个中第 5）。用时配一个静止视频下限对照（T4/T5 没有运动量门槛）。"
+  },
+  {
+   "title": "AI4AI-for-Anything/Faster-SelfForcing",
+   "url": "https://github.com/AI4AI-for-Anything/Faster-SelfForcing",
+   "note": "自称在 2×H200 上把 Self-Forcing DMD 训练迭代提速 2.08×（FA3、CUDA graph、Triton 融合）；10-19 新建，0★，**未验证**。"
+  },
+  {
+   "title": "SGF+ 官方代码 + 权重已放",
+   "url": "https://github.com/Zihan-Su/Self_Gradient_Forcing_Plus",
+   "note": "观察名单出名单；评级维持重做×存疑（参数翻倍的混淆没有解决）。"
+  },
+  {
+   "title": "ACWM-Phys 代码 / 权重 / 数据",
+   "url": "https://huggingface.co/datasets/t1an/ACWM-Phys",
+   "note": "动作条件 WM 的物理交互 benchmark；数据卡上的轨迹数和论文 Table 8 不完全一致。"
+  },
+  {
+   "title": "TempAct 代码 + LoRA",
+   "url": "https://github.com/jingw193/TempAct",
+   "note": "AR 视频规划器-执行器 RL；已转 RL 队友（文本，待发）。"
+  }
+ ],
+ "redo": [
+  {
+   "title": "Decoupling Appearance and Geometry in Diffusion World Models (2610.20625)",
+   "url": "https://arxiv.org/abs/2610.20625",
+   "note": "深读：拆成「动作→深度」和「深度→RGB」两段，5 个 RGB 指标全部略输同规模 RGB-only（FVD 53.1 vs 52.8）；代码里两模态其实是联合去噪，不是先深度后 RGB。重做×证据不足。"
+  },
+  {
+   "title": "SlotMemory: Object-Centric KV Memory for Streaming Long-Video Generation (2605.31033)",
+   "url": "https://arxiv.org/abs/2605.31033",
+   "note": "[今日补判·ICLR27 孪生，之前没定过级] 一行：slot索引原始KV做实体记忆；收益主要来自跨chunk slot对比损失（单加slot Dynamic 36.16→30.61，加对比后79.68），身份指标只有CLIP/Dynamic"
+  },
+  {
+   "title": "WorldKV: Efficient World Memory with World Retrieval and Compression (2605.22718)",
+   "url": "https://arxiv.org/abs/2605.22718",
+   "note": "[今日补判·ICLR27 孪生，之前没定过级] 一行：免训练按相机位姿检索旧KV+按首帧相似度剪枝；LingBot上LPIPS仍输Full KV（0.455 vs 0.441），只赢FID；60个场景"
+  },
+  {
+   "title": "Warp-as-History: Generalizable Camera-Controlled Video Generation from One Training Video (2605.15182)",
+   "url": "https://arxiv.org/abs/2605.15182",
+   "note": "[今日补判·ICLR27 孪生，之前没定过级] 一行：把几何warp证据塞进原生历史通道、单视频适配做相机控制；相机控制62.00仍低于Voyager 85.95，开销口径前后不一（<1s vs +7.81s）"
+  },
+  {
+   "title": "Quantized Keys Steal Attention: Bias Correction for KV-Cache Compression in Video Diffusion (2605.26266)",
+   "url": "https://arxiv.org/abs/2605.26266",
+   "note": "[今日补判·ICLR27 孪生，之前没定过级] 一行：KV量化后softmax偏置的解析校正；对最强QVG只+0.42（78.23±0.68 vs 77.81±0.67，误差条内）；可当KV压缩小技巧"
+  },
+  {
+   "title": "TempAct: Advancing Temporal Plausibility in Autoregressive Video Generation via Planner-Executor RL (2606.28016)",
+   "url": "https://arxiv.org/abs/2606.28016",
+   "note": "[今日补判·ICLR27 孪生，之前没定过级] 一行（转RL）：规划器-执行器双层RL做AR视频时间合理性，LongLive上0.432→0.488；表间基线不一致，无误差条"
+  },
+  {
+   "title": "VPG: Visual Prefix Guidance for Autoregressive Image and Video Generation (2605.30317)",
+   "url": "https://arxiv.org/abs/2605.30317",
+   "note": "[今日补判·ICLR27 孪生，之前没定过级] 一行：扰乱视觉前缀做CFG式引导；InfinityStar 83.86→84.35，多一次前向，λ正文/附录不一"
+  },
+  {
+   "title": "MultiWorld: Scalable Multi-Agent Multi-View Video World Models (2604.18564)",
+   "url": "https://arxiv.org/abs/2604.18564",
+   "note": "[今日补判·ICLR27 孪生，之前没定过级] 一行：多agent动作融合+冻结VGGT几何条件；游戏FVD 179 vs COMBO 207，但PSNR反输(17.72 vs 17.82)而正文称全面胜"
+  },
+  {
+   "title": "WorldCraft: From Camera Navigation to Object Manipulation in Interactive Video World Models (2605.25077)",
+   "url": "https://arxiv.org/abs/2605.25077",
+   "note": "[今日补判·ICLR27 孪生，之前没定过级] 一行：WorldPlay上加轨迹LoRA+出镜期间继续推进物体轨迹；TE短程38.90仍输DragAnything 39.86，45/50样本，无延迟/分辨率"
+  },
+  {
+   "title": "WorldOlympiad: Can Your World Model Survive a Triathlon? (2606.11129)",
+   "url": "https://arxiv.org/abs/2606.11129",
+   "note": "[今日补判·ICLR27 孪生，之前没定过级] 一行（评测资源）：1000视频三项世界模型评测，LingBot-World 0.683第一；评测器与人工排名Spearman 0.95但只20 prompt×8模型"
+  },
+  {
+   "title": "DisCo: World Models with Discrete Camera Motion Control (2606.07967)",
+   "url": "https://arxiv.org/abs/2606.07967",
+   "note": "[今日补判·ICLR27 孪生，之前没定过级] 一行：离散相机动作比连续Plücker更好控（同设置0.6332 vs 0.5563），但评测器复用训练标注管线，可能偏向自己"
+  },
+  {
+   "title": "Multics: Generative Multi-Player World Model with Hierarchical Communication (2610.17201)",
+   "url": "https://arxiv.org/abs/2610.17201",
+   "note": "[今日补判·ICLR27 孪生，之前没定过级] 一行：多玩家WM的层级分组通信；4玩家GeoKPM 54.17% vs γ-World 49.42%，10玩家注意力9.6 vs 69.1 TFLOPs；100测试样本、无多种子"
+  },
+  {
+   "title": "ACWM-Phys: Investigating Generalized Physical Interaction in Action-Conditioned Video World Models (2605.08567)",
+   "url": "https://arxiv.org/abs/2605.08567",
+   "note": "[今日补判·ICLR27 孪生，之前没定过级] 一行（数据资源）：动作条件WM物理交互benchmark+从零训练DiT诊断；代码/权重/数据已开；消融混杂"
+  },
+  {
+   "title": "PhysEditWorld: A Large-Scale Dataset Toward Physics-Editable World Models (2606.26694)",
+   "url": "https://arxiv.org/abs/2606.26694",
+   "note": "[今日补判·ICLR27 孪生，之前没定过级] 一行（转数据）：UE5里固定动作改重力的匹配重放数据；生成定量只有一个三重力组；完整数据仍Planned"
+  },
+  {
+   "title": "CineMem: Attention-Aligned Fine-grained Memory Retrieval for Multi-Shot Long Video Generation (2610.17926)",
+   "url": "https://arxiv.org/abs/2610.17926",
+   "note": "[今日补判·ICLR27 孪生，之前没定过级] 一行：多镜头记忆的在线聚类+逐query/head检索；PTCS 0.8242 vs MultiShotMaster 0.7984；自建100 prompt+VLM指标"
+  },
+  {
+   "title": "Memento: Reconstruct to Remember for Consistent Long Video Generation (2606.14667)",
+   "url": "https://arxiv.org/abs/2606.14667",
+   "note": "[今日补判·ICLR27 孪生，之前没定过级] 一行：记忆身份重建辅助监督+双查询；跨镜头0.7338 vs StoryMem 0.6606，但重建项使跨场景下降(0.7177→0.7082)"
+  },
+  {
+   "title": "Remembering What Matters for Long-Horizon Robotic World Models (2610.14583)",
+   "url": "https://arxiv.org/abs/2610.14583",
+   "note": "[今日补判·ICLR27 孪生，之前没定过级] 一行：锚+滑窗(ReCAP)搬到机器人离散AR WM；CALVIN LPIPS 0.159→0.106，KV 254→68 MiB；机器人域"
+  },
+  {
+   "title": "Mallea: Building, Steering, and Memorizing Worlds with Coding Agent (2610.21283)",
+   "url": "https://arxiv.org/abs/2610.21283",
+   "note": "速读一行：代码世界模型（显式状态 + 规则）加生成式渲染器；不是视频 WM，没有流式指标。"
+  },
+  {
+   "title": "WorldCast: Exploring Intelligent Visual Generation in World State Prediction (2610.20731)",
+   "url": "https://arxiv.org/abs/2610.20731",
+   "note": "速读一行：320 例多步世界状态预测，图像级（GPT-Image-2.5 72.8，最好的开源模型 20.x）；不是视频 WM。"
+  },
+  {
+   "title": "CIViC: Evidence Gates for Audio-Conditioned Visual Prediction on Proxy Tasks (2610.15327)",
+   "url": "https://arxiv.org/abs/2610.15327",
+   "note": "速读一行：4 道门检验「音频条件模型是否真用上了音频」；只做了代理任务。思路可以借来审计 H3 的音频条件。"
+  },
+  {
+   "title": "SoftCache: Adaptive Step Size Caching for Diffusion Transformers (2610.22369)",
+   "url": "https://arxiv.org/abs/2610.22369",
+   "note": "速读一行：双向 DiT 免训练缓存加自适应跳步，3.5–6.9×；不是 AR，已转少步。"
+  },
+  {
+   "title": "Sparse Attention for Video Generation Acceleration via Growing Sparsity and Reduced Search (2610.21129)",
+   "url": "https://arxiv.org/abs/2610.21129",
+   "note": "速读一行：稀疏度随去噪步数增长的视频 DiT 稀疏注意力；效率一行。"
+  },
+  {
+   "title": "Dynamic Video Generation: Shaping Video Generation Across Time and Space (2605.21042)",
+   "url": "https://arxiv.org/abs/2605.21042",
+   "note": "速读一行：按内容自适应调度时空 latent 分辨率，最高 7×；效率一行。"
+  }
+ ],
+ "trend_summary": "**今天唯一的必读是一条评测发现**：在复杂多事件场景里，DeSync 和人评几乎不相关（SRCC 0.061）。AV 少步蒸馏这边，三篇投稿各自独立得出「音视频不该共用同一套调度」，已合成一张方向卡，其中一篇直接在 MiniMax-H3 上做。\n\n**框架归格（按训练时的上下文从哪来）**\n- 自生成上下文（Self Forcing 系）：One-Forcing（1 步 + GAN）、Routed Forcing（按区域和噪声给 DFD 路由）、ACEdit（打分以学生上下文为条件，反而比不训还差），共同问题是「打分来源和塌缩」。Drift Forcing（OR，暂定观察）把初始化也挪到自 rollout 上。\n- 只改推理和上下文结构：ARROW / Eviction Is Not Forgetting（OR，暂定值得看）发现 KV 写入会把旧条目复制进新条目，所以淘汰以后影响还能留 L·W 次写入；WorldKV、CineMem、ReCAP、SlotMemory 都是一行。\n- 历史加噪（我们 AR 线所在格）：Memory-Gated Distillation（OR，暂定观察）用「过滤不可靠的历史块」代替「给历史加噪」，可以当我们 history corruption 的对照臂。\n\n**和少步队友的评级对账**（主评级归我，他们的意见放这里）：Speculative Forcing 他们评必读·先跑，我维持值得看（含 VAE、对比均匀 3 步时只快 1.07–1.26×）；One-Forcing、Routed Forcing 他们评必读·先跑，我评值得看（同意先跑）；Lost in the Rollout 他们评必读·先跑，我从观察上调到值得看（暂定），但据少步队友核对代码，它的前身 LiveTalk 把参考图贴进教师和 critic 打分输入的第 0 帧，K1 并没有解决；Drift Forcing 他们评必读·先跑，我从一行上调到观察（暂定）：初始化机制是新的，但 VBench 的领先只来自动态度，Codex 盲评判重做×存疑；Horizon DMD、Memory-Gated、ARROW 他们评必读候选，我评观察、观察、值得看（都只有摘要）。\n\n**今天补判了 18 篇**：ICLR27 投稿的 arXiv 孪生里，有 16 篇核心区论文此前从来没定过级（见页底），外加 One-Forcing 和 Routed Forcing。全部由 Codex 出初稿，我每篇核了至少 3 个数字。"
+}
