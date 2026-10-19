@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="800" viewBox="0 0 960 800" role="img" aria-labelledby="title desc" font-family="sans-serif">
+  <title id="title">对称 DMD 与模态解耦的干预位置</title>
+  <desc id="desc">左侧是同一时间重加噪、聚合 fake score 损失与同步四步的示意。右侧分别展示分模态重加噪及分支目标、MAAD 音频子步与 SCTA、CAVC 中段音频缓存。右侧方法不是已验证的组合流水线。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#64748b"/></marker>
+  </defs>
+  <rect width="960" height="800" fill="#fff"/>
+  <text x="32" y="43" font-size="25" font-weight="700" fill="#142438">同一个联合学生，可以有不同的模态日程</text>
+  <text x="32" y="71" font-size="14" fill="#64748b">概念示意｜右栏各卡独立阅读；不是已验证的组合算法</text>
+
+  <rect x="24" y="96" width="332" height="624" rx="16" fill="#f8fafc" stroke="#d9e1ea"/>
+  <text x="48" y="132" font-size="23" font-weight="700" fill="#334155">对称 DMD</text>
+  <text x="48" y="158" font-size="14" fill="#64748b">朴素联合蒸馏配方 [解读]</text>
+  <g fill="#fff" stroke="#cbd5e1">
+    <rect x="51" y="189" width="278" height="72" rx="10"/>
+    <rect x="51" y="309" width="278" height="86" rx="10"/>
+    <rect x="51" y="443" width="278" height="86" rx="10"/>
+    <rect x="51" y="577" width="278" height="76" rx="10"/>
+  </g>
+  <g text-anchor="middle" fill="#334155" font-size="18">
+    <text x="190" y="219" font-weight="700">联合学生</text>
+    <text x="190" y="246" font-size="16">z → (x_v, x_a)</text>
+    <text x="190" y="344" font-weight="700">同一 t 重加噪</text>
+    <text x="190" y="373" font-size="16">(x_v, x_a) 共用噪声尺度</text>
+    <text x="190" y="478" font-weight="700">一个联合 fake score</text>
+    <text x="190" y="507" font-size="16">聚合去噪损失</text>
+    <text x="190" y="609" font-weight="700">同步 4 步</text>
+    <text x="190" y="635" font-size="14">[示意：非 MAAD 已知步数]</text>
+  </g>
+  <g stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#arrow)">
+    <path d="M190 265 V301"/>
+    <path d="M190 399 V435"/>
+    <path d="M190 533 V569"/>
+  </g>
+  <text x="48" y="689" font-size="14" fill="#64748b">聚合损失正常，也可能掩盖分支欠拟合</text>
+
+  <text x="386" y="128" font-size="23" font-weight="700" fill="#176b78">解耦</text>
+  <text x="456" y="127" font-size="14" fill="#64748b">方法要点来自摘要；框线与箭头为概念组织</text>
+
+  <rect x="382" y="150" width="554" height="184" rx="12" fill="#eff9fa" stroke="#b3dce0"/>
+  <text x="402" y="179" font-size="17" font-weight="700" fill="#176b78">H3ndlmRluy｜噪声尺度与目标 [摘要]</text>
+  <rect x="402" y="194" width="244" height="47" rx="8" fill="#fff" stroke="#b3dce0"/>
+  <rect x="668" y="194" width="248" height="47" rx="8" fill="#fff" stroke="#b3dce0"/>
+  <text x="524" y="224" text-anchor="middle" font-size="18" fill="#176b78">视频：t_v 重加噪</text>
+  <text x="792" y="224" text-anchor="middle" font-size="18" fill="#176b78">音频：t_a 重加噪</text>
+  <g stroke="#64748b" stroke-width="1.6" marker-end="url(#arrow)"><path d="M524 244 V265"/><path d="M792 244 V265"/></g>
+  <text x="524" y="288" text-anchor="middle" font-size="16" fill="#176b78">视频 fake score 损失</text>
+  <text x="792" y="288" text-anchor="middle" font-size="16" fill="#176b78">音频 fake score 损失</text>
+  <text x="402" y="316" font-size="13" fill="#526774">需保持联合评估在分布内；具体映射、网络拆分均未披露</text>
+
+  <rect x="382" y="350" width="554" height="202" rx="12" fill="#f3f2fc" stroke="#d3cdef"/>
+  <text x="402" y="379" font-size="17" font-weight="700" fill="#5b4b8a">MAAD｜步数与条件上下文 [摘要]</text>
+  <rect x="402" y="395" width="183" height="43" rx="8" fill="#fff" stroke="#d3cdef"/>
+  <rect x="638" y="395" width="278" height="43" rx="8" fill="#fff" stroke="#d3cdef"/>
+  <text x="494" y="423" text-anchor="middle" font-size="16" fill="#5b4b8a">视觉 KV cache</text>
+  <path d="M590 416 H630" stroke="#64748b" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <text x="777" y="423" text-anchor="middle" font-size="16" fill="#5b4b8a">音频-only 子步复用</text>
+  <text x="402" y="466" font-size="16" font-weight="700" fill="#5b4b8a">SCTA：教师在学生视觉 cache 下给音频速度</text>
+  <text x="402" y="492" font-size="14" fill="#526774">学生视觉 cache 做 detach，监督与学生使用同一上下文</text>
+  <text x="402" y="526" font-size="13" fill="#526774">步间 KV 复用不等于 AR 跨 chunk cache [推断]</text>
+
+  <rect x="382" y="568" width="554" height="152" rx="12" fill="#fff8ec" stroke="#ead3a7"/>
+  <text x="402" y="597" font-size="17" font-weight="700" fill="#8c641f">CAVC｜免训练的推理缓存 [摘要]</text>
+  <g fill="#fff" stroke="#ead3a7">
+    <rect x="402" y="613" width="126" height="44" rx="8"/>
+    <rect x="561" y="613" width="196" height="44" rx="8"/>
+    <rect x="790" y="613" width="126" height="44" rx="8"/>
+  </g>
+  <g fill="#8c641f" font-size="16" text-anchor="middle">
+    <text x="465" y="641">联合去噪</text><text x="659" y="641">中段缓存音频</text><text x="853" y="641">联合恢复</text>
+  </g>
+  <g stroke="#64748b" stroke-width="1.6" marker-end="url(#arrow)"><path d="M531 635 H554"/><path d="M760 635 H783"/></g>
+  <text x="402" y="687" font-size="14" fill="#526774">中段视频继续精修；末段恢复跨模态交互以减少漂移</text>
+
+  <text x="32" y="756" font-size="15" fill="#334155">H3 提醒：同步迭代 ≠ 相同 sigma；公开视频 shift12／音频 shift3 [H3 README/代码]</text>
+  <text x="32" y="783" font-size="13" fill="#64748b">三篇均仅摘要覆盖。同步风险与训练细节仍待全文复核；来源链接见正文。</text>
+</svg>

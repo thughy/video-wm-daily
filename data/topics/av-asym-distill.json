@@ -1,0 +1,7 @@
+{
+  "slug": "av-asym-distill",
+  "title": "方向卡深读：音视频少步蒸馏要「打破模态对称」",
+  "desc": "Modality-decoupled DMD · Horses for Courses (MAAD) · CAVC：问题、原理（Fisher 推导）、逐篇机制与数字、六个打破对称的位置、公开 H3 已是 shift12/shift3 不对称调度、对 H3 蒸馏的 4 个对照实验（三篇均仅摘要，暂定）",
+  "updated": "2026-10-19",
+  "summary": {"file": "topics/av-asym-distill.md"}
+}
