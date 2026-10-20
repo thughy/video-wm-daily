@@ -1,0 +1,78 @@
+{
+  "date": "2026-10-20",
+  "headline": "13:49 补扫周二批次，必读 1 篇：Clean Forcing 发现 AR 视频漂移造成的速度误差约 95% 跨种子可复现，于是冻结底座、只训 5.9M 的 LoRA 去回归「同一噪声状态下换成干净历史后的速度」，50 秒漂移从 +11.27 降到 +1.65（零真实视频），追平 Self Forcing。（早上 06:45 例行无过线，未发页。）",
+  "papers": [
+    {
+      "id": "clean-forcing",
+      "rating": "must",
+      "originality": "mechanism",
+      "credibility": "solid",
+      "directions": ["streaming"],
+      "highlight": true,
+      "title": "Clean Forcing: Drift-Resistant Autoregressive Video Diffusion with a Frozen Base",
+      "tldr": "固定带噪状态 z_t、只把历史从「自己生成的漂移历史」换成「干净历史」，同一个冻结模型给出的速度差跨噪声种子约 95% 是系统性的（3 个底座 α*=0.89–0.99），所以能学：5.9M LoRA 回归这个差，50 秒 Δ-drift +11.27→+1.65（零真实视频）/ −0.16（加 40 段真实视频），合并后零推理开销。在 4 步蒸馏的 Self Forcing 上 α* 只有 0.65–0.80，校正反而变差。",
+      "institutions": ["Northeastern University", "Seoul National University", "NVIDIA"],
+      "published": "arXiv 2026-10-19 (v1)，周二 20 Oct 批次；ICLR 2027 投稿（OpenReview 6cVOrqYuGm）",
+      "links": {"paper": "https://arxiv.org/abs/2610.25634", "code": "https://github.com/wnqw/clean-forcing", "other": [{"label": "权重", "url": "https://huggingface.co/illustro1/clean-forcing"}, {"label": "评测视频与测量", "url": "https://huggingface.co/datasets/illustro1/clean-forcing-results"}]},
+      "rating_reason": "新机制 + 新发现 × 站得住（限多步底座）：「漂移误差是系统性的」这一测量本身就是新知识，还给出了能不能校正的事前诊断（α*）；同底座对照、独立底座（Causal-Forcing）和 14B 都复现；代码里的损失与论文公式一致。",
+      "coverage": {"paper": "full", "demo": "none", "code": "partial", "note": "Codex 只读初稿 + 我回原文核对 Table 1（+11.27 / +1.65 / −0.16 / +1.00 / +1.08 / +3.57 / 上下文加噪 +12.05）、§E（MUSIQ 69.3→47.5）、Table 5（3.00 s/chunk、4.01 fps 不含 VAE）；读了 cf_train_v2.py 的损失实现。需要 GPU，没有复跑。"},
+      "comparison": "| 工作 | 训练时上下文 | 谁当老师 / 打分 | 更新谁 |\n|---|---|---|---|\n| Self Forcing | 自生成 | 双向教师 real score + fake score（DMD） | 整个生成器 |\n| BAgger | 自生成回放聚合 | 真值 | 重训底座 |\n| Yu 2025 / Peng 2025 冻结校正器 | — | 采样噪声 / cache 近似误差 | 小校正器 |\n| **Clean Forcing** | 自生成（漂移历史） | **同一冻结模型 + 干净历史**，在同一个 z_t 上 | 只训 5.9M LoRA，底座冻结 |\n\n**增量**：把「历史带来的误差」用反事实隔离出来（同一 z_t，只换历史），老师就是模型自己看干净历史时的输出，所以不需要外部教师，也不需要真实视频（干净历史可以是底座自己的双向单次生成）。\n\n**反事实**：「用干净历史的输出去纠正」这个方向能想到；但误差 95% 系统性、5.9M 参数零真实视频就能追平完整蒸馏模型、而对蒸馏少步模型反而有害，这三点事先预测不到。",
+      "evidence": "- 50 秒、128 个 MovieGen 提示（Table 1）：Adapted base +11.27±0.81 → Clean Forcing 零真实 +1.65±0.35、+40 段真实视频 −0.16±0.12。\n- 公开模型：Self Forcing +1.08±0.39、SkyReels-V2-DF +1.00±0.30——**零真实版只是追平，没有赢**；BAgger R3 的 +3.57 是不同协议的发表值，不能直接比。\n- 同底座的推理时修正都没用：上下文加噪 σ=0.2 是 +12.05，history guidance +20.55。\n- 独立底座 Causal-Forcing：+11.99 → +2.80；Wan2.1-14B 去掉 94% 漂移（附录 G.1，未逐格核）。\n- 速度：合并后 3.00±0.89 s/chunk、4.01 fps（不含 VAE；含解码 3.80 fps），单卡型号未写；训练约 1 张 GB300 一天。",
+      "concerns": "- 全是自动指标（VBench、MUSIQ、Δ-drift），没有人评。\n- 只在多步底座上成立：在 Self Forcing 4 步蒸馏模型上校正后 MUSIQ 69.3→47.5、Δ +1.08→+8.3，DAgger 也救不回来。\n- 14B 上作者自述检查点震荡，选点影响大。\n- 漂移降低时场景推进也变弱，chunk 亮度脉冲仍在（作者自述）。",
+      "takeaways": "**对我们训练的含义**：我们 AR 线是「历史加噪」格，部署走 DMD 少步。\n1. 先在 H3 AR 检查点上跑 α* 诊断：固定 z_t、换干净/生成历史、多个噪声种子，几十次前向就能知道漂移误差是否系统性、值不值得加校正器；少步检查点 α* 可能偏低，作者的失败案例就是这种。\n2. 对照臂（同步数、同数据）：历史加噪 vs Clean Forcing 校正器 vs 两者叠加。\n3. 论文里「推理时给上下文加噪」无效（+12.05），但那是推理时加噪，不等于训练时 history corruption，不能据此否定我们的做法。"
+    },
+    {
+      "id": "frechet-forcing",
+      "rating": "worth",
+      "originality": "mechanism",
+      "credibility": "doubtful",
+      "directions": ["streaming", "world-model"],
+      "title": "Fréchet Forcing: Training Long-Horizon Streaming World Models from Short Clips",
+      "tldr": "动作条件世界模型做 DMD 时，外部教师不懂动作、自己当教师又同样漂移；改成不要教师：自由 rollout 的 latent 统计对「本片真值」的 FD + DINOv2 特征对真实帧的 FD，再加「自生成历史末尾接一段干净真值」的 FM 锚定。DROID 末段 FVD 81 vs 只做 FM 的 1,873。",
+      "institutions": ["未确认（论文未列机构）"],
+      "published": "arXiv 2026-10-19 (v1)，周二 20 Oct 批次",
+      "links": {"paper": "https://arxiv.org/abs/2610.25666", "code": "https://github.com/zhao-yian/Frechet_Forcing"},
+      "rating_reason": "新机制 × 存疑：去掉两项 FD 的对照很干净（同数据、同 225 步），但没有和 Self Forcing / DMD 实测比较（只说 DMD 试过失败），规模只有 1B、240×320，DROID 测试 episode 在预训练里出现过。",
+      "coverage": {"paper": "full", "demo": "none", "code": "none", "note": "Codex 初稿 + 我回原文核对 Table 2（81 / 1,873）、21.5 dB、49% 转角、79% 无伪影。"},
+      "comparison": "| 工作 | 长时监督从哪来 |\n|---|---|\n| Self Forcing | 教师 real score + 在线 fake score |\n| Resampling Forcing | 加噪真值→自去噪历史→回归真值未来 |\n| RMD | 逐 chunk 教师打分 |\n| **Fréchet Forcing** | 真实数据统计（两种 FD）+ 干净真值末尾锚定，无教师 |\n\n反事实：「用分布统计代替教师」方向可预测，但只用短片统计就能把 4000 帧 rollout 稳住，幅度预测不到。",
+      "concerns": "- 长程转角只达指令的 49%，动作跟随在长时会变弱。\n- 4000 帧的伪影统计来自人工看 8 条 rollout。\n- 没有推理速度。",
+      "takeaways": "对我们：可以拿「自生成历史末尾接一段干净真值 chunk」做小对照，和我们的 history corruption 同格比；如果我们的 DMD 教师在长时上不可靠，这是一条无教师的备选。"
+    },
+    {
+      "id": "tritd",
+      "rating": "fyi",
+      "originality": "redo",
+      "credibility": "doubtful",
+      "directions": ["streaming"],
+      "title": "TriTD: Tri-Partite Trajectory-Distribution Distillation for Real-Time Autoregressive Video Generation",
+      "tldr": "Self-Forcing 系蒸馏的三处改进（下一节点轨迹蒸馏、逐 chunk 单调加噪、正交约束 DMD），Quality 83.59 vs Causal-Forcing 82.91，单 H100 26.8 FPS（编译，不含 VAE）。",
+      "institutions": ["香港大学", "ByteDance Seed", "清华大学"],
+      "published": "arXiv 2026-10-19 (v1)，周二 20 Oct 批次",
+      "links": {"paper": "https://arxiv.org/abs/2610.26165"},
+      "rating_reason": "重做（组合）×存疑：消融只是逐项叠加（81.82→83.59），训练提示 6K vs 基线 16K，代码未见；OP-DMD 部分已转少步队友。",
+      "coverage": {"paper": "full", "demo": "none", "code": "unavailable"}
+    },
+    {
+      "id": "state-world-models",
+      "rating": "fyi",
+      "originality": "finding",
+      "credibility": "doubtful",
+      "directions": ["world-model"],
+      "title": "State World Models: Execute the Rules, Generate the Pixels",
+      "tldr": "隐藏状态决定结局的交互里，冻结 MiniMax-H3 只给规则 32% 两支都对，写明结局 64%，把规则执行放到程序里、视频模型只负责渲染的 harness 到 92%（WorldState-Bench 50 对，VLM 打分）。",
+      "institutions": ["清华大学", "GigaAI"],
+      "published": "arXiv 2026-10-19 (v1)，周二 20 Oct 批次",
+      "links": {"paper": "https://arxiv.org/abs/2610.26811", "code": "https://github.com/Zhangyr2022/StateWorldModel", "other": [{"label": "基准数据", "url": "https://huggingface.co/datasets/Louis0411/StateWorldModel"}]},
+      "rating_reason": "新发现（弱）×存疑：结论可预测，评测只有 50 对且由 VLM 打分；对我们的价值是 H3 在隐藏状态任务上的基线数字。",
+      "coverage": {"paper": "full", "demo": "none", "code": "none"}
+    }
+  ],
+  "redo": [
+    {"title": "DASA: Dynamics-Aware Sparse Attention for Efficient Autoregressive Video Diffusion (2610.26262)", "url": "https://arxiv.org/abs/2610.26262", "note": "按动静区域跳算 + 裁剪 KV，Self Forcing 上 27.58 FPS vs Dummy Forcing 25.19，总分 83.98 vs 83.79；正文 1.42× 与表中 1.50× 不一致。"},
+    {"title": "ActionRoPE (2610.25861)", "url": "https://arxiv.org/abs/2610.25861", "note": "动作转成世界坐标 RoPE，回访漂移 7.8 px vs 22.6；只有一款俯视游戏；作者也在 MiniMax-H3 33B 上用 LoRA 跑通。10-19 摘要级暂定一行，全文复核维持。"},
+    {"title": "UniAVC (2610.24791)", "url": "https://arxiv.org/abs/2610.24791", "note": "音频比视频更早去噪（k_v=9, k_a=2），AVS 0.2975 vs 对称 0.2545；「两模态不共用调度」第 3 次独立出现，这篇是多步非蒸馏版，已挂到 AV 模态不对称方向卡。"},
+    {"title": "StreamingSwap (2610.26681)", "url": "https://arxiv.org/abs/2610.26681", "note": "流式换脸，单 4090 21.174 FPS（含 VAE），ID Sim 0.577 低于 InSwapper 0.735。"},
+    {"title": "UniState (2610.25414)", "url": "https://arxiv.org/abs/2610.25414", "note": "空间记忆里直接指定物体运动 + 独立相机轨迹，作者自定指标 WCPE 2.323 vs 2.425；非流式。"}
+  ],
+  "trend_summary": "**补扫结论**：周二批次 1354 条全量分诊，核心区 9 篇读全文，必读 1 篇（Clean Forcing）、值得看 1 篇（Fréchet Forcing）。两篇都在攻 AR 长时漂移，而且都绕开了 DMD 教师：一篇让模型自己看干净历史当老师，一篇用真实数据统计当约束。\n\n**框架归格**\n- 自生成上下文：Clean Forcing（老师 = 自己 + 干净历史）、Fréchet Forcing（无教师，FD 约束）、TriTD（DMD 改进）。按这一格的预判，它们该在「打分来源」上出问题——Clean Forcing 恰好在蒸馏少步模型上失败（α* 低），符合预判。\n- 只改推理结构：DASA（动静区域跳算 + KV 裁剪）。\n- 音视频联合：UniAVC 是「两模态不共用噪声调度」的第 3 次独立出现。"
+}
