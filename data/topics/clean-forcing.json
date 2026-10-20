@@ -1,0 +1,7 @@
+{
+  "slug": "clean-forcing",
+  "title": "深读：Clean Forcing——AR 视频漂移是「可学的系统误差」",
+  "desc": "arXiv 2610.25634（Northeastern·SNU·NVIDIA）：同一 z_t 只换历史的反事实测量（α*≈0.95）、5.9M LoRA 校正器、零真实视频、50 s Δ-drift +11.27→+1.65/−0.16、在 4 步 Self Forcing 上失败的原因、与前作的反事实对比、对 H3 AR/DMD 的诊断与实验",
+  "updated": "2026-10-20",
+  "summary": {"file": "topics/clean-forcing.md"}
+}

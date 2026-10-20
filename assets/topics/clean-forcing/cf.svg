@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 470" font-family="-apple-system,'PingFang SC','Noto Sans CJK SC',sans-serif" font-size="14">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="#444"/></marker></defs>
+<rect width="960" height="470" fill="#fff"/>
+<text x="20" y="28" font-size="16" font-weight="700">① 测量：同一个带噪状态 z_t，只换历史</text>
+<rect x="20" y="48" width="150" height="44" rx="6" fill="#fde2e2" stroke="#c33"/><text x="95" y="68" text-anchor="middle">h_gen</text><text x="95" y="85" text-anchor="middle" font-size="12">自己生成的漂移历史</text>
+<rect x="20" y="118" width="150" height="44" rx="6" fill="#dbe8fb" stroke="#36c"/><text x="95" y="138" text-anchor="middle">h_clean</text><text x="95" y="155" text-anchor="middle" font-size="12">干净参考（双向单次生成）</text>
+<rect x="200" y="83" width="120" height="44" rx="6" fill="#f3f3f3" stroke="#555"/><text x="260" y="103" text-anchor="middle">z_t（共享）</text><text x="260" y="120" text-anchor="middle" font-size="12">漂移 rollout 的块再加噪</text>
+<rect x="360" y="48" width="150" height="44" rx="6" fill="#eee" stroke="#555"/><text x="435" y="68" text-anchor="middle">冻结底座 v_θ</text><text x="435" y="85" text-anchor="middle" font-size="12">→ v_gen</text>
+<rect x="360" y="118" width="150" height="44" rx="6" fill="#eee" stroke="#555"/><text x="435" y="138" text-anchor="middle">冻结底座 v_θ</text><text x="435" y="155" text-anchor="middle" font-size="12">→ v_clean</text>
+<path d="M170,70H360M170,140H360" stroke="#444" marker-end="url(#a)"/><path d="M320,98L360,75M320,112L360,135" stroke="#444" marker-end="url(#a)"/>
+<rect x="550" y="83" width="150" height="44" rx="6" fill="#fff4d6" stroke="#b80"/><text x="625" y="103" text-anchor="middle">Δ = v_clean − v_gen</text><text x="625" y="120" text-anchor="middle" font-size="12">历史造成的速度误差</text>
+<path d="M510,70L550,98M510,140L550,112" stroke="#444" marker-end="url(#a)"/>
+<rect x="740" y="60" width="200" height="90" rx="6" fill="#fff4d6" stroke="#b80"/><text x="840" y="82" text-anchor="middle">换 M 个噪声种子 ε 重复</text><text x="840" y="105" text-anchor="middle">α* = ‖E[Δ]‖² / (‖E[Δ]‖²+Var)</text><text x="840" y="128" text-anchor="middle" font-size="12">多步底座 0.89–0.99；SF 4 步 0.65–0.80</text>
+<path d="M700,105H740" stroke="#444" marker-end="url(#a)"/>
+<line x1="20" y1="190" x2="940" y2="190" stroke="#ccc" stroke-dasharray="4 4"/>
+<text x="20" y="220" font-size="16" font-weight="700">② 校正：学生只看 h_gen，去追冻结底座看 h_clean 时的答案</text>
+<rect x="20" y="240" width="190" height="56" rx="6" fill="#e3f4e1" stroke="#393"/><text x="115" y="262" text-anchor="middle">学生 = 冻结底座 + LoRA r_φ</text><text x="115" y="282" text-anchor="middle" font-size="12">rank16 q/k/v/o，5.9M，B=0 初始化</text>
+<rect x="20" y="320" width="190" height="44" rx="6" fill="#eee" stroke="#555"/><text x="115" y="340" text-anchor="middle">老师 = 同一底座（LoRA=0）</text><text x="115" y="357" text-anchor="middle" font-size="12">输入 (z_t, h_clean)</text>
+<rect x="240" y="270" width="290" height="66" rx="6" fill="#fff4d6" stroke="#b80"/><text x="385" y="296" text-anchor="middle">L_CF = ‖v_θ+φ(z_t,h_gen) − v_clean‖²</text><text x="385" y="317" text-anchor="middle">／ ‖v_clean − v_gen‖²（按样本归一）</text>
+<path d="M210,268L240,292M210,342L240,318" stroke="#444" marker-end="url(#a)"/>
+<rect x="550" y="240" width="200" height="56" rx="6" fill="#e3f4e1" stroke="#393"/><text x="650" y="262" text-anchor="middle">闭环①：DAgger</text><text x="650" y="282" text-anchor="middle" font-size="12">开着校正器重新 rollout，并入数据池</text>
+<rect x="550" y="310" width="200" height="56" rx="6" fill="#e3f4e1" stroke="#393"/><text x="650" y="332" text-anchor="middle">闭环②：漂移收缩 λ=0.5</text><text x="650" y="352" text-anchor="middle" font-size="12">x̂0 带梯度接进下一块历史再算 L_CF</text>
+<path d="M530,292L550,270M530,315L550,335" stroke="#444" marker-end="url(#a)"/>
+<rect x="790" y="275" width="150" height="56" rx="6" fill="#dbe8fb" stroke="#36c"/><text x="865" y="297" text-anchor="middle">合并进权重 α=1</text><text x="865" y="317" text-anchor="middle" font-size="12">推理零额外开销</text>
+<path d="M750,300H790" stroke="#444" marker-end="url(#a)"/>
+<text x="20" y="405" font-size="13" fill="#555">直觉：Δ 跨种子稳定 ⇒ 它主要由「历史坏在哪」决定，而不是随机噪声 ⇒ 一个确定性的小网络能学会把它补回去。</text>
+<text x="20" y="428" font-size="13" fill="#555">注意：α* 只说明「给定这对历史，Δ 对 ε 稳定」；推理时学生看不到 h_clean，能否只凭 h_gen 预测 Δ，要看验证集 R²（论文 rank16 为 0.854）。</text>
+<text x="20" y="455" font-size="12" fill="#888">示意图：本站根据 Clean Forcing (arXiv 2610.25634) §4 与公开代码绘制。</text>
+</svg>
