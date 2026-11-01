@@ -1,0 +1,98 @@
+{
+  "date": "2026-11-02",
+  "headline": "过线仅 Pika H3 Flex：按 gate-fix 进「值得看·可用配方」（六步 H3 AV LoRA 可复现推理契约）；周五批次核心四篇交互 WM 全日判定均未过线（GT depth / 通道统计调制 / 55s 几何 / 合成 tile）。",
+  "papers": [
+    {
+      "id": "pika-h3-flex",
+      "rating": "worth",
+      "originality": "redo",
+      "credibility": "solid",
+      "directions": [
+        "av-streaming",
+        "streaming"
+      ],
+      "title": "Pika H3 Flex: six-step post-trained MiniMax-H3 AV generation (FL2VA/Ref2VA LoRA, open weights)",
+      "tldr": "MiniMax-H3 上可复现的开源六步联合 AV LoRA 推理契约（FL2VA/Ref2VA）；少步主评「值得读·可用配方（高）」；本站按 gate-fix 进「值得看·可用配方」，价值在可跑对照而非新蒸馏目标。",
+      "institutions": [
+        "Pika Labs"
+      ],
+      "published": "GitHub/HF 2026-10-29（工业开源；非 arXiv）",
+      "links": {
+        "paper": "https://pika.art/blog/pika-h3-flex-research",
+        "code": "https://github.com/Pika-Labs/Pika-H3-Flex",
+        "other": [
+          {
+            "label": "Hugging Face",
+            "url": "https://huggingface.co/Pika-Labs/Pika-H3-Flex"
+          },
+          {
+            "label": "少步主评（10-30）",
+            "url": "https://thughy.github.io/fewstep-daily/daily/2026-10-30.html"
+          },
+          {
+            "label": "Research deep-dive",
+            "url": "https://pika.art/blog/pika-h3-flex-research"
+          }
+        ]
+      },
+      "rating_reason": "工业开源配方轨道（gate-fix）：工件与六步 schedule 站得住；训练 loss UNKNOWN → 非必读；对 H3 同 revision 三路对照有立即行动价值。",
+      "coverage": {
+        "paper": "none",
+        "demo": "partial",
+        "code": "partial",
+        "note": "无 arXiv；10-30 核 release/loader + showcase 音画；未跑模型端到端。少步 10-30 deep-dive 主评。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| MiniMax-H3 | 原生联合 AV 多步基座 | 公开六步 LoRA adapter + 精确 schedule |\n| FastH3 / 少步后训练谱系 | 少步蒸馏/后训练到可交互延迟 | Flex 给出可复现推理契约与参考控制（Ref2VA）；训码未开 |\n| 朴素截断 6 步 | 同 sampler 只改步数 | Flex  knotted schedule + re-noise 契约，应用层可对照 |\n\n**能否预测？** 「少步后训练 + 开源权重」产品组合可预期；具体 LoRA 质量/控制保留不可预期。→ **重做/产品化 × 可用配方**（非新机制必读）。\n\n**预测：** 相对截断 6 步应可辨更好或至少不崩。待行动卡实测；标记 **未测**。",
+      "method": "- Base pinned：`MiniMaxAI/MiniMax-H3`；两套 LoRA：FL2VA（text/endpoint）与 Ref2VA（多模态参考）。\n- 推理：六步采样；video shift≈12 / audio shift≈3；fresh re-noise（少步/本站 10-30 核）。\n- 开源：权重 + 推理脚本；**无 trainer/loss**（训练配方 UNKNOWN）。",
+      "evidence": "- Showcase（10-30）：camera-rally / product-film ≈15s、24fps、立体声音画对齐；非 validation 指标。\n- 少步主评：值得读·可用配方（高），SFT→PDMD→ReFL/DPO 叙事（训码无）。\n- 本站不另报 DeSync/人评。",
+      "concerns": "- 训练损失与数据未知；不能当蒸馏新知识。\n- 未在同协议对比 FastH3。\n- DiT 墙钟 ≠ 端到端交互延迟。",
+      "takeaways": "- **行动卡 Who**：H3 推理/部署同学。\n- **Control**：同 H3 base revision、先 480p/5s；原生多步 vs 截断 6 步 vs Flex 精确 6 步（FL2VA；有余力 Ref2VA）。\n- **Success**：各 ≥10 固定 prompt（含说话脸）可复现；Flex 相对截断唇形/时间稳定可辨更好或质量不崩；写出是否写入内部 bench 的是/否；**不**因本卡改投 consistency 主线。\n- 训侧仍优先看有训码配方（FastH3 等）。",
+      "solidity": "推理契约与权重可核对；训练主张证据不足 → 配方可信、方法原创性不抬到必读。"
+    }
+  ],
+  "resources": [
+    {
+      "title": "NVIDIA/flashdreams（AR 视频/WM serving）",
+      "url": "https://github.com/NVIDIA/flashdreams",
+      "note": "★531；交互自回归视频与世界模型推理服务库；今日仅元数据触摸（is_new=false），维持可用资源 FYI。"
+    },
+    {
+      "title": "WorldProbe（2610.39721）长程空间探索诊断",
+      "url": "https://arxiv.org/abs/2610.39721",
+      "note": "自适应 VLM 导航至 180s；>1600 rollouts。VLM 评分未人校准、完整局部分仅 327 → 不进值得看·评测卡；可作内部回访压力测协议。"
+    },
+    {
+      "title": "AB-Attention（2610.39663）训练无关块稀疏注意力",
+      "url": "https://arxiv.org/abs/2610.39663",
+      "note": "Wan2.1/Hunyuan 跳过 89–92% attention，E2E 1.84–2.23×（H20）；代码 InfRec-Cardinal/AB-Attention。效率工程，非流式训练新机制。"
+    },
+    {
+      "title": "L3G-World（2610.40614）latent 3D Gaussian 记忆",
+      "url": "https://arxiv.org/abs/2610.40614",
+      "note": "宣称 9.02 FPS / 1×H100 / 480×832 / 7.4GiB；VAE-render 吞吐≠端到端响应。机制可预期工程整合，作记忆对照候选。"
+    }
+  ],
+  "redo": [
+    {
+      "title": "Hierarchical Diffusion AR / WanAR+FixAR (2610.37983)",
+      "url": "https://arxiv.org/abs/2610.37983",
+      "note": "层级相机 AR；每 rollout 对齐 GT depth；FixAR 增益小；≈0.27–0.39 FPS；无 vs Self-Forcing。"
+    },
+    {
+      "title": "FutureWorld C-NCP (2610.39619)",
+      "url": "https://arxiv.org/abs/2610.39619",
+      "note": "通道统计残差调制；四基座 ~+0.02；块内仍 TF。"
+    },
+    {
+      "title": "GROME (2610.39812)",
+      "url": "https://arxiv.org/abs/2610.39812",
+      "note": "训免静动态记忆；几何更新 ~55s/chunk；静态逊 Gen3C。"
+    },
+    {
+      "title": "Context Compaction WM (2610.38980)",
+      "url": "https://arxiv.org/abs/2610.38980",
+      "note": "合成 8×8 tile 世界诊断；非视频生成。"
+    }
+  ],
+  "trend_summary": "## 音视频流式\n- **Pika-H3-Flex** 是今日唯一过线：把 10-30 少步「值得读·可用配方」落到本站「值得看·可用配方」+ 同日行动卡（原生多步 / 截断6步 / Flex精确6步）。\n\n## 交互 WM / 记忆\n- 周五补扫核心四篇均判定：**不进站**。共同问题是部署条件过强、增益窄、或非视频域。\n- WorldProbe / L3G / AB-Attention / flashdreams 进 resources，供协议与工程对照。\n\n## 少步对账\n- sDMD / IDM / ROAD：少步 10-30 已评值得读；今日仅对账不重评。Mix Forcing SLA 关闭观察。"
+}
