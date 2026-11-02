@@ -1,6 +1,6 @@
 {
   "date": "2026-11-02",
-  "headline": "过线仅 Pika H3 Flex：按 gate-fix 进「值得看·可用配方」（六步 H3 AV LoRA 可复现推理契约）；周五批次核心四篇交互 WM 全日判定均未过线（GT depth / 通道统计调制 / 55s 几何 / 合成 tile）。",
+  "headline": "周一新批次过线 Any Forcing（流式 AR 任意步+一步稳住，值得看）；晨报仍保留 Pika H3 Flex「值得看·可用配方」。周五核心四篇交互 WM 未过线。",
   "papers": [
     {
       "id": "pika-h3-flex",
@@ -48,6 +48,40 @@
       "concerns": "- 训练损失与数据未知；不能当蒸馏新知识。\n- 未在同协议对比 FastH3。\n- DiT 墙钟 ≠ 端到端交互延迟。",
       "takeaways": "- **行动卡 Who**：H3 推理/部署同学。\n- **Control**：同 H3 base revision、先 480p/5s；原生多步 vs 截断 6 步 vs Flex 精确 6 步（FL2VA；有余力 Ref2VA）。\n- **Success**：各 ≥10 固定 prompt（含说话脸）可复现；Flex 相对截断唇形/时间稳定可辨更好或质量不崩；写出是否写入内部 bench 的是/否；**不**因本卡改投 consistency 主线。\n- 训侧仍优先看有训码配方（FastH3 等）。",
       "solidity": "推理契约与权重可核对；训练主张证据不足 → 配方可信、方法原创性不抬到必读。"
+    },
+    {
+      "id": "any-forcing",
+      "rating": "worth",
+      "originality": "mechanism",
+      "credibility": "solid",
+      "directions": [
+        "streaming",
+        "video-gen"
+      ],
+      "title": "Any Forcing: Any-Step Generality and One-Step Stability for Autoregressive Video Generation",
+      "tldr": "统一对抗头（RA+CA+FE）让同一 AR 学生任意 1–4 步仍不崩，训免 GSR+LVC 记忆稳住一步长视频；5s VBench 1* 85.06 高于 Self/ASD/One Forcing，对 H3 AR/DMD 有可跑对照，但属 Forcing 谱系组合且 FPS 不含 VAE → 值得看非必读。",
+      "institutions": [
+        "Xidian University",
+        "Huawei"
+      ],
+      "published": "arXiv 2610.42031 (2026-10-30；Mon 11-02 batch 上新)",
+      "links": {
+        "paper": "https://arxiv.org/abs/2610.42031",
+        "project": "https://arxiv.org/abs/2610.42031"
+      },
+      "rating_reason": "核心区 Forcing/流式 AR 当天必判；机制可写清、表与消融站得住；原创性是 ASD×One Forcing×记忆的谱系内组合 → worth 不过 must。",
+      "coverage": {
+        "paper": "full",
+        "demo": "none",
+        "code": "unavailable",
+        "note": "全文 PDF 抽查 Table1/2/3 与 FPS 表述；项目页名出现但代码/权重未确认开源。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| ASD | 步间一致性 → 任意步兼容 | 加上 real-distribution 对齐与首帧增强，统一对抗头 |\n| One / Causal / Self Forcing | 对抗或 DMD 压到少步/一步 AR | 同一学生覆盖 1–4 步；FE 消融最大（85.06→83.52） |\n| Infinity RoPE / Deep / Relax Forcing | 长视频位置/记忆策略 | 训免 GSR+LVC 选择+位置重映射，在同一 generator 上对照 |\n\n**能否预测？** 懂 ASD+One Forcing+长记忆的人大多能料到「统一头+记忆」组合；FE 为最大杠杆、4 步几乎打平 Causal Forcing（85.09 vs 85.08）也可预期。→ **窄新机制 / 谱系整合 × 站得住**。\n\n**预测：** 1-step 相对 ASD/Self 抬分；任意步增益有限；FPS 不含 VAE。**结果：中。**",
+      "method": "- 底座：Wan2.1-T2V-1.3B 学生 + fake-score；冻结 14B real-score；Causal Forcing ODE 初始化。\n- 统一判别器共享 fake-score 特征，分头做 RA / 相邻步 CA / 首帧 FE；早期 ODE endpoint 监督；训练随机采样预算 {1,2,3,4}。\n- 推理「一步」：首帧仍 2 或 4 步（1†/1*），其后每帧 1 步；长视频 cache = 3 sink + 2 memory + 1 recent，按 GSR∧LVC 替换并重映射 RoPE 位置。",
+      "evidence": "- 5s 480p VBench Total：4-step **85.09**；2-step 84.89；1* **85.06**；1† 84.79（主评 946 prompts×5）。\n- 对照 1*：Self Forcing **83.08**、ASD **82.74**、One Forcing **84.35**、Causal Forcing 83.06；4-step Causal Forcing **85.08**≈持平。\n- 消融（Table 3）：w/o FE **85.06→83.52**（1*）；w/o RA 83.78；w/o CA 84.66。\n- 长视频 1*：30s **84.56** / 60s **84.46** vs LongLive 82.81/82.73。\n- 单卡 H100 吞吐 **20.9 FPS**（短）/ **24.7 FPS**（长）；附录写明**不含 VAE decode 与视频编码**。\n- 人偏 48 人：对 ASD 1* 62.2% / 1† 83.3%；对 One Forcing 71.9%/73.7%。",
+      "concerns": "- 「一步」不含首帧；任意步训练上限 4，不是真正任意 N。\n- 上报 FPS 非端到端播放率；4 步相对 Causal Forcing 几乎无增益。\n- 长视频对照把竞品记忆策略移植到本文 generator，非原生端到端系统对比。\n- 代码/权重开源未在正文确认。",
+      "takeaways": "- **Who**：H3 AR / Self-Forcing 训练同学。\n- **Control**：同 Wan2.1-1.3B 学生与预算；Self-Forcing vs Causal-Forcing vs Any-Forcing 式（随机步预算+FE）；记忆开/关。\n- **Success**：5s VBench 与固定 30s 子集不崩；1-step（含首帧设定写清）相对 Self-Forcing ≥+1.0 Total 或人偏可辨；**必须**同时报含/不含 VAE 墙钟。\n- 蒸馏头设计转少步队友定级；本站只跟流式 AR 部署与记忆。",
+      "solidity": "全文表与消融可核对；硬件吞吐口径需降权；开源未确认。"
     }
   ],
   "resources": [
@@ -94,5 +128,5 @@
       "note": "合成 8×8 tile 世界诊断；非视频生成。"
     }
   ],
-  "trend_summary": "## 音视频流式\n- **Pika-H3-Flex** 是今日唯一过线：把 10-30 少步「值得读·可用配方」落到本站「值得看·可用配方」+ 同日行动卡（原生多步 / 截断6步 / Flex精确6步）。\n\n## 交互 WM / 记忆\n- 周五补扫核心四篇均判定：**不进站**。共同问题是部署条件过强、增益窄、或非视频域。\n- WorldProbe / L3G / AB-Attention / flashdreams 进 resources，供协议与工程对照。\n\n## 少步对账\n- sDMD / IDM / ROAD：少步 10-30 已评值得读；今日仅对账不重评。Mix Forcing SLA 关闭观察。"
+  "trend_summary": "## 音视频流式\n- **Pika-H3-Flex** 是今日唯一过线：把 10-30 少步「值得读·可用配方」落到本站「值得看·可用配方」+ 同日行动卡（原生多步 / 截断6步 / Flex精确6步）。\n\n## 交互 WM / 记忆\n- 周五补扫核心四篇均判定：**不进站**。共同问题是部署条件过强、增益窄、或非视频域。\n- WorldProbe / L3G / AB-Attention / flashdreams 进 resources，供协议与工程对照。\n\n## 少步对账\n- sDMD / IDM / ROAD：少步 10-30 已评值得读；今日仅对账不重评。Mix Forcing SLA 关闭观察。\n\n## 周一 13:45 补扫（新批次）\n- **Any Forcing (2610.42031)**：Forcing 谱系统一对抗任意步 + 训免长记忆；过线 **值得看**。\n- 转发：Better Critic DMD / Coarse OT（少步）；Few-Step Flow RL（RL）；GeoFlip / WM harness（数据）。\n- SPT-Flow：机器人 ODE WM 诊断 TF 捷径，一行不进站。"
 }
