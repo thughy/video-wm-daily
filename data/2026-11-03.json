@@ -1,0 +1,66 @@
+{
+  "date": "2026-11-03",
+  "headline": "周二晨报：CADRE 交互 WM 压缩配方抬升为「值得看·可用配方」（延迟账本+开源权重）；无新 AV 流式过线。Any Forcing 昨日已上站。",
+  "papers": [
+    {
+      "id": "cadre-wm-ae",
+      "rating": "worth",
+      "originality": "finding",
+      "credibility": "solid",
+      "directions": [
+        "world-model",
+        "streaming"
+      ],
+      "title": "Rethinking Video Autoencoders for Interactive World Models (CADRE)",
+      "tldr": "Kyutai 开源交互 WM 用因果表征 AE 族（DINO 瓶颈+1–2 步扩散解码）与四域 WM；论文 Table4 在 1×H100 上 CADRE-2×32×32 动作延迟 **185 ms**（含 τ/f+tgen+tdec），代码 MIT + HF 权重齐 → gate-fix 进「值得看·可用配方」，价值在压缩–延迟账本而非新蒸馏目标。",
+      "institutions": [
+        "Kyutai",
+        "ENPC / IP Paris",
+        "UC Berkeley"
+      ],
+      "published": "arXiv 2610.30129（2026-10-22 blog；GH/HF 2026-09–10）",
+      "links": {
+        "paper": "https://arxiv.org/abs/2610.30129",
+        "project": "https://kyutai.org/blog/2026-10-22-cadre/",
+        "code": "https://github.com/kyutai-labs/cadre-autoencoders-and-world-models",
+        "other": [
+          {
+            "label": "HF collection",
+            "url": "https://huggingface.co/collections/kyutai/cadre-autoencoders-and-world-models-6abbaa26ed6191f7c975072d"
+          },
+          {
+            "label": "Live demo",
+            "url": "https://cadre-wm.kyutai.org/"
+          }
+        ]
+      },
+      "rating_reason": "工业/开源配方轨道（2026-10-30 gate-fix）：训推评+权重站得住；机制可预期 → 非 must；对交互 WM 的 AE/τ/延迟选型有立即行动价值。",
+      "coverage": {
+        "paper": "partial",
+        "demo": "partial",
+        "code": "full",
+        "note": "PDF Table4/附录+README/demo 路径核；blog WebFetch；HF tree 体积核。未本机 GPU 复测 185/162 ms。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| Wan / Cosmos / LTX tokenizer | T2V 因果(或窗口) VAE，高 τ 服务离线吞吐 | 开放可换 τ×s 族 + 短 τ 延迟账本；按域重训瓶颈 |\n| MIRA AE | 表征 AE + 回归解码（受限域） | 通用视频预训练 + 扩散少步解码；同数据重训对照 |\n| DC-AE | 强空间压缩图像 AE | 时空单元与交互延迟联合评 ARR/FVD |\n\n**能否预测？** 「别再用高 τ T2V VAE 硬套交互 WM」大体可预期；静/动相机要对立压缩、以及 185 ms 量级可跑 frontier 不完全可预期。→ **发现×可用配方**。\n\n**预测：** 短 τ CADRE 应打进 ≤230 ms 带且运动/跟随不崩。**本站未测。**",
+      "method": "- Encoder：冻结 DINOv3 + 可配置 τ×s×s 瓶颈。\n- Decoder：因果扩散 / flow，自蒸馏；评测默认 `decode_steps=1`（可选 2）。\n- WM：四环境（robot/human manip、driving、indoor nav）扩散 forcing + 动作条件；发布权重 `cadre-world-models-2x16x16`。\n- 延迟定义：`latency = τ/f + tgen + tdec`（论文 Eq.1）。",
+      "evidence": "- Table 4（1×H100 bf16 compile）：CADRE-2×32×32 → tgen 61 / tdec 25 → **185 ms**，max **23.4 fps**；2×16×16 → **216 ms**；Wan2.2 **317** / Cosmos **605** / LTX-2 **492**。\n- README 服务（FP8 decoder-only 等）：1 user **20 FPS · 162 ms**；2 users ~14 FPS · p95 **207–212 ms**（口径≠Table4）。\n- 开源：GH MIT；HF AE ~2.1GB×7 + multires×4 + WM ~20.3GB + probes ~1.7GB；权重 **CC-BY-NC-4.0**。",
+      "concerns": "- 185 ms 未本机复测；服务 162 ms 依赖特定旗标。\n- 权重非商业；无 AV。\n- 公开 WM 仅配 2×16×16；multires 与已发布 WM 不兼容。",
+      "takeaways": "- **Who**：交互 WM / 部署同学。\n- **Control**：现用 AE vs CADRE-2×16×16（或 2×32×32 重建）；对齐约 288×512 / 20fps 叙事；拆 chunk wait / tgen / tdec。\n- **Success**：可报告三路墙钟；主观/测量是否进 ≤230 ms；决定是否写入内部 interactive-WM bench。**不**改 H3 蒸馏主损失。",
+      "solidity": "开源代码与权重路径可核对；延迟数字有论文表+README 双口径，缺本机复测 → 配方可信、硬件声称降一档。"
+    }
+  ],
+  "resources": [
+    {
+      "title": "Lightricks/LTX-2-3（HF Space 元数据更新）",
+      "url": "https://huggingface.co/spaces/Lightricks/LTX-2-3",
+      "note": "★~486；updated 2026-11-02；演示空间活动，无新训码主张 → FYI。"
+    },
+    {
+      "title": "nvidia/GEM-X（HF model 元数据更新）",
+      "url": "https://huggingface.co/nvidia/GEM-X",
+      "note": "motion/video 标签触摸 2026-11-02；低优先 FYI。"
+    }
+  ],
+  "redo": [],
+  "trend_summary": "主线：交互 WM 的 AE/τ/延迟选型——CADRE（Kyutai）从「可用资源」抬到「值得看·可用配方」，价值在可换 τ×s 因果表征 AE 族 + Table4 185 ms 账本与 MIT/HF 可跑件，而非新蒸馏目标。AV 流式今日无新过线；Any Forcing（流式 AR 任意步）已在 11-02 站页。机器人侧 WorldBridge/SPT/CausalWAM 等仅一行或 OUT。"
+}
