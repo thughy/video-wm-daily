@@ -1,0 +1,256 @@
+{
+  "date": "2026-11-04",
+  "headline": "周三晨报：AV 过线 TaoMate-HD；Forcing 族同日四卡（Disen/History/dKV/Commit）+ Wave 多卡配方；OmniOPD AV 蒸馏转少步。",
+  "papers": [
+    {
+      "id": "taomate-hd",
+      "rating": "worth",
+      "originality": "mechanism",
+      "credibility": "solid",
+      "directions": [
+        "av-streaming",
+        "streaming"
+      ],
+      "highlight": true,
+      "title": "TaoMate-HD: Progressive-Resolution Autoregressive Audio-Video Generation",
+      "tldr": "阿里淘宝直播向：chunk 内 480→768 渐进 AR 联合 AV + 阶段本地 clean history；非对称文本窗 continuation 蒸馏把 CER 从 30.8% 降到 19.6%；串行 Temporal 0.913 / AudioAes 4.407 / Desync 0，8×H20 并行 8.99 FPS（含 decode）。相对 OmniForcing 明显更稳，但非对称消融未孤立 → 值得看非必读。",
+      "institutions": [
+        "Alibaba Group",
+        "Nanjing University"
+      ],
+      "published": "arXiv 2611.03394 (2026-11-02)",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.03394",
+        "project": "https://taoliveaigc.github.io/TaoMate-HD"
+      },
+      "rating_reason": "P0 AV 流式有机制增量与硬指标；渐进可预期、非对称归因弱 → worth 非 must；无开源权重。",
+      "coverage": {
+        "paper": "full",
+        "demo": "partial",
+        "code": "unavailable",
+        "note": "PDF Table1–3 抽查；项目页；未复测。"
+      },
+      "comparison": "# TaoMate-HD — 值得看\n\n| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| TaoMate | 固定分辨率 stage-parallel AV 流式 | chunk 内 480→768 渐进 + stage-local clean AV history |\n| OmniForcing / Lynn | 联合 AV 流式基线 | Temporal 0.913 / AudioAes 4.407 / Desync 0；CER 19.57% |\n| PyramidalWan / HiAR | 空间金字塔 / stage-parallel | 中间 AV 预测作下一 chunk 同阶段历史；非对称文本续说 |\n\n**能否预测？** 粗→细省算大体可预期；非对称文本窗续说不完全可预期，但 Table3 非孤立 → **窄机制**，非 must。\n\n**预测：** 渐进 ~1.5× 快于直接 768p；CER 明显降。**中。** 本站未复测。",
+      "method": "每 chunk：两步低分视频去噪确立结构 + 一步高分精修；音频全程同轨迹。每阶段 clean AV 写入该阶段 KV，供下一 chunk 同阶段读取（可重叠执行）。文本从 A+B 滑到 B+C 时保留 AV KV，用非对称文本窗做 DMD continuation。",
+      "evidence": "- Table1 serial：Temporal **0.913**，AudioAes **4.407**，CER **19.57%**，Desync **0.000** vs OmniForcing Temporal **0.786** / AudioAes **3.571**（8×H20，4.68 FPS）。\n- Table1 parallel：**8.99 FPS**，CER 21.28%。\n- Table2：Direct 768p **2.93** → Progressive serial **4.68**（1.60×）→ 部署 **8.99**；计时含 AV decode。\n- Table3：CER **30.751→19.570**（捆绑定 continuation 配置）。\n- 本站 **未测**。",
+      "concerns": "非对称未孤立消融；与 MiniMax-H3 的 22.4× 非同口径；无权重；插入错误上升。",
+      "takeaways": "- Who：H3 AV/AR 训练同学。\n- Control：直接高分 vs progressive；对称 vs 非对称文本窗；同数据报 CER/Desync + 含/不含 VAE 墙钟。\n- Success：CER 相对对称基线下降且 Desync 不恶化；吞吐比接近文中 1.6× 量级。\n- Stop：无卡则只读机制，不搬整网。"
+    },
+    {
+      "id": "wave-forcing",
+      "rating": "worth",
+      "originality": "finding",
+      "credibility": "solid",
+      "directions": [
+        "streaming"
+      ],
+      "title": "Wave Forcing: Towards Speed-of-Light Streaming Video Generation",
+      "tldr": "SJTU 波前共设：因果 wavefront + WaveRT 多卡流水；5-step VBench Total 81.64≈RF 81.15，4-step 在 8×H200 上 **147.6 DiT / 134.8 E2E FPS**（7.07× 单卡 19.06）。开源推理+1.3B 权重 →「值得看·可用配方」。",
+      "institutions": [
+        "Shanghai Jiao Tong University",
+        "Xi'an Jiaotong University",
+        "Peking University"
+      ],
+      "published": "arXiv 2611.00859 (2026-10-31)",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.00859",
+        "project": "https://sjtu-deng-lab.github.io/WaveForcing/",
+        "code": "https://github.com/SJTU-DENG-Lab/WaveForcing",
+        "other": [
+          {
+            "label": "HF WaveForcing-1.3B",
+            "url": "https://huggingface.co/SJTU-DENG-Lab/WaveForcing-1.3B"
+          }
+        ]
+      },
+      "rating_reason": "质量增量小、系统配方硬 → gate 进可用配方轨；非 must。",
+      "coverage": {
+        "paper": "full",
+        "demo": "partial",
+        "code": "partial",
+        "note": "PDF+README 数字核；未本机跑 WaveRT。"
+      },
+      "comparison": "| 最接近 | 增量 |\n|---|---|\n| Rolling Forcing | 去掉反向 refinement，换因果波前 |\n| Causal/Self-Forcing | WaveRT 1F1C + 训适配 |\n\n多卡加速可预期 → **发现/配方**。",
+      "method": "Chunk-wise causal attention 读更早更净中间态；S 去噪阶段+store 满模型副本波前；三阶段训；Wave Parallelism 早投递 KV。",
+      "evidence": "- Table1：**5-step** Total **81.64** vs RF **81.15**；**4-step** Total 80.74 但 **147.58/134.81 FPS**。\n- 单卡 E2E 19.06 → **7.07×** @8×H200，832×480，含 streaming VAE。\n- 本站未测。",
+      "concerns": "勿把 81.64 安到 4-step 上；VAE 仍是 E2E 瓶颈；宽度≈步数。",
+      "takeaways": "- Who：流式推理部署。\n- Control：同 1.3B，单卡基线 vs WaveRT 4/5-step；拆 DiT/E2E。\n- Success：写出两套 FPS；主观不崩。不改 H3 主损失。"
+    },
+    {
+      "id": "disen-forcing",
+      "rating": "worth",
+      "originality": "finding",
+      "credibility": "solid",
+      "directions": [
+        "streaming"
+      ],
+      "title": "Disen-Forcing: Disentangling Semantic Anchoring from Motion Construction in AR-VDMs",
+      "tldr": "诊断：长程一致靠稀疏 semantic-anchor heads，万能 Frame Sink 把 sink 喂给全部头→动态崩。蒸馏 plug-in 拆头路由+运动正则：SF 上 Dynamic 35.66→73.12，Total 76.93→82.38。转少步。",
+      "institutions": [
+        "Australian National University",
+        "Sony AI",
+        "CSIRO"
+      ],
+      "published": "arXiv 2611.02822 (2026-11-02)",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.02822",
+        "project": "https://disen-forcing.github.io/"
+      },
+      "rating_reason": "核心区反漂移发现清晰、对照闭环；代码未明示 → worth 非 must。",
+      "coverage": {
+        "paper": "full",
+        "demo": "partial",
+        "code": "unavailable"
+      },
+      "comparison": "| Frame Sink / LongLive | 万能初帧 | 稀疏锚头诊断 + 头级路由 |\n| Self/Causal-Forcing | 基座 | 同预算 plug-in |",
+      "method": "锚头读 sink+window，其余只读 window；L=LDMD+λreg Lreg。",
+      "evidence": "Table1 SF+Disen Dyn **73.12**/Total **82.38**/∆Drift **4.03** vs Sink Dyn **35.66**/Total **76.93**；CF 类似。未测。",
+      "concerns": "无明确代码；锚头选择流程可复现性。",
+      "takeaways": "H3 AR：Frame Sink vs 锚头子集接 sink；转少步定蒸馏细节。"
+    },
+    {
+      "id": "history-forcing",
+      "rating": "worth",
+      "originality": "mechanism",
+      "credibility": "solid",
+      "directions": [
+        "streaming",
+        "world-model"
+      ],
+      "title": "History Forcing: Learning History-Dependent Continuations for Autoregressive Video Generation",
+      "tldr": "AR 教师有/无额外 history 的打分残差校正 DMD reference：15s Quality 85.07；60s VBench-Long 79.82（1.3B 教师），接近 5B LongLive-2.0。代码开源。转少步。",
+      "institutions": [
+        "Zhejiang University",
+        "Microsoft Research",
+        "Monash University",
+        "Adelaide University"
+      ],
+      "published": "arXiv 2611.02782 (2026-11-02)",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.02782",
+        "project": "https://ziplab.github.io/History-Forcing-Project-Page/",
+        "code": "https://github.com/ziplab/History-Forcing"
+      },
+      "rating_reason": "机制可写清、数字闭环；谱系内 → worth。",
+      "coverage": {
+        "paper": "full",
+        "demo": "partial",
+        "code": "partial"
+      },
+      "comparison": "| Self-Forcing++ | 无 history residual | 有/无 history 残差 |\n| 直接 AR distill | 整分布 | 残差解耦 |\n| Context Forcing | history 进教师 | 显式 residual→DMD |",
+      "method": "同噪声样本，AR 教师两上下文；残差改 reference；学生自 rollout≤15s。",
+      "evidence": "Table1 Q **85.07** vs baseline **84.44**；Table2 agg **79.82** vs Rolling **79.22**。吞吐未报。未测。",
+      "takeaways": "在现有 DMD 上加 history residual；同 1.3B 教师预算对照。"
+    },
+    {
+      "id": "dkv-forcing",
+      "rating": "worth",
+      "originality": "mechanism",
+      "credibility": "solid",
+      "directions": [
+        "streaming"
+      ],
+      "title": "dKV Forcing: Differentiable KV Pages for Memory Writing in Autoregressive Video Diffusion",
+      "tldr": "generation KV≠written KV；可微 page+writer LoRA 学记忆写：相对 SGF aesthetic +6.6@60s / +8.5@240s。代码开源。转少步。",
+      "institutions": [
+        "Georgia Institute of Technology"
+      ],
+      "published": "arXiv 2611.01648 (2026-11-01)",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.01648",
+        "project": "https://zhiqili-cg.github.io/dKV-Forcing-Project",
+        "code": "https://github.com/ZhiqiLi-CG/dKV-Forcing"
+      },
+      "rating_reason": "写路径机制清楚；推理吞吐缺 → worth。",
+      "coverage": {
+        "paper": "full",
+        "demo": "partial",
+        "code": "partial"
+      },
+      "comparison": "| SGF | 同目标无 writer | +pages +writer LoRA |\n| Commit Forcing | 改读 | 改写 |",
+      "method": "immutable pages + handles；writer-only LoRA；rollout dropout。",
+      "evidence": "摘要 +6.6/+8.5；表区 aesthetic 60.1 vs SGF 57.2 vs detached 51.6。+7% update overhead。未测。",
+      "takeaways": "长时 AR 试 writer LoRA；与 Disen/History 择一，勿全开。"
+    },
+    {
+      "id": "omniopd",
+      "rating": "worth",
+      "originality": "finding",
+      "credibility": "solid",
+      "directions": [
+        "av-streaming"
+      ],
+      "title": "OmniOPD: On-Policy Distillation for Balanced Audio-Video Generation",
+      "tldr": "联合 AV on-policy 蒸馏：非对称噪声 privileged visual + group/weight；JavisBench 上 vs LTX-2.3：VQ 3.347 vs 2.714，DeSync 0.457 vs 0.584。少步主读；含奖励教师可转 RL。",
+      "institutions": [
+        "University of Science and Technology of China"
+      ],
+      "published": "arXiv 2611.02803 (2026-11-02)",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.02803"
+      },
+      "rating_reason": "P0 AV 蒸馏发现；主深度归少步；本站给 AV worth。",
+      "coverage": {
+        "paper": "full",
+        "demo": "none",
+        "code": "unavailable"
+      },
+      "comparison": "| OPD/GDPO | 联合不稳 | privileged visual 非对称 |\n| LTX-2.3 | 底座 | DeSync/VQ 增益 |",
+      "method": "模态分治教师；音频教师见更净视觉；group multi-noise + importance weight。",
+      "evidence": "Table1 OmniOPD VQ **3.347** AQ **5.449** DeSync **0.457** vs LTX-2.3 **2.714/5.252/0.584**。无 FPS。未测。",
+      "takeaways": "H3 AV：音频分支试 cleaner 视觉条件；细节待少步。"
+    },
+    {
+      "id": "commit-forcing",
+      "rating": "worth",
+      "originality": "finding",
+      "credibility": "solid",
+      "directions": [
+        "streaming"
+      ],
+      "title": "What Helps Denoising Can Hurt Memory: Rethinking History in Long Video Generation (Commit Forcing)",
+      "tldr": "发现：利于去噪的旧历史在 committing 写 KV 时伤后续。训免 Commit Forcing：committing 只读上一块 KV。6 个生成器 Quality/Total 全升，最大 +1.27 Q。",
+      "institutions": [
+        "Georgia Institute of Technology",
+        "Peking University",
+        "Zhejiang University",
+        "Tsinghua University",
+        "LiblibAI"
+      ],
+      "published": "arXiv 2611.00937 (2026-10-31)",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.00937"
+      },
+      "rating_reason": "核心区发现+训免可试；增益中等 → worth。",
+      "coverage": {
+        "paper": "full",
+        "demo": "none",
+        "code": "unavailable"
+      },
+      "comparison": "| SGF/LongLive | sink 读写 | 拆开 denoising vs committing 史 |\n| dKV | 改写 | 改读链 |",
+      "method": "训练无关；committing 链式只读前一块 stored KV。",
+      "evidence": "摘要：6/6 升，最大 +1.27 Quality / +1.10 Total；盲测一致 ~83% 胜。未逐表复测。",
+      "takeaways": "推理侧零成本开关；与 dKV 正交小实验。"
+    }
+  ],
+  "resources": [
+    {
+      "title": "SJTU-DENG-Lab/WaveForcing + WaveForcing-1.3B",
+      "url": "https://github.com/SJTU-DENG-Lab/WaveForcing",
+      "note": "WaveRT 推理开源；HF 4step/5step；与站卡 wave-forcing 同条。"
+    }
+  ],
+  "redo": [
+    {
+      "title": "Learning-to-Memorize (2611.01858)",
+      "url": "https://arxiv.org/abs/2611.01858",
+      "note": "可学习 KV 管理；相对 sink 谱系内，同日有更强 Disen/Commit → 一行。"
+    },
+    {
+      "title": "VidDub (2611.03404)",
+      "url": "https://arxiv.org/abs/2611.03404",
+      "note": "配音蒸馏→少步；非原生 AV 流式。"
+    }
+  ],
+  "trend_summary": "主线一：P0 AV——TaoMate-HD 渐进分辨率+非对称文本续说；OmniOPD 联合 AV on-policy 稳定术（少步主深读）。主线二：Forcing 反漂移同日四卡——Disen（锚头诊断）、History（history residual）、dKV（可微写）、Commit（训免读链），与 Wave 多卡波前配方并行。Henry 不必亲自下场：按行动卡分给 AV 训练 / 反漂移 / 部署三条线。"
+}
