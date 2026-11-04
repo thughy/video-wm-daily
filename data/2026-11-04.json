@@ -1,6 +1,6 @@
 {
   "date": "2026-11-04",
-  "headline": "周三晨报：AV 过线 TaoMate-HD；Forcing 族同日四卡（Disen/History/dKV/Commit）+ Wave 多卡配方；OmniOPD AV 蒸馏转少步。",
+  "headline": "晨报 AV TaoMate-HD + Forcing 反漂移四卡；13:45 补扫过线 ReCR（训免历史重写）与 Compression Forcing（DAT 历史压缩）。",
   "papers": [
     {
       "id": "taomate-hd",
@@ -231,6 +231,76 @@
       "method": "训练无关；committing 链式只读前一块 stored KV。",
       "evidence": "摘要：6/6 升，最大 +1.27 Quality / +1.10 Total；盲测一致 ~83% 胜。未逐表复测。",
       "takeaways": "推理侧零成本开关；与 dKV 正交小实验。"
+    },
+    {
+      "id": "recr-context-rewrite",
+      "rating": "worth",
+      "originality": "mechanism",
+      "credibility": "solid",
+      "directions": [
+        "streaming",
+        "video-gen"
+      ],
+      "highlight": true,
+      "title": "What Remains in Sight? Autoregressive Video Decoding as Representation-Guided Context Rewriting",
+      "tldr": "训免 ReCR：用解码器内部表征选「该看见」的已生成历史帧并压到紧凑因果轴；等可见 token 预算下 7 个 Forcing 底座 VBench-Long 平均 +1.41/+1.94（30s/60s），Causal-Forcing 60s Total 77.41→82.08、动态度 56.82→80.47；H200 块延迟近零。与晨报 Commit/dKV 正交（读侧可见上下文）。代码宣称开源。",
+      "institutions": [
+        "Stanford University"
+      ],
+      "published": "arXiv 2611.04164（Wed 11-04 batch 补扫）",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.04164",
+        "code": "https://github.com/lixuan27/ReCR",
+        "project": "https://arxiv.org/abs/2611.04164"
+      },
+      "rating_reason": "核心区流式 AR 推理历史选择当天必判；跨底座表站得住；谱系内训免组合且全史 KV 仍涨 → worth 非 must。",
+      "coverage": {
+        "paper": "full",
+        "demo": "none",
+        "code": "partial",
+        "note": "PDF Table1–3 抽查；GitHub 文中声明未本机 clone。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| Deep Forcing / Infinity-RoPE | 训免长视频 sink/位置策略 | 显式选历史帧 + 时间轴重写 |\n| Self / Causal / LongLive | 固定 recent 或压缩窗口 | 等预算下换「看见谁」 |\n| Commit / dKV Forcing（晨报） | 写/读 KV 规则 | 正交：可见上下文组合，非写侧 |\n\n**能否预测？** 「换更好的历史窗」大多可预期；表征引导+冗余惩罚+重排的组合增益幅度不完全可预期。→ **窄新机制 × 站得住**。",
+      "method": "每块提交后：对 layer-20 clean-pass 表征做帧级池化；打分=全局兼容−近期冗余；贪心选 B 帧（边界覆盖+成对冗余惩罚）；按时间重排到紧凑轴并重写 RoPE；预测下一块。全史 KV 仍保留。",
+      "evidence": "- Table1：七配置均值 Total **+1.41 / +1.94**（30s/60s）。\n- Causal-Forcing 60s **77.41→82.08**；Dynamic Degree **56.82→80.47**。\n- Self-Forcing 30s/60s **79.09/78.19 → 82.05/81.60**。\n- Table2：Deep Forcing aesthetic drift **3.56→1.76**。\n- Table3：H200 batch1 SF **728→712 ms**；Infinity **667→710 ms**。\n- 本站 **未测**。",
+      "concerns": "全史 KV 仍随长度增长、未报峰值显存；部分子指标回退（如 LongLive aesthetic drift 3.05→3.27）；无 AV；仓库未本机核实。",
+      "takeaways": "- Who：H3 AR 推理/长时同学。\n- Control：冻 checkpoint；等 token 预算 recent vs random vs ReCR；消融时间重索引；必须报峰值显存。\n- Success：60s 后段漂移与文本对齐不劣于 Commit 基线；块延迟增量 <5%。\n- Stop：显存爆则先做「未选帧丢 KV」变体。"
+    },
+    {
+      "id": "compression-forcing",
+      "rating": "worth",
+      "originality": "mechanism",
+      "credibility": "solid",
+      "directions": [
+        "world-model",
+        "video-gen"
+      ],
+      "highlight": false,
+      "title": "Compression Forcing: Hierarchical History Tokenization Enables Flexible World Models",
+      "tldr": "相对 Diffusion Forcing「部分加噪=部分 masking」：DAT 把历史压成动态显著性递减 token，随机前缀训扩散 WM，推理 HG-H 多前缀分数融合。Kinetics PSNR 18.83>ElasticTok 18.60；CS:GO FVD 123 vs 197/DIAMOND-HQ 368。交互 WM 历史表示新机制；非流式 AR、无开源、与晨报 History Forcing 撞名不同物。",
+      "institutions": [
+        "Carnegie Mellon University",
+        "Tsinghua University",
+        "University of Bristol",
+        "University of Oxford"
+      ],
+      "published": "arXiv 2611.04028（Wed 11-04 batch 补扫）",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.04028",
+        "project": "https://arxiv.org/abs/2611.04028"
+      },
+      "rating_reason": "核心区 Forcing/交互 WM 当天必判；相对 DF/ElasticTok 机制可写清、三域消融站得住；无流式 VBench/无代码 → worth 非 must。NAME-COLLISION:≠History Forcing。",
+      "coverage": {
+        "paper": "full",
+        "demo": "none",
+        "code": "unavailable",
+        "note": "PDF Table1–3 抽查；无 CF 仓库。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| Diffusion Forcing | 历史部分加噪控制信息 | 学习式前缀截断（压缩=masking） |\n| ElasticTok | 嵌套截断、重建优先 | 动态预测/静态重建双目标 → 前部动态 |\n| History Forcing（晨报） | AR 教师 history 残差进 DMD | 完全不同：WM tokenizer+HG-H |\n\n**能否预测？** 「动态优先压缩」方向可预期；HG-H+DAT 在 CS:GO FVD 的大幅领先不完全可预期。→ **新机制 × 站得住**。",
+      "method": "DAT：ViViT+有序 slot，短前缀偏动态预测、长前缀偏静态重建。冻结 DAT 后滑窗编码历史，backbone 随机截断前缀 cross-attn 条件。HG-H：组合空历史与多预算前缀的分数。",
+      "evidence": "- Table1 Kinetics：DAT+HG-H SSIM/PSNR/FID/LPIPS **0.553 / 18.83 / 88.13 / 0.343** vs ElasticTok+导 0.546/18.60/90.74/0.349。\n- Table2 CS:GO FVD **123.0** vs ElasticTok **197.1** / DIAMOND-HQ **368.5**（PSNR 非最优）。\n- Table3 RT-1 FVD **101.5** ≈ ElasticTok 105.4。\n- 本站 **未测**；无开源。",
+      "concerns": "Kinetics 增益小；CS:GO PSNR 不占优；无端到端延迟；HG-H 多分支成本未报；无 AV。",
+      "takeaways": "- Who：H3 历史条件/WM 表示同学。\n- Control：等数据等步 history corruption vs 前缀截断 vs 组合；开关 HG-H；报多分支墙钟。\n- Success：长 rollout 运动可辨性↑且外观噪声不绑架。\n- Stop：无卡则只吸收「动态优先预算」思想，不重训 DAT。"
     }
   ],
   "resources": [
@@ -252,5 +322,5 @@
       "note": "配音蒸馏→少步；非原生 AV 流式。"
     }
   ],
-  "trend_summary": "主线一：P0 AV——TaoMate-HD 渐进分辨率+非对称文本续说；OmniOPD 联合 AV on-policy 稳定术（少步主深读）。主线二：Forcing 反漂移同日四卡——Disen（锚头诊断）、History（history residual）、dKV（可微写）、Commit（训免读链），与 Wave 多卡波前配方并行。Henry 不必亲自下场：按行动卡分给 AV 训练 / 反漂移 / 部署三条线。"
+  "trend_summary": "主线一：P0 AV——TaoMate-HD 渐进分辨率+非对称文本续说；OmniOPD 联合 AV on-policy 稳定术（少步主深读）。主线二：Forcing 反漂移同日四卡——Disen（锚头诊断）、History（history residual）、dKV（可微写）、Commit（训免读链），与 Wave 多卡波前配方并行。Henry 不必亲自下场：按行动卡分给 AV 训练 / 反漂移 / 部署三条线。 **13:45 补扫**：Wed 新批次过线 ReCR（等预算可见历史重写，跨 Forcing 底座 VBench-Long 抬分；对 H3 AR 冻权重可对照）与 Compression Forcing（DAT+HG-H，≠晨报 History Forcing；交互 WM 历史信息预算）。"
 }
