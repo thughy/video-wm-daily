@@ -97,7 +97,9 @@
       "title": "EvoWorld: Towards Out-of-Sight World Evolution in Generative Video Models",
       "tldr": "提出 Out-of-Sight Causal Evolution：VLM 脑 + LTX-2.5 渲染器（IAA + 监督→AR rollout）；自建 Bench 上 Core **90.8%**（次优 Evoke-Turbo **21.7%**）。**MiniMax-H3 one-shot Core 仅 21.7%**（Revisit 100 / Event 99.2）——组件成功≠因果演化。与全景 EvoWorld（2510.01183）**撞名不同文**。",
       "institutions": [
-        "(authors; institutions in PDF)"
+        "HKUST",
+        "Tencent",
+        "CUHK"
       ],
       "published": "arXiv 2611.06748（Thu 11-05 batch 补扫）",
       "links": {
@@ -129,7 +131,8 @@
       "title": "NanoKV: High-Ratio KV Cache Compression for Autoregressive Video Generation",
       "tldr": "冻骨干的历史 KV 生成感知压缩（Key/Value 分工）；HY-WorldPlay **26.09×**（20.96→0.80 GiB），相对 KVTC 近 2× 压缩且 PSNR **+1.0 dB**；NanoKV-Fast 约 **1.15×** E2E。评测是相对未压缩同轨迹 PSNR，非真值。",
       "institutions": [
-        "(authors; institutions in PDF)"
+        "Zhejiang University",
+        "NVIDIA"
       ],
       "published": "arXiv 2611.06377（Thu 11-05 batch 补扫）",
       "links": {
