@@ -1,0 +1,154 @@
+{
+  "date": "2026-11-05",
+  "headline": "周四 13:45 新批次补扫：过线 LiveFoley（流式 V2A）、Cosmos 交互 WM 可用配方、EvoWorld 视野外因果（含 H3 Core 21.7%）、NanoKV（AR KV 压缩）。晨报 STALE 无过线。",
+  "papers": [
+    {
+      "id": "livefoley-streaming-v2a",
+      "rating": "worth",
+      "originality": "mechanism",
+      "credibility": "solid",
+      "directions": [
+        "av-streaming",
+        "streaming"
+      ],
+      "highlight": true,
+      "title": "LiveFoley: Dynamic Real-Time Video-to-Audio Generation for Immersive Interactive Worlds",
+      "tldr": "流式 V2A：trailing hop 保住 Synchformer 全窗（look-ahead=hop），History LocDiT 用已生成 patch 协同去噪；VGGSound 上 LiveFoley-16k DeSync **0.50** / FD-PaSST **92.48** @0.08s（SoundReactor 1.03/113）；单卡 A800 E2E **156 ms**（Future-Warmup 估 236 ms）低于动作感知阈 0.34 s。相对级联伴音强基线，非原生联合 AV。",
+      "institutions": [
+        "Monash University",
+        "Nanjing University",
+        "ShengShu Technology",
+        "Tampere University",
+        "Alibaba",
+        "Tsinghua University"
+      ],
+      "published": "arXiv 2611.05988（Thu 11-05 batch 补扫）",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.05988",
+        "project": "https://arxiv.org/abs/2611.05988"
+      },
+      "rating_reason": "P0 邻域流式 AV 同步有机制+硬延迟；纯音频输出 → worth 非 must。",
+      "coverage": {
+        "paper": "full",
+        "demo": "none",
+        "code": "unavailable",
+        "note": "PDF Table1/延迟段抽查；未本机测。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| SoundReactor | 帧级前端 + 独立 patch 去噪，0.08s look-ahead | trailing hop 保全窗 Synchformer + History LocDiT |\n| WorldSonus | 流式 V2A，~100ms chunk look-ahead | 更低 look-ahead 下 DeSync/质量双赢 |\n| MMAudio-L | 离线强基线 | 流式逼近离线对齐（DeSync 0.50 vs 0.47） |\n\n**能否预测？**「别砍视觉窗」可预期；trailing+共享 Synchronizer 在 80ms 下对齐幅度不完全可预期。→ **窄机制**。",
+      "method": "固定 0.64s（16帧@25fps）视觉窗，用 hop s∈{1,2,4} 滑步（80/160/320ms look-ahead）；Unified Varhop Synchronizer；History LocDiT 读过去 patch；可选 Future-Warmup 打破 AR 死锁。",
+      "evidence": "- Table1：LiveFoley-16k DeSync **0.50**、FD-PaSST **92.48** @0.08s vs SoundReactor **1.03**/**113**；48k DeSync **0.48**、IS **11.42**。\n- A800 E2E **156 ms**（s=1）；Future-Warmup **~236 ms**。\n- Fig1a 感知阈：动作 **0.34 s**。\n- 本站 **未测**。",
+      "concerns": "非联合 AV；SoundReactor 多项灰字无官方 ckpt；未报与内部视频生成耦合延迟。",
+      "takeaways": "- Who：H3 AV / 交互世界伴音。\n- Control：同 80ms look-ahead，LiveFoley vs SoundReactor；报 DeSync + A800/H20 墙钟。\n- Success：DeSync≤0.55 且 E2E≤300ms；主观不糊。\n- Stop：无卡则只读机制。"
+    },
+    {
+      "id": "cosmos-interactive-sim",
+      "rating": "worth",
+      "originality": "finding",
+      "credibility": "solid",
+      "directions": [
+        "world-model",
+        "streaming"
+      ],
+      "highlight": true,
+      "title": "Interactive World Simulation with Cosmos for Physical AI",
+      "tldr": "NVIDIA 开源 Cosmos 交互 WM 配方：离线 Cosmos3→控制条件 chunk-AR（因果注意力+因果/少步/self-forcing 后训+流式 KV）；Sim-Bimanual 在 **1×GB300** 上 TAEHV Super **48.1 FPS / p50 166 ms**（8帧@30FPS）；代码+HF Nano-Sim-* 权重声明 → gate「值得看·可用配方」。",
+      "institutions": [
+        "NVIDIA"
+      ],
+      "published": "arXiv 2611.06627（Thu 11-05 batch 补扫）",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.06627",
+        "code": "https://github.com/nvidia/cosmos",
+        "project": "https://research.nvidia.com/labs/cosmos-lab/cosmos-simulation",
+        "other": [
+          {
+            "label": "Cosmos-Framework",
+            "url": "https://github.com/nvidia/cosmos-framework"
+          },
+          {
+            "label": "HF Sim-Bimanual",
+            "url": "https://huggingface.co/nvidia/Cosmos3-Nano-Sim-Bimanual"
+          }
+        ]
+      },
+      "rating_reason": "工业开源配方轨道：可跑件+延迟账本站得住；机制继承 Causal-rCM → 非 must。",
+      "coverage": {
+        "paper": "full",
+        "demo": "partial",
+        "code": "partial",
+        "note": "PDF Table3/Fig9 抽查；未本机跑 GB300。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| Cosmos 3 | 离线双向世界基座 | 交互流式执行框架 + 开源 Sim 检查点 |\n| Causal-rCM | 因果蒸馏课程 | 同课程落地到多任务 Sim（操作/迁移/多视车辆） |\n| CADRE | 交互 WM AE/延迟账本 | 大基座侧 serving 配方 |\n\n**能否预测？** 因果化+开源大体可预期 → **发现/可用配方**。",
+      "method": "控制条件 chunk-AR；时序因果注意力；因果/少步/SF 后训；固定 KV 窗流式执行；可选外挂物理状态驱动观察；FPS 调制对齐动作与 latent。",
+      "evidence": "- Table3：TAEHV Super **48.1 FPS**、p50 **166**/p95 **169 ms**；Wan2.2 解码 **35.0 FPS**/**229 ms**（1 GB300，4 步，64-latent KV 窗，8 帧/chunk@30FPS）。\n- Fig9：去噪~89 ms、KV 更新~69 ms、解码 4.4 ms。\n- 本站 **未测**。",
+      "concerns": "录制动作非闭环；控制须 chunk 前到齐；GB300≠H20/5090；文中 AV=自动驾驶多视，非音视频。",
+      "takeaways": "- Who：交互 WM serving。\n- Control：同 chunk/步数拆 denoising / KV-update / decode；试轻解码器。\n- Success：写出三件套墙钟；RTF≤1 @目标播放率。\n- Stop：无同类卡则只对标相对拆分。"
+    },
+    {
+      "id": "evoworld-oos-causal",
+      "rating": "worth",
+      "originality": "finding",
+      "credibility": "solid",
+      "directions": [
+        "world-model",
+        "streaming"
+      ],
+      "highlight": true,
+      "title": "EvoWorld: Towards Out-of-Sight World Evolution in Generative Video Models",
+      "tldr": "提出 Out-of-Sight Causal Evolution：VLM 脑 + LTX-2.5 渲染器（IAA + 监督→AR rollout）；自建 Bench 上 Core **90.8%**（次优 Evoke-Turbo **21.7%**）。**MiniMax-H3 one-shot Core 仅 21.7%**（Revisit 100 / Event 99.2）——组件成功≠因果演化。与全景 EvoWorld（2510.01183）**撞名不同文**。",
+      "institutions": [
+        "(authors; institutions in PDF)"
+      ],
+      "published": "arXiv 2611.06748（Thu 11-05 batch 补扫）",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.06748",
+        "project": "https://tommy-bie.github.io/projects/evoworld/"
+      },
+      "rating_reason": "对 H3 有可行动分项发现；自建Bench/VLM评 → worth 非 must。",
+      "coverage": {
+        "paper": "full",
+        "demo": "none",
+        "code": "unavailable",
+        "note": "PDF Table1/8 抽查；未复测。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| Evoke / LingBot-World | 视频世界模型 | 视野外事件→反应因果链协议 + 脑-渲染器 |\n| LTX-2.5 | 视频底座 | IAA + 两阶段 AR 训 |\n| MiniMax-H3 | 联合 AV 底座 | 同 Bench one-shot 暴露 Core 短板 |\n\n**能否预测？** 要记忆+推理可预期；H3 Event 高但 Core 崩的落差不完全可预期。→ **发现**。",
+      "method": "分段 AR：段内全注意，跨段读前 4 latent；脑（Qwen3.8-27B）产事件条件推理提示；渲染器 IAA 锚定实体；Stage1 监督反应、Stage2 在线 AR rollout。",
+      "evidence": "- Table1：Core **90.8** / Causal **94.2** / React **85.0** vs Evoke-Turbo Core **21.7**。\n- Table8：H3 Core **21.7** / Revisit **100** / Event **99.2** / Causal **44.2**。\n- Table2：IAA+Stage2 Core **82.5→84.2→90.8**。\n- 本站 **未测**。",
+      "concerns": "120 例自建+VLM 评；无墙钟；NAME-COLLISION 2510.01183；单事件单反应范围。",
+      "takeaways": "- Who：H3 AR / 交互 WM 评测。\n- Control：同协议测 H3 AR（非 only one-shot）；盯 Core/Causal 不只 Event。\n- Success：Core 相对 one-shot 基线明显抬；回访一致不崩。\n- Stop：Bench 不可得则先复现协议再训。"
+    },
+    {
+      "id": "nanokv-ar-compression",
+      "rating": "worth",
+      "originality": "mechanism",
+      "credibility": "solid",
+      "directions": [
+        "streaming",
+        "video-gen"
+      ],
+      "title": "NanoKV: High-Ratio KV Cache Compression for Autoregressive Video Generation",
+      "tldr": "冻骨干的历史 KV 生成感知压缩（Key/Value 分工）；HY-WorldPlay **26.09×**（20.96→0.80 GiB），相对 KVTC 近 2× 压缩且 PSNR **+1.0 dB**；NanoKV-Fast 约 **1.15×** E2E。评测是相对未压缩同轨迹 PSNR，非真值。",
+      "institutions": [
+        "(authors; institutions in PDF)"
+      ],
+      "published": "arXiv 2611.06377（Thu 11-05 batch 补扫）",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.06377"
+      },
+      "rating_reason": "核心区 AR 推理缓存当天必判；高比压缩+生成保真有表；开源未落地 → worth。",
+      "coverage": {
+        "paper": "full",
+        "demo": "none",
+        "code": "unavailable",
+        "note": "PDF Fig1/表抽查；承诺开源未见 URL。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| KVTC | AR 视频 KV 压缩基线 | 更高有效压缩 + 生成感知拟合 |\n| HY-WorldPlay / Matrix-Game | AR 视频/WM 骨干 | 即插压缩层 |\n| VAR-Q（同日） | KV 量化 | 正交：压缩编码 vs 量化 |\n\n**能否预测？** 高比压缩可预期；保下游生成的分工设计增益需表。→ **窄机制**。",
+      "method": "历史 KV 低秩/聚类式压缩；Key 与 Value 分角色拟合；可选混合维注意力；Fast 配置换速度。",
+      "evidence": "- HY-WorldPlay：**26.09×**，峰显存 **55.92→35.83 GiB**。\n- vs KVTC：约 2× 压缩、PSNR **+1.0 dB**；Fast **~1.15×** E2E。\n- 本站 **未测**。",
+      "concerns": "相对未压缩生成的 PSNR；标准版常慢于 Original；无交互延迟；代码未出。",
+      "takeaways": "- Who：H3 AR 长上下文 serving。\n- Control：recent 窗 vs NanoKV 类压缩；报峰显存+后段漂移+墙钟。\n- Success：显存降且后段质量不塌。\n- Stop：无实现则先复现压缩比-PSNR 曲线。"
+    }
+  ],
+  "trend_summary": "主线三岔：①流式 AV 伴音（LiveFoley 用 trailing hop 在 80ms look-ahead 下逼近离线 DeSync）；②交互 WM 开源配方（Cosmos Sim 给 GB300 延迟账本）；③视野外因果评测暴露 H3 one-shot Core 短板。AR serving 侧 NanoKV 高比历史 KV 压缩可并行关注。",
+  "catchup_note": "13:45 NEW_THU_BATCH；08:45/10:45 仍 Wed 静默。"
+}
