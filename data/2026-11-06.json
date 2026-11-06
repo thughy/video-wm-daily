@@ -1,0 +1,41 @@
+{
+  "date": "2026-11-06",
+  "headline": "周五 13:45 新批次补扫：过线 PreSTP（少步 AR token 剪枝，Self-Forcing/CausVid/AnyFlow 上 1.52–3.20×）。晨报 STALE；08:45/10:45 无新批次。",
+  "catchup_note": "13:45 NEW_FRI_BATCH（Fri 6 Nov）；08:45/10:45 仍 Thu 静默。晨报零过线=供给空窗。",
+  "trend_summary": "周五批次终于翻到。核心增量是 **训练免费的少步 AR 推理加速**：PreSTP 用早期 clean estimate 做跨帧/跨步 token 剪枝，补 TeaCache/FlowCache 在 4-NFE 区失效的缺口；与昨日 NanoKV（KV 压缩）正交，可并列进 Fast-H3 serving 菜单。少步侧 AGAVE（1-NFE guidance field）与 FewStepRL（Wan 4-step RL）已转发，不抢站卡。",
+  "papers": [
+    {
+      "id": "prestp-fewstep-ar-token-prune",
+      "rating": "worth",
+      "originality": "mechanism",
+      "credibility": "solid",
+      "directions": [
+        "streaming",
+        "video-gen"
+      ],
+      "highlight": true,
+      "title": "Training-Free Predictive Spatio-Temporal Token Pruning for Few-Step Autoregressive Video Diffusion",
+      "tldr": "少步 AR 上用早期 clean estimate 构跨帧静态+跨步收敛的 token 掩码并跳算；5s 上 CausVid/Self-Forcing/AnyFlow **1.52–3.20×**（AnyFlow 26.21→8.19s），VBench 降幅 ≤0.24；30s 最高 **1.96×** 且 Self-Forcing VBench-Long **81.89→82.07**；1-NFE 仍有 **1.17–1.22×**。相对 TeaCache/FlowCache 的步轴缓存，在蒸馏后更贴少步区。",
+      "institutions": [
+        "The University of Hong Kong",
+        "ByteDance Seed"
+      ],
+      "published": "arXiv 2611.07551（Fri 11-06 batch 13:45 补扫）",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.07551"
+      },
+      "rating_reason": "核心区 few-step AR 推理加速当天必判；机制+多骨干表 vs TeaCache/FlowCache；缺 GPU 标注与开源 → worth 非 must。",
+      "coverage": {
+        "paper": "full",
+        "demo": "none",
+        "code": "unavailable",
+        "note": "PDF Table1/2/3 与附录 A.1 抽查；延迟=扩散 latency；未本机测；未见 GitHub。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| TeaCache / FlowCache | 步间特征复用 | token 粒度；少步/1-NFE 仍有效 |\n| Self-Forcing / CausVid / AnyFlow | 少步 AR 骨干 | 即插训练免费加速 |\n| NanoKV（昨日） | 历史 KV 压缩 | 正交：算力剪枝 vs 显存压缩 |\n\n**能否预测？** 少步区弃步轴缓存转 token 可预期；AnyFlow 3.20× 与长窗反超需表。→ **窄机制**。",
+      "method": "步0 dense probe 得 clean estimate → 跨帧相似+跨步收敛构 mask；冗余 token 跳后续计算，last-computed-value 还原；内容自适应 mask 复用降 probe 成本。",
+      "evidence": "- Table1 5s：SF **7.92→5.21s（1.52×，15.5FPS）** VBench −0.07；CausVid **1.69×**；AnyFlow **3.20×**（26.21→8.19s）−0.24。\n- Table2 30s：CausVid **1.96×** VBench-Long **+0.28**；SF **1.50×** 且 Total **+0.18**。\n- Table3 1-NFE：OF/CF++ **1.17–1.22×**。\n- 本站 **未测**；GPU **未写**。",
+      "concerns": "硬件型号缺失；无官方代码；AnyFlow 实验改了历史 KV 更新策略（附录）；工程接入 restoration/KV 一致性有成本。",
+      "takeaways": "- Who：Fast-H3 / Self-Forcing 族 serving。\n- Control：同 4-NFE，TeaCache vs PreSTP；报墙钟 FPS + VBench + 长窗漂移。\n- Success：≥1.4× 且 Total 降幅≤0.2；长窗不恶化。\n- Stop：无实现带宽则先读机制，与 NanoKV 二选一排期。"
+    }
+  ]
+}

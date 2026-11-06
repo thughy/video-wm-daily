@@ -1,0 +1,37 @@
+{
+  "week": "2026-W45",
+  "range": [
+    "2026-11-02",
+    "2026-11-06"
+  ],
+  "title": "W45：可用配方+AV流式+反漂移稳住；周五补到 PreSTP（少步AR token剪枝）与少步侧 AGAVE/FewStepRL 转发。",
+  "summary": "## 本周一日历\n\n- **周一 11-02：** CADRE 抬升「值得看·可用配方」；交互 WM 部署拆 chunk 墙钟。\n- **周二 11-03～周三 11-04：** TaoMate-HD（AV）+ Wave Forcing 配方 + 反漂移簇（Disen/History/dKV/Commit）+ ReCR/Compression；行动卡 progressive AV / 反漂移三选一 / WaveRT。\n- **周四 11-05（13:45 补）：** LiveFoley 流式 V2A、Cosmos Interactive 可用配方、EvoWorld OOS（H3 Core 21.7%）、NanoKV AR KV 压缩。\n- **周五 11-06：** 晨报 STALE（仍 Thu）零过线=供给空窗；08:45/10:45 静默；**13:45 NEW_FRI_BATCH** 过线 **PreSTP**；少步转发 AGAVE + FewStepRL（+Fisher/Route-DMD）；RL 转发 RoboImagine/ArtiVidRM。\n\n## 训练主线（可串）\n\n1. **少步对抗/后训：** VA-TDM（周一对照）∥ FewStepRL（Wan 4-step RL 菜单）∥ AGAVE（1-NFE guidance field）\n2. **反漂移 / 历史约束：** History Forcing + Disen/dKV/Commit + ReCR/Compression\n3. **AV 流式：** TaoMate-HD progressive；LiveFoley 流式 V2A\n4. **交互 WM 工业：** Cosmos Interactive；CADRE AE；EvoWorld OOS 警示\n5. **推理 infra：** NanoKV（KV）∥ **PreSTP（token 剪枝）** — 正交可并列；uniserve/Wave 部署账本\n\n## 渠道\n\n| 渠道 | 表现 |\n|---|---|\n| arXiv /new | 主供给；Fri 翻日推迟到 13:45 |\n| 补扫 08:45/10:45/13:45 | Fri 前两槽静默；13:45 产出 PreSTP |\n| 少步转发 | AGAVE/FewStepRL/Fisher/Route-DMD |\n| 数据/RL 转发 | RL×3；data 无 |\n\n## 对 H3\n\n- 先跑：VA-TDM @4NFE；并行评估 PreSTP vs TeaCache（同 SF ckpt）\n- 旁注：AGAVE 1-NFE field；FewStepRL 开源 wan21\n- 警示：EvoWorld H3 Core 21.7% 仍在\n",
+  "highlights": [
+    {
+      "date": "2026-11-05",
+      "paper_id": "livefoley-streaming-v2a",
+      "title": "LiveFoley",
+      "note": "流式 V2A；DeSync 0.50 @80ms"
+    },
+    {
+      "date": "2026-11-05",
+      "paper_id": "cosmos-interactive-sim",
+      "title": "Cosmos Interactive",
+      "note": "工业交互 WM 可用配方"
+    },
+    {
+      "date": "2026-11-05",
+      "paper_id": "nanokv-ar-compression",
+      "title": "NanoKV",
+      "note": "AR KV 高比压缩"
+    },
+    {
+      "date": "2026-11-06",
+      "paper_id": "prestp-fewstep-ar-token-prune",
+      "title": "PreSTP",
+      "note": "少步 AR token 剪枝 1.52–3.20×"
+    }
+  ],
+  "threads": "少步加速从「蒸馏步数」扩到「步内 token / KV」两层；AV 流式有 LiveFoley 硬延迟样板；交互 WM 有 Cosmos 工业账本。",
+  "watchlist": "- VA-TDM 是否开跑\n- PreSTP 工程可行性（无官方码）\n- AGAVE/FewStepRL 少步回执\n- Speculative Forcing 代码仍空壳"
+}
