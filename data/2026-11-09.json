@@ -1,0 +1,41 @@
+{
+  "date": "2026-11-09",
+  "headline": "周一 13:45 新批次补扫：过线 Trajectory Forcing（用去噪轨迹当 AR 上下文，VBench 85.15 超过 Self-Forcing，30 秒 Quality Drift 降到 1.38）。晨报 STALE；08:45/10:45 仍是周五批次。",
+  "catchup_note": "13:45 NEW_MON_BATCH（Monday 9 Nov，覆盖周末）；08:45/10:45 仍 Friday 6 Nov 静默。不重推周五 PreSTP。",
+  "trend_summary": "周一列表覆盖周末。核心增量是 **Forcing 族的上下文设计**：Trajectory Forcing 不再只看前一 chunk 的干净终点，而是按 γ 从去噪轨迹里选一点；5 秒 VBench Total 85.15（SF 84.31 / CF 84.04），30 秒 Quality Drift 1.38（SF 2.21 / CF 4.36），代价是吞吐 15.0 vs 17.0 FPS。H3 AR 线可直接对照 History Forcing / SF 终点条件。旁注：AR-Edit 在 DMD 少步 AR 上做训练免费流式编辑（fyi，不上站）；Video-Coder 提升的 Minimax-H3 是 Hailuo，不是咱们的 H3。",
+  "papers": [
+    {
+      "id": "trajectory-forcing-ar-traj-context",
+      "rating": "worth",
+      "originality": "mechanism",
+      "credibility": "solid",
+      "directions": [
+        "streaming",
+        "video-gen"
+      ],
+      "highlight": true,
+      "title": "Trajectory Forcing: Exploiting Diffusion Trajectories for Autoregressive Long Video Generation",
+      "tldr": "AR 扩散把 chunk 的去噪轨迹当上下文：SL 用伪轨迹、RL/DMD 用学生自己的 4-step rollout 轨迹，每步按 γ 选一个 clean-estimate 而不是静态终点。Wan2.1-1.3B 上 5s VBench Total **85.15**（Self-Forcing 84.31 / Causal Forcing 84.04），Quality 与 Semantic 同时升；30s（6×训练窗）Total **73.98**、Quality Drift **1.38**（SF 2.21 / CF 4.36，vs SF +2.92 [+2.06, +3.78]）。吞吐 **15.0 FPS / 0.78 s**，低于 SF/CF 的 17.0 / 0.69。",
+      "institutions": [
+        "Huawei Noah Research Institute"
+      ],
+      "published": "arXiv 2611.09096（Mon 11-09 batch 13:45 补扫）",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.09096",
+        "project": "https://wangbohan97.github.io/Trajectory-Forcing/"
+      },
+      "rating_reason": "Forcing 族新机制（轨迹点 vs 终点）+ 同管道 γ/Gaussian/SL 消融 + 30s 置信区间站得住；与已发表 SF/CF 初始化不同、吞吐略降、Table 2 未写 GPU、单骨干无官方码 → worth 非 must。",
+      "coverage": {
+        "paper": "full",
+        "demo": "partial",
+        "code": "unavailable",
+        "note": "PDF Table 2/3/4 与附录 C、Table 6 抽查，并与项目页交叉核对；项目页有 30s demo；未见训练代码；未本机测；Table 2 吞吐未标注 GPU。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| Self Forcing | 自 rollout + 只条件于前 chunk 终点 + DMD | 条件从终点换成按 γ 选出的轨迹点 |\n| Causal Forcing | SF + causal ODE 初始化 + DMD | 同样 DMD，改的是上下文不是 ODE |\n| Teacher / Diffusion Forcing | GT 终点或加噪终点 | SL 阶段用插值伪轨迹并反预测 |\n\n**能否预测？** 写出「AR 扩散 token 不是原子、应条件于整条去噪轨迹」之后，用轨迹而非终点可预期；Gaussian 扰动终点反而掉分、30s Drift 降到 1.38、Quality+Semantic 双升需要看表。→ **窄机制**。",
+      "method": "不缓存整条轨迹（KV 会按步数成倍涨）。每个既往 chunk 只存一组 clean-signal 预测，当前去噪步用选择函数 Sγ(p)=γp/(1+(γ-1)p) 选最近点；γ=1 对齐同噪声、γ→∞ 退回终点。SL（OpenVid 子集，20K，flow matching）构造伪轨迹；RL（VidProM ~250K，2K，DMD，Wan-14B teacher）用 4-step 自 rollout 真实轨迹。经验最优 γ=2–3。",
+      "evidence": "- Table 2（946 prompts）：TraF **85.15 / 85.89 / 82.20** vs SF 84.31 / 85.07 / 81.28（+0.84）vs CF 84.04 / 84.59 / 81.84（+1.11）；15.0 FPS / 0.78 s vs 17.0 / 0.69。骨干 Wan2.1-T2V-1.3B，832×480 @16 fps，4-NFE。\n- Table 3（128 MovieGen，30s）：TraF Total **73.98**、Temporal 90.39、Frame 65.46、Drift **1.38**；SF 71.06 / Drift 2.21；CF 70.48 / Drift 4.36。附录 Table 6 vs SF Total **+2.92 [+2.06, +3.78]**。Rolling/LongLive 有长训，Drift 更低（0.56/0.60）但 Total 仍低于 TraF。\n- Table 4 / γ 消融：同管道 endpoint（γ=∞）**84.24** vs γ=2 **85.15**；Gaussian σ=0.22/0.11 → 83.87 / 83.95（比不扰动更差）。SL 蒸馏前：轨迹 84.39 vs TF 83.47 vs DF 84.07。\n- 本站 **未测**；Table 2 **未写 GPU**。",
+      "concerns": "与已发表 SF/CF 对比时初始化不同（TraF 从自家 SL ckpt 起步；γ 消融是同 ckpt，更干净）。吞吐 15 vs 17 FPS，作者承认未做等吞吐点。单骨干/单分辨率；未与 History Forcing 或 Rolling 长训叠加。项目页有 demo，未见训练代码。",
+      "takeaways": "- Who：H3 AR 线（与 History Forcing 同一对照簿）。\n- Control：同骨干同 4-NFE；SF 终点 vs TraF γ=2 轨迹点 vs 现有 history corruption；报 5s VBench Total + 30s Quality Drift（首末 5s imaging quality 差）。\n- Success：VBench Total ≥ SF +0.5，且 30s Quality Drift ≤ 当前 SF/HF。\n- Stop：轨迹缓存把墙钟吃掉超过质量收益（论文估训练 +6%；推理 15 vs 17 FPS），或 γ 在 H3 日程上不稳。\n- 蒸馏目标与 SF 同族，增量在条件 → 主评在本站，DMD 细节转发少步。"
+    }
+  ]
+}
