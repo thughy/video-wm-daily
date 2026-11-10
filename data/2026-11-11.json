@@ -1,0 +1,89 @@
+{
+  "date": "2026-11-11",
+  "headline": "周二批次终于发布：过线一篇工业开源配方——IFM/MBZUAI 的 PAN 2（29B MMDiT 世界模型，权重+训练+FastVideo day-0）。能力表略低于 MiniMax-H3（84.48 vs 87.20），Physics-IQ 排行榜设置上高于 H3（49.38 vs 39.79）；不是流式/AR。昨天三槽补扫都还停在周一。",
+  "catchup_note": "2026-11-10 晨报及 08:45/10:45/13:45 补扫仍是 Mon 9 Nov；周二批次约在 11-10 16:33 后出现（今早 cs.CV Age≈14.2h）。本页处理 Tuesday 10 Nov。今日 08:45/10:45/13:45 接 Wednesday 11 Nov。",
+  "papers": [
+    {
+      "id": "pan2-ifm-wm-recipe",
+      "rating": "worth",
+      "originality": "finding",
+      "credibility": "solid",
+      "directions": [
+        "world-model",
+        "video-gen"
+      ],
+      "highlight": true,
+      "title": "PAN 2",
+      "tldr": "IFM（MBZUAI）开源通用世界模型 PAN 2：LLM 概念推理器写出带时间戳的状态描述，29B MMDiT 感知骨干再生成最多约 20 秒视频；默认 50 步、704×1248、24fps、241 帧。官方表上 Overall 84.48 低于 MiniMax-H3 的 87.20，人评 Elo 1595（GPT-6 Astra 推理器）对 H3 的 1620；Physics-IQ Verified 排行榜设置 49.38 高于 H3 的 39.79。代码 Apache-2.0 + HF 权重 + FastVideo 11-10 day-0 支持 → gate「值得看·可用配方」。不是流式，也没有音视频联合。",
+      "institutions": [
+        "Institute of Foundation Models, MBZUAI"
+      ],
+      "published": "GitHub ifm-ai/PAN2（2026-11-05 建仓）；HF IFM/PAN2（模型卡 11-09 更新）；FastVideo PR #2029 于 2026-11-10 10:50 UTC 合入。无独立 arXiv 技术报告（架构引用 2507.05169 Critique of World Models）。",
+      "links": {
+        "code": "https://github.com/ifm-ai/PAN2",
+        "other": [
+          {
+            "label": "HF weights",
+            "url": "https://huggingface.co/IFM/PAN2"
+          },
+          {
+            "label": "Diffusers pipeline",
+            "url": "https://huggingface.co/docs/diffusers/main/en/api/pipelines/pan2"
+          },
+          {
+            "label": "vLLM recipe",
+            "url": "https://recipes.vllm.ai/IFM/PAN2"
+          },
+          {
+            "label": "FastVideo PR #2029",
+            "url": "https://github.com/hao-ai-lab/FastVideo/pull/2029"
+          },
+          {
+            "label": "GLP formalization (arXiv)",
+            "url": "https://arxiv.org/abs/2507.05169"
+          }
+        ]
+      },
+      "rating_reason": "工业开源配方轨道（2026-10-30 gate-fix）：权重、训练脚本、推理默认值和对照表站得住；机制是已发表的 GLP（LLM 写状态 + 扩散出像素），可预期，故非 must。对 H3 的立即价值是多一个可跑的开放对照，尤其是 Physics-IQ。",
+      "coverage": {
+        "paper": "partial",
+        "demo": "none",
+        "code": "partial",
+        "note": "读了官方 MODEL_CARD / inference.md / 结果图（数字从官方图抄录）和仓库目录；HF 上有完整 transformer 14 分片与 text encoder 4 分片。未下载 demo 视频，未在本机跑 29B。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| Critique of World Models (2507.05169) | 形式化 GLP：概念推理 + 潜空间扩散 | 把该架构做成 29B 开源可跑件，并给出与 H3 / LTX 2.5 / Cosmos 3 Super 的对照表 |\n| MiniMax-H3 | 开放 omni 视频底座，常被当作教师/对照 | PAN 2 是动作条件世界模拟器（文本动作→视频结果），不是音视频联合生成；能力总分和人评略低于 H3，Physics-IQ 排行榜设置更高 |\n| Cosmos Interactive / CADRE | 已上站的工业交互 WM 配方，带延迟账本 | PAN 2 给出 20 秒级、704×1248、50 步的开源 29B 权重，但默认不是流式、也没有可比的单卡延迟账本 |\n\n**能否预测？** 用 LLM 写结构化状态、再用 DiT 渲染，懂 GLP 的人能料到这条路。新的是可跑的 29B 开放配方，以及它和 H3 在物理 IQ / 多步计划上的相对位置 → **可用配方，不是新机制。**",
+      "method": "概念推理器（可用 Claude / GPT-6 Astra 等，训练时的文本编码器是冻结的 Qwen3.5-9B）把观察和文本动作写成带时间戳的事件、角色动作和相机运动；29B MMDiT 在该条件以及起始图像的 Wan 2.2 VAE latent 上预测视频 latent，再用 Wan 2.2 解码。默认采样：50 步、flow shift 9、全程 CFG 2.5；分辨率 704×1248、24 fps、默认 241 帧（约 10 秒），声称最长 20 秒。推理脚本按 GPU 数分片提示词，每张卡持有完整 29B，不做上下文并行。有安全护栏（提示 Qwen3Guard、视频 Q16），FastVideo 里默认打开。",
+      "evidence": "- 六项能力（300 单动作用例；官方图，均值±标准差，3 个种子）：PAN 2 Overall **84.48±0.08**，MiniMax-H3 **87.20±0.45**（开源最高），LTX 2.5 72.25，Cosmos 3 Super 71.34。多步计划（100 个日常任务，200 条提示，456 步）：逐步完成率 PAN 2 **75.10±1.51** 与 H3 **75.12±0.76** 持平；全计划完成率 PAN 2 **34.00±3.61**，H3 32.50±3.04。模型卡自己写：大约三分之二的计划里至少有一步没被执行。\n- Physics-IQ Verified（I2V）：排行榜设置下 PAN 2 **49.38±0.64**，H3 **39.79±0.40**，Cosmos 3 Super 48.62；系统默认设置下反而 H3 更高（**42.91±0.58** vs 37.48±0.48）。PhyGround 几乎持平（4.74 vs 4.73）。RBench 57.04 vs 56.16。闭源 FLUX 3 排行榜 51.11，略高于 PAN 2。\n- 人评（140 条提示 × 13 名评审 = 1400 次两两比较，Bradley–Terry Elo 中心 1500）：MiniMax-H3 **1620**、胜率 **68.8%**；PAN 2 + GPT-6 Astra **1595** / 63.7%；PAN 2 + Claude Opus **1559** / 58.9%；Cosmos 3 Super 1380；LTX 2.5 1346。\n- 来源：官方结果图（MODEL_CARD Headline Results）与 [inference.md](https://github.com/ifm-ai/PAN2/blob/main/docs/inference.md)。本站 **未复测**。",
+      "case_analysis": "HF 仓库有官方 `assets/video.mp4` 和预览 GIF。本站未下载、未用 ffmpeg 实测，也没有看过时序或物理演示是否挑样。",
+      "code_analysis": "仓库含 `train.py`、`generate.py`、`config/sft_29B_720p.yaml`、Apache-2.0。HF `IFM/PAN2` 有 transformer 14 个分片和 text encoder 4 个分片，看起来权重是齐的。FastVideo [PR #2029](https://github.com/hao-ai-lab/FastVideo/pull/2029) 合入 T2V/I2V 管线、Wan2.2 VAE decode kernel（声称 5 秒视频峰值显存 20.3 GiB，低于第一版 94.6 GiB）和默认护栏。本站只读了说明和目录，没有对训练循环做逐行核对，也没有跑通推理。",
+      "solidity": "机构清楚（MBZUAI IFM）；对照包含 MiniMax-H3、LTX 2.5、Cosmos 3 Super 和若干闭源模型；人评规模写明。缺独立技术报告、缺单卡/5090 延迟、缺音频。训练数据只说「数以亿计的、同一格式标注的视频」，没有公开数据清单。",
+      "concerns": "- 不是流式，也不是 AR：默认 50 步整段生成。不要把它当成 H3 流式学生的直接替代。\n- 人评和能力总分仍是 H3 更高；Physics-IQ 的优势只出现在「排行榜设置」，系统默认设置下 H3 反而高，换设置会改结论。\n- 推理器是外挂的：同一套 29B 骨干，GPT-6 Astra 和 Claude Opus 的 Elo 差 36 分，比较时必须写明推理器。\n- 29B 整模型驻卡，5090 32GB 大概要开 `--offload blocks`；官方没有给出我们机器上的墙钟。\n- 此前不在工业组织清单里，GitHub 仓 11-05 就在，是漏召回后补，不是 11-11 才发布。",
+      "takeaways": "- Who：H3 评测 / 对照同学（不是训练主票）。\n- Control：同一套 Physics-IQ Verified I2V，分别跑「排行榜设置」和「系统默认」；PAN 2 侧写明推理器（先复现 GPT-6 Astra 这一档，不要和 Claude 混报）。不要和 VA-TDM / History 同簿。\n- Success：相对关系与官方表同向即可（排行榜设置上 PAN 2 高于 H3，人评 Elo 仍是 H3 更高）。换卡只报相对名次，不硬抄绝对值。\n- Stop：29B 跑不起来就停在阅读，把它当作开放对照基线；不要为此改 H3 训练配方。",
+      "media": [
+        {
+          "src": "assets/2026-11-11/pan2-results-capabilities-light.webp",
+          "caption": "官方能力与多步计划表（来源：IFM / MBZUAI，HF IFM/PAN2 模型卡）。PAN 2 Overall 84.48，低于 MiniMax-H3 的 87.20；全计划完成率 34.00，略高于 H3 的 32.50。",
+          "wide": true
+        },
+        {
+          "src": "assets/2026-11-11/pan2-results-benchmarks-light.webp",
+          "caption": "官方公开基准表（来源：同上）。Physics-IQ Verified 排行榜设置下 PAN 2 为 49.38，高于 H3 的 39.79；系统默认设置下 H3 为 42.91，高于 PAN 2 的 37.48。",
+          "wide": true
+        },
+        {
+          "src": "assets/2026-11-11/pan2-results-human-light.webp",
+          "caption": "官方盲评 Elo（来源：同上；140 条提示 × 13 名评审 = 1400 次比较）。H3 1620 / 68.8%；PAN 2 + GPT-6 Astra 1595 / 63.7%。",
+          "wide": true
+        }
+      ]
+    }
+  ],
+  "trend_summary": "周二 arXiv 批次（873 篇新投稿）里，流式/AR 视频没有新过线机制文。SemanticKV（2611.11452）和 ReelCache（2611.09973）都是 AR 视频 KV 压缩，速度分别大约 1.14–1.29× 和相对卸载/重算约 2×，增量不够上站。SWAM（2611.12870）是机器人世界动作模型，没有视频质量指标。真正过线的是组织追踪补到的 PAN 2：开放 29B 世界模型配方，用来对照 H3。",
+  "redo": [
+    {
+      "title": "SemanticKV (2611.11452)",
+      "url": "https://arxiv.org/abs/2611.11452",
+      "note": "在 Self-Forcing / Causal Forcing / LongLive 2.0 上按语义约束做 KV 保留；5 秒段 3.35× 显存、速度只有 1.14–1.22×（DiT-only FPS）。相对 R-KV / Forcing-KV 可预期，不上站。"
+    }
+  ]
+}
