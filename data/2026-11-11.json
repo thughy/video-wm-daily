@@ -1,7 +1,7 @@
 {
   "date": "2026-11-11",
-  "headline": "周二批次终于发布：过线一篇工业开源配方——IFM/MBZUAI 的 PAN 2（29B MMDiT 世界模型，权重+训练+FastVideo day-0）。能力表略低于 MiniMax-H3（84.48 vs 87.20），Physics-IQ 排行榜设置上高于 H3（49.38 vs 39.79）；不是流式/AR。昨天三槽补扫都还停在周一。",
-  "catchup_note": "2026-11-10 晨报及 08:45/10:45/13:45 补扫仍是 Mon 9 Nov；周二批次约在 11-10 16:33 后出现（今早 cs.CV Age≈14.2h）。本页处理 Tuesday 10 Nov。今日 08:45/10:45/13:45 接 Wednesday 11 Nov。",
+  "headline": "13:45 周三批次过线 3 篇：生数/清华把 APEX 条件平移接到 S2-Avatar 的 Self-Replay Forcing（去掉 DMD fake net）；淘宝 TaoMate-R1 用开场/续写分角色 LoRA 降指令边界跳变；六月漏收的 Video-Mirai v2 用训练期未来表示蒸馏抬长时主体一致性。晨报已上站的 PAN 2（IFM 29B 世界模型配方）仍在。",
+  "catchup_note": "晨报处理的是 Tuesday 10 Nov（FRESH）。08:45 / 10:45 五类 /new 仍是周二、Age 未重置，静默。13:45 五类已翻 Wednesday 11 November 2026（Age≈2771–3494 s ≈0.77–0.97 h），API newest 2611.14519v1。本页因此同时收录晨报的 PAN 2 与周三补扫的 3 篇过线文。",
   "papers": [
     {
       "id": "pan2-ifm-wm-recipe",
@@ -76,9 +76,113 @@
           "wide": true
         }
       ]
+    },
+    {
+      "id": "apex-condition-shift-srf",
+      "rating": "worth",
+      "originality": "finding",
+      "credibility": "solid",
+      "directions": [
+        "av-streaming",
+        "streaming",
+        "video-gen"
+      ],
+      "highlight": true,
+      "title": "Few-Step Streaming Video Generation via Condition Shifting",
+      "tldr": "把原 APEX 的条件平移接到 Vidu S2-Avatar 的 Self-Replay Forcing：原文条件走生成、平移条件走假速度估计，共享参数，去掉独立 DMD fake net。StreamAV-Bench（320 例，1344×768，3 NFE+一步 2× Refiner）Progressive VIF **3.856 vs 3.831**，VA **0.642 vs 0.633**；70 对 180 秒人评指令跟随 **+30.0%**（22/47/1），运动质量 **−8.6%**，同步基本打平。匹配训练下峰值显存 102.7→98.2 GiB/GPU（−4.4%）、步时 35.9→32.6 s（−9.2%）。推理 FPS 未报。",
+      "institutions": [
+        "Tsinghua University",
+        "Shengshu Technology",
+        "Westlake University"
+      ],
+      "published": "arXiv 2611.14033（Wed 11-11 batch 13:45 补扫）",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.14033"
+      },
+      "rating_reason": "机制是 APEX（2604.12322）迁到流式 SRF，不是新原理；但 StreamAV-Bench+180s 人评站得住，指令跟随与运动质量的权衡是新信息，对 H3 的 DMD 线可直接对照。无推理 FPS、训练卡型未写、PQ 小数位几乎相同 → worth 非 must。",
+      "coverage": {
+        "paper": "full",
+        "demo": "none",
+        "code": "unavailable",
+        "note": "核对 HTML 表 1–4 与 PDF 前 12 页及训练成本段；未见项目页或代码；未本机测；推理硬件/FPS 未报；训练峰值显存未写 GPU 型号。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| APEX（2604.12322） | 条件平移让生成与假估计共享网络 | 接到因果流式视频 + Self-Replay Forcing |\n| DMD | 独立 fake-score 网络跟踪生成器 | 用平移条件在同一套参数里估假速度 |\n| S2-Avatar / Self-Replay Forcing | 自回放历史 + 冻结参考教师 + 感知正则 | 保留这三项，只换假估计 |\n| TwinFlow | 生成与分布估计共享网络的另一条线 | 本文走 APEX 的条件平移 |\n\n**能否预测？** 写出「把 APEX 接到 SRF、去掉 fake net」之后，质量大致持平、训练变便宜是可预期的；指令跟随 +30%、运动 −8.6%、训练只省 4.4%/9.2% 要看表。→ **迁移 + 新权衡**。",
+      "method": "在 S2 的 Self-Replay Forcing 里，对同一提示的生成输出做条件平移：原文本条件选择生成，平移后的条件选择假速度场，默认共享 AdamW 状态。参考分数仍来自 S2 的冻结教师。推理仍是每块 3 次骨干 NFE（不含 KV 编码），再加共用的一步 2× 空间 Refiner。评测分辨率 1344×768，序列 180 秒。训练数据与过滤流程复用 S2-Avatar 全文。",
+      "evidence": "- 表 1（StreamAV-Bench；APEX 与 S2 为本文复测，部分基线 VIF 引自原 bench）：APEX VA **0.642** / VQ 3.256 / VIF **3.856** / AIF **2.835**，S2-Avatar 0.633 / 3.267 / 3.831 / 2.768；AVSync 1.341 vs 1.319 s（略差）；SC/BC 持平；PQ 两边都是 6.386（表 2 到 6 位小数几乎相同，存疑）。\n- 表 2 分轨：VIF/AIF/VA 在 Progressive 与 Interactive 都升；VQ 在 Progressive +0.049、Interactive −0.070，总体 −0.011；AQ、AVAlign、SC 两轨都略降。\n- 人评 70 对 180s I2V（相对 S2 3 NFE）：指令 22 胜 47 平 1 负 = **+30.0%**，MOS 4.17 vs 3.99；一致性与视频质量各 +4.3%（净胜 3 场）；同步 69 平 1 负（−1.4%），MOS 4.23 vs 4.26；运动 **−8.6%**；可用性都是 62/70（88.6%）。\n- 2 NFE 对 S2 的 3 NFE：指令仍 **+27.1%**（22/45/3），一致性/画质 −2.9%，同步与运动 −7.1%。\n- 训练对照（图 5，匹配设置）：峰值显存 102.7→**98.2 GiB/GPU**（−4.5 GiB，−4.4%），步时 35.9→**32.6 s**（−9.2%）。未写 GPU 型号。",
+      "concerns": "- 机制不是新的，是 APEX 的流式迁移。\n- 没给推理吞吐或硬件；扎实度门槛里的延迟/FPS 这条对「少步流式」主张是缺口（他们主要主张训练成本和指令跟随）。\n- 表 2 的 PQ 两边到 6 位小数几乎一样，可能是共享 Refiner 或指标饱和，不能当成画质证据。\n- 一致性/画质人评只有净胜 3 场，弱于指令项；运动质量明确回退。\n- 未见代码。",
+      "takeaways": "对 H3 的 DMD/少步线：用条件平移替换独立 fake net，对照现有 DMD（同数据、同 SRF 或现有回放）。成功标准：显存或步时下降，指令跟随不掉，运动质量和 AV 同步不出现本文这种回退。2 NFE 仍能保住指令跟随，值得一并看。不改行动卡① VA-TDM 的先跑地位。"
+    },
+    {
+      "id": "taomate-r1-temporal-role",
+      "rating": "worth",
+      "originality": "mechanism",
+      "credibility": "doubtful",
+      "directions": [
+        "av-streaming",
+        "streaming",
+        "video-gen"
+      ],
+      "highlight": true,
+      "title": "TaoMate-R1: Temporal Role Specialization for Streaming Multi-Reference Video Generation",
+      "tldr": "在冻结骨干上给「开场建场」和「后续续写」各一套 LoRA（同预算两适配器），每套都做去噪和写上下文，用 Self Gradient Forcing 联合训练。对照把参数按操作（去噪 vs 写上下文）切开。10 条约 2 分钟、指令会变的流上，边界亮度跳变 **1.96→0.613**，边界 CLIP/DINO 也升。代码声称发在 [TaoMate-H3](https://github.com/TaoLiveAIGC/TaoMate-H3)。自有 22 例原生音频上 Desync 反而变差（0.445 vs 0.282）。",
+      "institutions": [
+        "Alibaba Group"
+      ],
+      "published": "arXiv 2611.14307（Wed 11-11 batch 13:45 补扫）",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.14307",
+        "code": "https://github.com/TaoLiveAIGC/TaoMate-H3"
+      },
+      "rating_reason": "时间角色切分是可执行的设计选择，且接在已过线的 TaoMate-HD 线上、声称开源；主证据是 10/32 例自建集，对外 luma 对比可能不公，音频 Desync 变差 → worth，可信度存疑，非 must。",
+      "coverage": {
+        "paper": "full",
+        "demo": "none",
+        "code": "partial",
+        "note": "核对 HTML 表 1–4 与 PDF 前 12 页及音频段；代码仓库本槽未克隆核实是否已含 R1 权重；未本机测；无 FPS/硬件。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| TaoMate / TaoMate-HD（2611.03394） | 淘宝直播流式/渐进分辨率 AR 音视频 | 多参考 + 按时间角色拆 LoRA |\n| Self Gradient Forcing / SGF+ | 用后续预测监督写历史；SGF+ 按操作拆参数 | 改成按开场/续写拆，操作在角色内共享 |\n| VACE / Phantom / MiniMax-H3 | 多参考短片生成 | 对成长流、指令切换、边界连续 |\n\n**能否预测？** 「开场和续写是不同条件任务」可预期；边界跳变降到 0.613 的幅度、以及 Desync 变差要看表。→ **窄机制，证据偏自建**。",
+      "method": "冻结骨干上两套 rank/scale=128 的 LoRA（注意力 QKV/输出和 FFN，覆盖 208 个线性层）。开场适配器学习首块及持久外观锚点；续写适配器学习后续预测和最近音视频上下文。推理时历史保留开场视频 KV 作外观锚，再保留最近两块音视频 KV。Self Gradient Forcing 让后段监督写历史的计算。长流评测还提供缓存的教师音频，以及物体移除段的结束帧条件。",
+      "evidence": "- 表 3（10 条长流，同骨干、同两适配器预算）：相对 Operation split，边界 CLIP 0.979→**0.991**，DINO 0.973→**0.990**，亮度跳变 **1.96±0.456 → 0.613±0.103**。\n- 表 1（32 例）：相对 Operation split 的参考/文本 CLIP 几乎持平，时间 DINO 0.928→0.934，Realism 4.66→4.69，QA 0.938→0.950；VACE 在参考 CLIP/DINO 和文本 CLIP 上更高。\n- 表 2：短/长/公开三组里，时间相似度多数最高；长流参考 DINO 略低于 Operation split（0.478 vs 0.486）。\n- 表 4 对外：2 分钟流上 MiniMax-H3 / VACE 的边界 luma 为 10.2 / 9.12，本文 0.613——系统不同（教师音频、结束帧条件），不当成公平对照。\n- 22 例原生音频：AV alignment 4.77 vs Operation 4.59；音频 QA 0.736 vs 0.809；Desync **0.445 vs 0.282**（变差）。",
+      "concerns": "- 主结果是自建 10/32 例，没有 StreamAV-Bench / VBench 一类公共流式榜。\n- 与 MiniMax-H3 的 luma 差距不能直接解读为方法胜利。\n- 音频同步在自比中变差，和「音视频流式」目标冲突，对照时必须盯 Desync。\n- 无推理 FPS/硬件；代码本槽未核。",
+      "takeaways": "对 H3 多参考或长指令切换：用「开场 vs 续写」两套 LoRA 对照单套或按操作切分。成功标准：指令边界跳变下降，同时 Desync / 音频质量不出现本文这种回退。这是 TaoMate-HD 的后续，不挤掉 VA-TDM，作为下一票之一。"
+    },
+    {
+      "id": "video-mirai-ar-foresight",
+      "rating": "worth",
+      "originality": "mechanism",
+      "credibility": "solid",
+      "directions": [
+        "streaming",
+        "video-gen"
+      ],
+      "highlight": true,
+      "title": "Video-Mirai: Autoregressive Video Diffusion Models Need Foresight",
+      "tldr": "训练期让因果生成器自己 rollout，冻结的双向编码器读完整段，轻量预测头把停止梯度的未来表示蒸进当前因果状态；推理丢掉编码器与预测头，架构、逐步 FLOPs、KV 行为不变。Causal-Forcing（chunk-wise，Wan2.1 1.3B，832×480）5s VBench Total **83.82→84.62**（吞吐仍 17.0 FPS / 0.69 s）；30s 主体一致性 **84.93→88.47**；60s **73.74→84.09**。8×H100 上每轮训练 +14.3%。这是 2026-06-02 v1 的补判（当时漏收），今日为 v2。",
+      "institutions": [
+        "The University of Tokyo",
+        "National Institute of Informatics",
+        "SOKENDAI"
+      ],
+      "published": "arXiv 2606.03971v2（Wed 11-11 列表 replacement；v1 2026-06-02）",
+      "links": {
+        "paper": "https://arxiv.org/abs/2606.03971",
+        "project": "https://y0uroy.github.io/Video-Mirai"
+      },
+      "rating_reason": "「因果只约束推理、表示可以看未来」有多骨干和 30s/60s、bootstrap CI 撑着；与 REPA 近、5s 只 +0.80、未见训练代码 → worth 非 must。六月漏收在此补上。",
+      "coverage": {
+        "paper": "full",
+        "demo": "partial",
+        "code": "unavailable",
+        "note": "核对 HTML 表 1、5–8、17–18 与 PDF 前 12 页；项目页有可视化；未见训练代码；未本机测。v1 于 2026-06-02 发布时漏收，本次按 v2 补判。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| Causal Forcing / Self-Forcing | 因果 rollout + DMD，表示只由过去监督 | 用同一条 rollout 的未来双向特征当停止梯度目标 |\n| REPA / 表示对齐 | 用外部编码器对齐扩散中间表示 | 目标来自本条完成视频的未来段，且只在训练期 |\n| Teacher forcing | 用真值未来当生成输入 | 未来只监督表示，从不进入生成输入 |\n\n**能否预测？** 论点可预期；60s 主体一致性从 73.74 升到 84.09、5s 只加 0.80 要看表。→ **机制可想得到，长时幅度是新闻**。",
+      "method": "生成器仍按因果块去噪。冻结的前瞻编码器（默认 Wan-14B 双向）非因果地读完整 rollout；轻量预测头把当前因果状态映射到这些目标。消融里「当前 + 前 1 段」最好；DINO ViT-S/16 替换 Wan-14B 仍然涨点（84.34 vs 基线 83.82）。推理时编码器与预测头都丢掉。",
+      "evidence": "- 表 5：CF chunk-wise Total **83.82→84.62**（Quality 84.54→85.38，Semantic 80.93→81.59），17.0 FPS / 0.69 s 不变；SF chunk-wise 83.67→84.15；CF frame-wise 82.27→83.60，8.9 FPS / 0.45 s 不变。\n- 表 6：SkyReels-V2-DF-1.3B 微调 500 步，81.82→82.89。\n- 表 7：30s 主体一致性 CF **84.93→88.47**，背景 90.22→91.94；SF 89.83→91.62。\n- 表 17：60s（200 MovieGen，969 解码帧）主体 **73.74→84.09**，背景 85.03→89.54，Quality 65.81→73.30。\n- 表 18：对 CF 的 5s Total **+0.80±0.15**（10000 次按提示配对自助，95% 显著）。\n- 表 8：8×H100，每轮（1 次生成+4 次 critic）588→672 s（**+14.3%**）。",
+      "concerns": "- 与 REPA 类表示对齐很近，5s 增益中等。\n- 60s 跳变很大，但协议是 prompt-agnostic、只报一致性/质量，需防指标偏置。\n- 未见训练代码；项目页未在本槽逐帧复核。\n- 六月 v1 漏收是流程债，不是论文问题。",
+      "takeaways": "对 H3 AR / 漂移线：在 Causal-Forcing 或当前 History Forcing 配方上加这条 foresight loss，对照「同样步数不加未来表示」。成功标准：30s+ 主体一致性上升，短窗质量不掉，推理 FLOPs/KV 不变。训练开销按论文大约 +14%。与行动卡② History 放在同一条对照里，不另起炉灶。"
     }
   ],
-  "trend_summary": "周二 arXiv 批次（873 篇新投稿）里，流式/AR 视频没有新过线机制文。SemanticKV（2611.11452）和 ReelCache（2611.09973）都是 AR 视频 KV 压缩，速度分别大约 1.14–1.29× 和相对卸载/重算约 2×，增量不够上站。SWAM（2611.12870）是机器人世界动作模型，没有视频质量指标。真正过线的是组织追踪补到的 PAN 2：开放 29B 世界模型配方，用来对照 H3。",
+  "trend_summary": "周三五类语料 597（new 272 / cross 104 / repl 221），相对周二已处理 ID 的新+交叉差集 375；关键词后 75 篇交 Codex 分诊。过线 3 篇都在核心区：APEX 是少步流式训练配方（指令跟随升、运动质量降、训练成本只降一截）；TaoMate-R1 是 TaoMate-HD 的多参考续作，边界连续是真问题，但自建集且音频 Desync 变差；Video-Mirai 补上六月漏收，长时主体一致性的数字对 H3 AR 线更有用。OnlyAct 只做动作表示、HintErase 无数字、Edit in Sync v2 仍无 DeSync/人评，都不过线。晨报的 PAN 2 对照 H3 仍然成立。",
   "redo": [
     {
       "title": "SemanticKV (2611.11452)",
