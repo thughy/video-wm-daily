@@ -1,0 +1,67 @@
+{
+  "week": "2026-W46",
+  "title": "W46（11-09 至 11-15）补齐：周一轨迹条件、周三配方与长时、周五漏扫后的全双工/按帧延迟/可寻址记忆。没有新的必读定理，过线的都是可试配方或记忆修法。",
+  "range": [
+    "2026-11-09",
+    "2026-11-16"
+  ],
+  "summary": "本周 arXiv 实际公告日是周一、周二、周三和周五；周四 12 日没有公告。周五 13 日批次在周五当天三槽都没等到（列表仍停在周三），周一晨报失败，由 2026-11-16 08:45 补扫补上，所以本周页的日期范围接到 11-16。\n\n主线仍是流式/AR 的曝光偏差和长时记忆，不是新的生成原理。周一 Trajectory Forcing 用轨迹点条件替换终点条件，减轻长 rollout 漂移。周三一边是工业开源世界模型配方 PAN 2（对照 H3），一边是 APEX 用条件平移去掉 DMD fake net、TaoMate-R1 降开场边界跳变、以及六月漏收的 Video-Mirai v2。周五补上的四篇里，Duo 把全双工 AV 助手做成可跑件（老师是 MiniMax-H3/Hailuo，不是 Loopit H3），PixVid 证明时序 VAE 块本身就是控制延迟的下限，WorldTrace 给出训练免费的可寻址 KV，OmniDreams 公开了 2 步 Self-Forcing 驾驶栈。\n\n对 H3 的执行含义：VA-TDM、History+Mirai、APEX 条件平移这几张旧卡还在；本周新加的是 Duo 的双 rollout 协议阅读、PixVid 的「按帧出画 vs 块等待」对照，以及 WorldTrace/MemRoPE 的回访重建。不要把 OmniDreams 的驾驶 FVD 或 Duo 的 30 条人评抄成 SOTA。",
+  "highlights": [
+    {
+      "date": "2026-11-09",
+      "paper_id": "trajectory-forcing-ar-traj-context",
+      "title": "Trajectory Forcing",
+      "note": "轨迹点条件 vs 终点；VBench 85.15 vs SF 84.31；30s Drift 1.38 vs SF 2.21"
+    },
+    {
+      "date": "2026-11-11",
+      "paper_id": "pan2-ifm-wm-recipe",
+      "title": "PAN 2",
+      "note": "IFM 29B 开源 WM 配方；能力 84.48 vs H3 87.20，Physics-IQ 榜 49.38 vs 39.79"
+    },
+    {
+      "date": "2026-11-11",
+      "paper_id": "apex-condition-shift-srf",
+      "title": "APEX / Condition Shifting",
+      "note": "条件平移接到 S2-Avatar SRF，去掉 DMD fake net"
+    },
+    {
+      "date": "2026-11-11",
+      "paper_id": "taomate-r1-temporal-role",
+      "title": "TaoMate-R1",
+      "note": "开场/续写 LoRA；长流边界 luma 1.96→0.613"
+    },
+    {
+      "date": "2026-11-11",
+      "paper_id": "video-mirai-ar-foresight",
+      "title": "Video-Mirai v2",
+      "note": "六月漏收补判；30s 主体 84.93→88.47"
+    },
+    {
+      "date": "2026-11-16",
+      "paper_id": "duo-rwm-full-duplex",
+      "title": "Duo v1",
+      "note": "周五批次周一补：全双工 AV WM，MiniMax-H3 初始化，4 步 DMD；人评薄"
+    },
+    {
+      "date": "2026-11-16",
+      "paper_id": "pixvid-pixel-sf",
+      "title": "PixVid",
+      "note": "像素按帧生成，控制到出画 34ms vs SolarWM 495ms"
+    },
+    {
+      "date": "2026-11-16",
+      "paper_id": "worldtrace-addr-kv",
+      "title": "WorldTrace",
+      "note": "可寻址压缩 KV；LoopBench DINOv2 +32.6%，14B 互有胜负"
+    },
+    {
+      "date": "2026-11-16",
+      "paper_id": "omnidreams-sf-recipe",
+      "title": "OmniDreams",
+      "note": "开源 2 步 Self-Forcing 驾驶栈，单卡 GB300 68 FPS；只迁栈"
+    }
+  ],
+  "threads": "1. 条件从哪来：Trajectory Forcing（轨迹点）、APEX（条件平移，去掉 fake net）、PixVid（去掉时序 VAE 块，让控制作用在下一帧）。\n2. 长时记忆与回访：WorldTrace 可寻址 KV、Video-Mirai 的未来表示蒸馏、既有 History 卡。\n3. 可跑的工业配方：PAN 2、Duo、OmniDreams。后两份分别是全双工 AV 和驾驶域，数字不能混用。",
+  "watchlist": "- VA-TDM、History+Mirai、APEX vs DMD 仍待闭环对照。\n- Duo 等自动指标或可复述的单卡延迟账本。\n- WorldTrace 在非游戏骨干上的回访是否还优于 MemRoPE。"
+}

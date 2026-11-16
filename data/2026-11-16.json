@@ -1,0 +1,169 @@
+{
+  "date": "2026-11-16",
+  "headline": "周一补扫漏掉的周五 13 日批次（晨报失败后补上）：过线 4 篇。主线是流式交互的可用配方和长时记忆，不是新定理。inclusionAI 的 Duo 把全双工 AV 世界模型做成可跑件（Realization 从 MiniMax-H3/Hailuo 初始化，不是 Loopit H3）；PixVid 去掉时序 VAE 块后控制到出画 34ms；NVIDIA WorldTrace 用可寻址压缩 KV 做回访重建；OmniDreams 开源 2 步 Self-Forcing+DMD 驾驶栈。周四 12 日 arXiv 无公告。",
+  "catchup_note": "2026-11-16 晨报 06:38 失败（只留下 raw HTML，没有 recall-report）。08:45 补扫时五类 /new 仍是 Friday, 13 November 2026（Age≈232861–234437 s ≈64.7–65.1 h，相对晨报约 +2.1 h，未重置）；HTTPS API 200 Age 0，newest 2611.17336v1 published 2026-11-12T18:59:55Z，与周五公告窗一致。周四 12 日 catchup 为 0 条（pastweek 从周三直接跳到周五）。周一 16 日批次本槽尚未翻页（09:07 仍是周五、Age 继续增长）。本页收录的是漏扫的周五批次，不是周一周末窗。",
+  "papers": [
+    {
+      "id": "duo-rwm-full-duplex",
+      "rating": "worth",
+      "originality": "mechanism",
+      "credibility": "insufficient",
+      "directions": [
+        "av-streaming",
+        "world-model",
+        "streaming"
+      ],
+      "highlight": true,
+      "title": "Duo: A Reciprocal World Model for Full-Duplex Interaction",
+      "tldr": "inclusionAI 开源全双工音视频世界模型 Duo v1：Intent（Qwen3-VL）每个 17 帧块决定 <speak>/<wait>，Realization（从 MiniMax-H3/Hailuo 初始化的因果 AV DiT，不是 Loopit H3）做 4 步 DMD 联合生成。24fps、768×576、块长 ≈708ms；8 卡上意图 90–160ms、生成 200–450ms。30 条人评 168/180 通过，但内容响应只有 73.3%，没有自动指标和具名系统对照。按工业开源配方进「值得看」，不是必读。",
+      "institutions": [
+        "inclusionAI"
+      ],
+      "published": "arXiv 2611.15131（2026-11-13 新投稿）",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.15131",
+        "project": "https://duo-v1.github.io/",
+        "code": "https://github.com/inclusionAI/Duo",
+        "other": [
+          {
+            "label": "HF weights",
+            "url": "https://huggingface.co/collections/inclusionAI/duo-v1"
+          }
+        ]
+      },
+      "rating_reason": "机制上有增量（意图与实现在统一时间线上互为条件，并对自生成的意图 token 和 AV 历史做双 rollout DMD），而且是可跑的全双工 AV 系统。证据不够站得住：n=30 人评、无自动指标、无具名对照、未写 GPU 型号和数据规模，作者自己也说 v1 是初步报告。不进必读；工业开源配方轨道给值得看。",
+      "coverage": {
+        "paper": "partial",
+        "demo": "none",
+        "code": "none",
+        "note": "读了 arXiv HTML 的方法、延迟分解和人评段；未看项目页视频，未拉取代码或权重，未复测。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| Self-Forcing / CausVid | 用自生成历史训练因果学生，缓解曝光偏差 | 把同一思想同时用在意图 token 和 AV 历史上（双 rollout DMD），并接到全双工对话循环 |\n| MiniMax-H3（Hailuo） | 开放音视频联合生成底座 | Realization 用它的预训练权重做因果适配和 4 步蒸馏；不是 Loopit H3，不要当成自家模型的分叉 |\n| OmniForcing / OmniLiveAvatar / Wan-Streamer | 流式联合 AV、块因果与同步 | Duo 把「何时开口」做成块级 Intent 决策（<speak>/<wait>），用户音视频持续输入、助手可打断 |\n| Qwen-Omni / LiveTalk | 流式语音或音频驱动数字人 | Duo 是联合生成音视频，而不是级联配音或纯会说话的头 |\n\n**能否预测？** 用因果 AV 底座 + 块级语言决策 + 少步 DMD 做全双工，方向可预期；「对自生成意图 token 和 AV 历史同时做 rollout 蒸馏」不是一眼能从前作抄出来的组合。但人评协议和对照薄，还不能把效果当成已验证的新规律。",
+      "method": "每个采样窗 17 视频帧（24fps，约 708ms）。Intent（Qwen3-VL LoRA）在块边界只看已到达的用户音视频和自己先前的语言，输出 <speak>+文本 或 <wait>；hidden state 而不是解码文本去条件 Realization。Realization 是从 MiniMax-H3 初始化的因果 AV DiT，4 步去噪后把干净 KV 写入缓存。训练分三阶段：Intent 因果 SFT（动作重加权，避免永远 wait）；冻结 Intent 后对 Realization 做流匹配；最后对两个模块做双 rollout DMD。视觉前端把 17 帧的最后一帧重复配对，避免时序 patch 跨块泄漏。",
+      "evidence": "- 人评：30 条实时全双工案例 × 6 项二值标准 = 180 项，通过 168（93.3%）。语言遵从 / 语音可懂 / 视觉身份 90/90；情感一致 96.7%；唇语对齐 90.0%；内容响应 73.3%（22/30）。来源：原文评测段。本站未复测。\n- 延迟（单机 8 GPU，型号未写）：意图 90–160ms，联合潜空间生成 200–450ms，4 帧解码约 30ms，开销约 40ms；再加上最多约 708ms 的采样窗等待。\n- 数据合成漂移：基线按上一块末帧续写，60 秒 / 10 块到第 9 块 luma 掉 34.2；他们用第 0 块作固定参考，稳定在约 99 luma。这是合成数据的消融，不是在线交互指标。\n- 没有 VBench / FVD / DeSync / LSE，也没有和 OmniForcing、Wan-Streamer 等系统的自动对照。",
+      "case_analysis": "项目页声称可对话、展示实物、改虚拟场景和音视频游戏。本站未观看 demo 视频，也未用 ffmpeg 或同步指标抽查。",
+      "code_analysis": "GitHub inclusionAI/Duo 与 HF collections/inclusionAI/duo-v1 在论文主页给出。本站未克隆、未核对训练循环或推理图。",
+      "solidity": "代码仓归属 inclusionAI，摘要页未逐条列出作者单位。延迟分解和块长写清楚了，但缺 GPU 型号、参数量和数据小时数。唇语只有人评 90%，没有 DeSync。作者在文中把 v1 写成初步报告。",
+      "concerns": "- MiniMax-H3 是 Hailuo 底座，不是 Loopit H3。对照或初始化时必须写明，禁止混报。\n- 内容响应 73.3% 是最弱也是最关键的一项：模型要在用户还在说、画面还在进的时候定回复。\n- 8 卡延迟没有卡型号，无法直接换算到 5090。\n- 人评 n=30，没有具名系统对照，不能当 SOTA 声明。",
+      "takeaways": "- Who：H3 流式 AV 同学（配方阅读 + 择一对照），不是 Henry 亲自下场。\n- Control：先复述 Duo 的块协议（17 帧 / 4 步 / 双 rollout），再决定是否在 H3 AR 线上试「Intent 隐状态条件 + 自生成历史 DMD」。对照要写明教师是不是 MiniMax-H3。\n- Success：至少补上一项自动指标（内容响应或唇语 DeSync）和一档可复述的延迟账本（写明卡、分辨率、是否含 VAE）。\n- Stop：权重或卡对不上就停在阅读，不要为了对齐 8 卡未写型号的延迟去改训练主线。"
+    },
+    {
+      "id": "pixvid-pixel-sf",
+      "rating": "worth",
+      "originality": "mechanism",
+      "credibility": "solid",
+      "directions": [
+        "streaming",
+        "video-gen"
+      ],
+      "highlight": true,
+      "title": "Back to Pixels: Lifting Latent Video Diffusion into Pixel Space",
+      "tldr": "PixVid 把预训练的潜空间视频 DiT 抬到像素空间：丢掉时序 VAE 解码器，换成卷积头，按帧生成。从 Wan2.1-14B 微调后，VBench 84.78 对 Wan 的 84.05（480p，前 21 帧）。接到 4 步 Self-Forcing 学生后，1×B200 上控制到出画中位延迟 34ms，对比 SolarWM 的 12 帧块 495ms（约 14×）；帧率 29.4 对 72.0，两者都高于 16fps 基线。相机旋转/平移误差略差。项目页有，代码/权重声明未在 HTML 里确认。",
+      "published": "arXiv 2611.17336（2026-11-13 新投稿）",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.17336",
+        "project": "https://chenshuo20.github.io/PixVid/"
+      },
+      "rating_reason": "机制清楚：时序 VAE 块会迫使控制等到本块结束，像素按帧生成才能把等待从块级降到帧级。B200 上的延迟表和 VBench 对照站得住。T2V 只评了 1.3 秒、姿态误差略差、14B 同步数更慢，所以不是必读，但是值得看。",
+      "coverage": {
+        "paper": "partial",
+        "demo": "none",
+        "code": "unavailable",
+        "note": "核对了 arXiv HTML 中 Tab.1 VBench 和 Tab.3 延迟/FVD/姿态；未看项目页视频，未发现已确认的公开代码仓。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| Wan2.1 潜空间 T2V | 时序 VAE 把多帧压成一块 latent，扩散在块上运行 | 去掉 VAE 解码器，DiT 直接出每一帧像素；同一套 14B 骨干，VBench 略高（84.78 vs 84.05） |\n| SolarWM | 因果学生按 12 帧 / 3 latent 块出画 | 一帧一块后控制到出画 34ms vs 495ms；吞吐下降（29.4 vs 72.0 fps），但都过 16fps |\n| Self-Forcing | 用自生成历史蒸馏少步因果学生 | PixVid 把 4 步 Self-Forcing 接到像素帧生成，用来消块级等待 |\n| PixelUMM | 像素空间视频扩散（从零训） | PixVid 是从现成潜空间模型抬上来，不是从零训 |\n\n**能否预测？** 块等待来自时序 VAE 的分组，这个因果链事先想得到；真正要看的是抬到像素后质量会不会垮、以及姿态会不会漂。结果是短时质量还在、控制延迟下降、姿态略差——和「去掉块约束会换来别的累积误差」的预期一致，但 14× 延迟差值得记。",
+      "method": "保留预训练 DiT，把 VAE 解码器换成卷积细节头，训练目标改为预测干净视频而不是速度，并加大 noise shift。T2V：Wan2.1-14B，约 130 万 clips（来自 6.4 万条 Wan2.1 生成视频），约 4K B200 GPU-hour。交互设置：把 SolarWM-5B 蒸馏成 4 步、每块 1 帧的因果学生，在 1×B200 上测控制到出画延迟。",
+      "evidence": "- T2V（21 帧、480×832）：VBench 总分 PixVid 84.78 vs Wan2.1 84.05 vs PixelUMM 83.72；语义 82.15。颜色一项落后（81.59 vs 84.73）。来源：原文 Tab.1。本站未复测。\n- 交互（1×B200）：中位控制到出画 34ms vs SolarWM 495ms；FPS 29.4 vs 72.0；FVD 51.1 vs 53.8；转向相关 0.95 vs 0.70；旋转误差 5.44° vs 4.24°；平移 0.312 vs 0.231。来源：原文 Tab.3。\n- 编辑（微调后）：运动保持 98% vs 同设定潜空间 VACE-1.3B 的 83%；运动对齐 10.7 vs 17.9；FVD 118 vs 91（FVD 不是它的赢项）。\n- 代价：14B / 50 步 / 1×B200 上，21 帧 480p 要 151s，潜空间 Wan 只要 26s（token 更多）。",
+      "case_analysis": "项目页 https://chenshuo20.github.io/PixVid/ 。本站未下载、未观看官方视频。",
+      "code_analysis": "HTML 中没有找到已确认的 GitHub / 权重量。发布以项目页为准，代码状态未核实。",
+      "solidity": "延迟和 VBench 数字来自论文表，硬件写明 1×B200。T2V 评测窗口只有前 21 帧（约 1.3 秒），长时质量没有同等证据。作者单位未在摘要页列出。",
+      "concerns": "- 控制延迟的对照是 SolarWM 的 12 帧块；若对照改成「同样一帧一块的潜空间学生」，优势会缩小（文中说微调 SolarWM 到单 latent 块会伤质量）。\n- 旋转/平移误差变差，长 rollout 可能漂。\n- 14B 像素 T2V 比潜空间慢很多，不要把它当成通用加速。\n- 代码/权重是否公开，本站未确认。",
+      "takeaways": "- Who：H3 AR / 流式推理同学。\n- Control：在同一套因果学生上对比「时序 VAE 块」vs「按帧出画」，硬件写明；延迟看控制到出画，不要只看吞吐。\n- Success：控制到出画有数量级下降，同时长时漂移（姿态或主体）不差过预先写死的可接受线。\n- Stop：没有像素头或抬模型成本过高，就只把「块等待是 VAE 分组造成的」写进设计备忘，不必为此改主线。"
+    },
+    {
+      "id": "worldtrace-addr-kv",
+      "rating": "worth",
+      "originality": "mechanism",
+      "credibility": "solid",
+      "directions": [
+        "world-model",
+        "streaming"
+      ],
+      "highlight": false,
+      "title": "Addressable Memory for Video World Models (WorldTrace)",
+      "tldr": "NVIDIA 的训练免费记忆框架 WorldTrace：压缩 KV 时给每个摘要槽一个训练范围内的虚拟 RoPE 位置，用模型自己的注意力决定原样保留还是合并。自建 LoopBench（绕路后再回访）上，Matrix-Game 2 1.3B、同一缓存预算下平均 DINOv2 回访相似度比滑动窗高 32.6%；ABA N=16 为 0.798/0.512，对照滑动窗 0.577/0.643、MemRoPE 0.623/0.621。LingBot-World 14B 上和 MemRoPE 互有胜负（长 ABA 上 WorldTrace 0.274 低于 MemRoPE 0.467）。这是周五替换稿的首次收录，相对 v1 是一次重写。",
+      "institutions": [
+        "NVIDIA"
+      ],
+      "published": "arXiv 2608.07408 v2（周五 13 日替换；v1 不在本站既有 read-log，按首次阅读）",
+      "links": {
+        "paper": "https://arxiv.org/abs/2608.07408",
+        "project": "https://research.nvidia.com/labs/sil/projects/WorldTrace/"
+      },
+      "rating_reason": "针对交互视频世界模型「缓存超出训练 RoPE 范围就取不回旧场景」给出可运行的训练免费修法，并且有回访协议和对照。主结果在 1.3B 游戏世界模型的自建基准上，14B 并不全面领先，所以不是必读，但对 H3 长时 KV 有直接对照价值。",
+      "coverage": {
+        "paper": "partial",
+        "demo": "none",
+        "code": "unavailable",
+        "note": "核对了摘要、LoopBench 设定和主表数字；对比了 v2 相对 v1 的重写幅度。项目页存在，公开训练代码未在 HTML 中确认。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| 滑动窗 KV | 丢掉窗外历史 | 同一预算下把历史压进固定槽位，并保持可寻址 |\n| MemRoPE | 不旋转存储 + 在线连续索引，双路 EMA 摘要 | WorldTrace 给 N 个槽各自不同的槽序虚拟位置；MemRoPE 在 14B 若干回访格上反而更好 |\n| Infinity-RoPE / Block-relative RoPE | 把偏移重新索引进训练范围，服务无限长生成 | 用在压缩缓存时，超出范围的摘要会挤到同一个位置；WorldTrace 刻意避免这种碰撞 |\n| 自回归视频 WM（Matrix-Game 2、LingBot-World） | 滚动 KV 做交互生成 | WorldTrace 是插在它们缓存上的训练免费层，不改权重 |\n\n**能否预测？** 「超出训练 RoPE 范围就寻址失败、在旋转域里直接平均会相位相消」事先想得到。不容易事先猜到的是：只保留地标（Landmark-only）已经做掉大部分工作，Field-only 几乎等于滑动窗；以及 14B 上并不全面压过 MemRoPE。",
+      "method": "写入前先去掉源 key 的时间 RoPE，读出时再旋到该槽的虚拟位置。注意力决定哪些观察原样作为地标保留、哪些并进摘要。槽位预算固定，不随 rollout 变长。评价协议 LoopBench：离开场景再回来，看能否重建先头那一幕。",
+      "evidence": "- 摘要主声明：LoopBench 上相对同一预算滑动窗，平均 DINOv2 回访相似度 +32.6%。来源：摘要与引言。本站未复测。\n- MG2-1.3B，ABA N=16：WorldTrace DINOv2/LPIPS 0.798/0.512 vs 滑动窗 0.577/0.643 vs MemRoPE 0.623/0.621。来源：原文表。\n- 长程 ABA N=128：WorldTrace 0.698/0.572 vs 滑动窗 0.251/0.751。\n- LingBot-World 14B（3 次）：WorldTrace 在 ABA/ABCBA/ABCDBA 上领先，但 ABCA、长 ABA（0.274 vs MemRoPE 0.467）和 360° 环视上 MemRoPE 更好。不要把 +32.6% 外推成所有尺度的结论。",
+      "case_analysis": "项目页 https://research.nvidia.com/labs/sil/projects/WorldTrace/ 。本站未下载 demo。",
+      "code_analysis": "论文提到 NVIDIA kvpress 和相关工具，但 WorldTrace 本身的独立开源仓未在 HTML 中确认。",
+      "solidity": "机构为 NVIDIA。主表数字自洽，对照包括滑动窗、MemRoPE 和两个消融。基准是自建的游戏/相机世界模型回访，不是通用 T2V。v2 相对 v1 是大幅改写（方法定名为 WorldTrace，表数量从 34 降到 23），声明方向一致。",
+      "concerns": "- LoopBench 是自建协议，DINOv2/LPIPS 不是像素级重建。\n- Landmark-only 已经很强，完整方法的增量要按任务看。\n- 14B 长 ABA 上 WorldTrace 弱于 MemRoPE，也弱于滑动窗的某些单元（文中有记录）。换模型必须重测。\n- 目前证据在游戏世界模型上，迁到通用 AV 生成要单独验证。",
+      "takeaways": "- Who：H3 AR 记忆 / KV 同学。\n- Control：同一缓存预算下对比滑动窗、MemRoPE（或现有 sink/压缩）和「槽序虚拟位置 + 注意力保留/合并」。用回访重建（先离开再回来）而不是只看平均质量。\n- Success：回访相似度相对滑动窗稳定提升，且在我们自己的骨干上不出现 14B 那种长 ABA 回退。\n- Stop：若只有游戏相机轨迹才能复现，就把它当成评测协议参考，不把虚拟 RoPE 方案直接合进训练。"
+    },
+    {
+      "id": "omnidreams-sf-recipe",
+      "rating": "worth",
+      "originality": "finding",
+      "credibility": "solid",
+      "directions": [
+        "world-model",
+        "streaming",
+        "video-gen"
+      ],
+      "highlight": false,
+      "title": "NVIDIA OmniDreams: Real-Time Generative World Model for Closed-Loop Autonomous Vehicle Simulation",
+      "tldr": "NVIDIA 开源的驾驶世界模型配方：从 Cosmos-Predict 2.5 做 mid/post-train，再经 Diffusion Forcing 因果化和 2 步 Self-Forcing+DMD。单卡 GB300、704×1280、8 帧一块，118ms / 68 effective FPS（KV 更新不计入 Total）。蒸馏 FVD 24.8，对照因果 Diffusion Forcing 31.7。约 2B 的 WAM 在 574 个 NuRec 场景上碰撞 4.2%，对照约 10B 的 Alpamayo 1.5 为 6.9%。这是驾驶域数字，不要当成通用 T2V/AV 助手 SOTA。按 10-30 工业开源配方规则进「值得看」。周五替换稿 v4 相对 v3 只改了致谢，数字没变。",
+      "institutions": [
+        "NVIDIA"
+      ],
+      "published": "arXiv 2606.03159 v4（周五 13 日替换；本站首次收录。v3→v4 为致谢变更）",
+      "links": {
+        "paper": "https://arxiv.org/abs/2606.03159",
+        "code": "https://github.com/nv-tlabs/omni-dreams",
+        "other": [
+          {
+            "label": "HF weights",
+            "url": "https://huggingface.co/nvidia/omni-dreams-models"
+          },
+          {
+            "label": "Project blog",
+            "url": "https://research.nvidia.com/labs/sil/projects/omnidreams-blog/"
+          }
+        ]
+      },
+      "rating_reason": "驾驶世界模型按范围本可排除，但代码和权重已公开，2 步 Self-Forcing+DMD、逐步加长双向教师和静态形状 KV 是可复述的工业栈。按 2026-10-30 门禁，工业开源配方可以进「值得看」，不必是必读。迁移对象是这套栈，不是碰撞率或 FVD 的绝对值。",
+      "coverage": {
+        "paper": "partial",
+        "demo": "none",
+        "code": "partial",
+        "note": "核对了数据规模、蒸馏设定、GB300 延迟表和 FVD/碰撞数字；对比了 v3 与 v4。未跑官方权重，未看闭环视频。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| Cosmos-Predict 2.5 | 双向视频基础模型 | mid/post-train 到驾驶传感器模拟，再因果化并 2 步蒸馏 |\n| Self-Forcing + DMD / Diffusion Forcing | 少步因果蒸馏与因果化 | 用逐步加长的双向教师压 20 秒段 FVD（均值 179.4 vs 短教师 240.0），并给出可部署的 KV/编译栈 |\n| 重建式驾驶模拟（NuRec 等） | 在已采集走廊里做反事实 | 生成式模型可出采集里没有的天气和主体行为，但评价仍在驾驶域 |\n| Alpamayo 1.5 VLA | 约 10B 的驾驶策略 | 从 OmniDreams 后训的约 2B WAM，574 场景碰撞 4.2% vs 6.9% |\n\n**能否预测？** 用 Cosmos + Self-Forcing 做实时驾驶模拟，方向可预期。有增量的是完整的数据、蒸馏和推理账本，以及「同一套生成栈还能后训成更小的 WAM」。这些是工程配方，不是新的生成原理。",
+      "method": "数据：RDS 中期训练 16,600 小时；RDS-HQ-1M 后期 4,944 小时（1,142,285 条，10 秒和 20 秒混合），704×1280，最多 7 路相机中的 4 路。训练顺序：双向 mid-train →（多视则加跨视注意）→ Diffusion Forcing 因果化 → 世界场景图控制 → Self-Forcing+DMD，K=2，时间表 [1000, 450]，蒸馏子集 5.8 万条，再加逐步加长的双向教师。推理：固定局部注意窗，静态形状 KV，torch.compile + CUDA Graph；KV 更新走热路径之外。",
+      "evidence": "- 单视、NVIDIA GB300、8 RGB 帧/块：1 卡 118ms / 68 effective FPS；8 卡 78ms / 103 FPS。四视、16 帧/块：16 卡 151ms / 每路 105 FPS。来源：原文 Sec.5 与 Tab.2/3。Effective FPS = 块帧数 / Total ms，且 Total 不含 KV 更新。\n- 质量（OmniDreams-SV，1,000 条留出）：蒸馏 FVD 24.8 vs 因果 Diffusion Forcing 31.7 vs 双向 26.8。20 秒分段 FVD：长教师均值 179.4（末窗 268.4）vs 短教师 240.0（末窗 409.2）。\n- WAM 后训约 2B vs Alpamayo 1.5 约 10B，574 个 NuRec 场景、10Hz、20 秒：碰撞 4.2% vs 6.9%（追尾 3.0% vs 5.3%）。\n- LightTAE 解码器用了会把 FVD 从 24.8 放到 45.4。",
+      "case_analysis": "官方博客和 GitHub 有闭环演示说明。本站未下载视频、未在模拟器里复跑。",
+      "code_analysis": "https://github.com/nv-tlabs/omni-dreams 与 https://huggingface.co/nvidia/omni-dreams-models 在摘要页给出。本站只确认链接存在，没有逐行核对蒸馏脚本，也没有拉权重。",
+      "solidity": "NVIDIA 机构清楚，延迟写了 GB300 和块大小，FVD 与碰撞有对照。全部数字都在驾驶闭环里。v4 相对 v3 没有改数字。",
+      "concerns": "- 驾驶排除规则仍然成立：不要把 68 FPS 或 24.8 FVD 抄到通用视频或 H3 助手评测里。\n- Total 延迟不含 KV 更新，复现时必须单独报这项。\n- LightVAE/LightTAE 会明显伤 FVD。\n- 没有通用 VBench。",
+      "takeaways": "- Who：少步蒸馏 + H3 推理栈同学（只迁栈，不迁驾驶任务）。\n- Control：对照「2 步 Self-Forcing + 逐步加长双向教师」和现有 DMD 学生；延迟必须写卡、分辨率、块长、KV 更新是否计入。\n- Success：在我们自己的非驾驶短视频或 AV 片段上，长 rollout 漂移相对短教师基线下降，并且实时档的延迟账本可复述。\n- Stop：如果只能在 GB300 和驾驶数据上复现，就停在阅读，把仓库当配方参考。"
+    }
+  ],
+  "trend_summary": "周五批次（周一补）的有效增量集中在「交互延迟」和「长时记忆」两条线上。Duo 是目前最接近全双工 AV 助手的开源系统，但人评只有 30 条、没有自动指标和具名系统对照，按工业开源配方进「值得看」。PixVid 把控制到出画的等待从块级（495ms）降到帧级（34ms），这是时序 VAE 块本身决定的，吞吐再高也消不掉；代价是相机姿态略漂、14B T2V 更慢。WorldTrace 是训练免费的可寻址 KV，LoopBench 上回访 DINOv2 +32.6%，但 14B LingBot 上和 MemRoPE 互有胜负。OmniDreams 的数字都在驾驶域，可迁移的是 2 步 Self-Forcing + 逐步加长双向教师 + 静态形状 KV 这套栈。eDMD、PhysLoop、WorldDraft 等不过线，已转交少步/数据助手。",
+  "redo": []
+}
