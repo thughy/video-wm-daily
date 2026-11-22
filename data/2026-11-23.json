@@ -1,0 +1,241 @@
+{
+  "date": "2026-11-23",
+  "headline": "周一补上上周漏扫（16 日午后到周五批次；今早 arXiv 仍是周五 20 日列表，周一周末窗未翻）。过线 5 篇，没有必读新定理。主线是推理路径上的「配件」和一项世界模型诊断：Apple FastFrames 用轻量像素解码器和 KV 精炼，把 1.3B 做到单卡 B200 36ms；Tencent AIPD 的 Streaming-AAA 把 1080p 游戏世界模型做到 43 FPS / 198ms（至少双卡流水）；ScoutCache 训练免费缓存，120 秒质量不掉；Google DeepMind 的 Flip Test 显示 11 个视频世界模型在因果状态翻转上低于随机；Reference Forcing 用首帧区域校正抗漂。Henry 不必亲自下场。",
+  "catchup_note": "2026-11-16 08:45 补扫已收录周五 13 日批次。此后周二至周五晨报与周五补扫例行失败，11-20 13:45 已完成 Mon 16–Fri 20 召回和分诊，但未定级上站。本页是这次积压的一次补齐，不是今天的周一新批次。2026-11-23 06:47 Asia/Shanghai 五类 /new 仍写 Showing new listings for Friday, 20 November 2026（HTTP 200，Age 约 208617–236562 秒 ≈ 58–66 小时，未重置）；HTTPS API 200、Age 0，newest 仍是 2611.26629v1 published 2026-11-19T18:59:57Z（周五窗）。周一覆盖周末的批次尚未翻页，交给 08:45 / 10:45 / 13:45 补扫。",
+  "papers": [
+    {
+      "id": "fastframes-pixel-kv",
+      "rating": "worth",
+      "originality": "mechanism",
+      "credibility": "solid",
+      "directions": [
+        "streaming",
+        "video-gen"
+      ],
+      "highlight": true,
+      "title": "FastFrames: Video Generation at Interactive Latency",
+      "tldr": "Apple / Cornell 把少步 AR 视频的端到端瓶颈从去噪挪到「配件」上：用 ConvNeXt 像素解码器替换 VAE 解码（B200、832×480 上 147ms→1ms），再用轻量网络替换为写 KV 而多跑的一次 DiT。FastFrames-S 1.3B 单卡 B200 每帧 36ms（28 RPS），VBench Total 84.23，对照 Causal Forcing++ 272ms / 84.11、Self-Forcing 717ms / 84.10；14.3B 八卡 45ms、Total 84.44。720p 单卡仍要 100ms 以上，不在他们自己的 50ms 交互预算里。项目页声称代码和权重已放，HF 上已能看到 FastFrames-S / L。按可用配方进「值得看」。",
+      "institutions": [
+        "Apple",
+        "Cornell University"
+      ],
+      "published": "arXiv 2611.23226（2026-11-18 列表，本页补收）",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.23226",
+        "project": "https://apple-aiml-research.github.io/ml-fastframes/",
+        "other": [
+          {
+            "label": "HF FastFrames-S",
+            "url": "https://huggingface.co/apple/FastFrames-S"
+          },
+          {
+            "label": "HF FastFrames-L",
+            "url": "https://huggingface.co/apple/FastFrames-L"
+          }
+        ]
+      },
+      "rating_reason": "增量清楚：在 CF++ / PixVid / TAEHV 已经指出 VAE 很贵之后，他们把 VAE 解码和 KV 更新都换成可训练的轻量模块，并给出 B200/H100 分项账本和公开权重。方向可预期，但分项和 14B 多卡数字扎实，适合当可用配方，不是新定理，不进必读。",
+      "coverage": {
+        "paper": "partial",
+        "demo": "none",
+        "code": "none",
+        "note": "核过 arXiv HTML 的方法段、Table 4 和 Table 6；组织追踪看到 HF 权重页。未看项目页视频，未克隆代码，未上 GPU。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| Causal Forcing++ / Self-Forcing | 少步因果学生，KV 缓存生成下一块 | 剖析 CF++ 在 B200 上 271.8ms 的路径：KV 更新是额外一次 DiT，VAE 解码 147ms，去噪不再是大头 |\n| PixVid（本站 11-16）/ TAEHV | 去掉或替换时序 VAE，降低控制到出画等待 | FastFrames 用训练过的 ConvNeXt 像素头 + 线性反补丁，并在像素空间加感知和 GAN 损失；重点是交互延迟，不只是第一帧等待 |\n| 普通 KV 压缩 / Forcing-KV | 压缩或稀疏化已有缓存 | 这里替换的是「为了写 KV 再跑一遍 DiT」，不是再压一遍注意力 |\n\n反事实：熟悉 PixVid 和 CF++ 剖析的人，会预期换掉 VAE 就能进 50ms 量级；KV 精炼网和 14B 八卡 45ms 是工程加码，不是事先算不出来的新机制。判定为可用配方，不是必读。",
+      "method": "以 Wan 2.1 1.3B 上的 Causal Forcing++ 两步变体为剖析对象。一块生成分成 KV 更新、扩散采样、像素渲染。VAE 解码器只有约 73M 参数，却在全分辨率做 3D 卷积，480p 四帧就要卷积约 160 万个时空位置。他们改成低空间分辨率的 ConvNeXt 头，再接一层线性反补丁升到像素，文中写解码延迟降到原来的 1/147，并因此能在像素空间做感知损失和 GAN。KV 方面，基线会在去噪结束后再跑一次完整 DiT 来刷新缓存；他们换成轻量精炼网络，文中写这项大约快 10 倍。系统层还有编译和注意力后端优化。生成粒度是每块 1 个潜帧（与 CF++ 相同，比 Self-Forcing 的 3 潜帧更细）。",
+      "evidence": "- Table 4（原文，832×480 量级的交互设定）：FastFrames-S 1.3B 延迟 36ms，VBench Total / Quality / Semantic = 84.23 / 85.30 / 79.92；八卡 14ms，分数相同。对照 Self-Forcing 717ms、84.10 / 84.84 / 81.13；Causal Forcing++ 272ms、84.11 / 85.09 / 80.20；LongLive 2.0 5.0B 505ms、83.65。FastFrames-L 14.3B 单卡 158ms、八卡 45ms，Total 84.44 / Quality 85.48 / Semantic 80.29。来源：原文 Table 4。本站未复测。\n- Semantic 上 S 比 Self-Forcing 低（79.92 vs 81.13），Total 靠 Quality 略高。不能写成全面超过。\n- Table 6 分项（B200 / H100，毫秒）：S 在 832×480 上 DiT 16 / 25，KV 精炼 2 / 3，VAE 147 / 175，他们的像素解码器 1 / 1。1280×720 上 DiT 已是 60 / 101，VAE 327 / 408，像素解码器 2 / 3。720p 单卡不在 ≤50ms 的交互预算里。L 的八卡分项在 480p 上 DiT 20 / 30。\n- 文中把 RPS 定义为 1000/延迟毫秒，按「一次响应」计，不按输出帧数摊。36ms 对应 28 RPS。Table 4 里 MiniMax-H3 33.1B 是双向 Hailuo 基线（38,454ms，Total 84.43），不是 Loopit H3。",
+      "case_analysis": "项目页声称有相机条件和物理条件的交互演示。本站未下载、未观看、未用 ffmpeg 抽查。",
+      "code_analysis": "项目页写明有代码和权重；2026-11-18 / 11-20 组织追踪看到 Hugging Face 上 apple/FastFrames-S 与 FastFrames-L（新建）。本站未克隆，未核对角线或训练脚本。",
+      "solidity": "机构是 Apple 和 Cornell（第一作者实习）。对照是具名的少步 AR 系统，延迟账本写了 GPU 和 VAE 分项。缺的是 720p 交互方案和人评。Semantic 略降需要记在账上。",
+      "concerns": "- 交互数字是 480p + B200；H100 大约慢 25–50%，720p 单卡仍远超 50ms。\n- 作者也提醒有的基线报的是按块延迟，不是按帧，对照不完全同口径。\n- 本站没有跑通推理，也没有看 demo。\n- MiniMax-H3 在表里是 Hailuo，不要当成 Loopit H3。",
+      "takeaways": "- Who：H3 推理 / AR 同学，不是 Henry 亲自下场。\n- Control：在现有 H3 因果学生上，先只换解码器或只换 KV 精炼，对照当前 VAE 路径；480p 写明卡型号，分项报 DiT / 解码 / KV / 端到端。\n- Success：解码不再主导端到端；VBench Total 不低于 CF++ 或当前学生 0.3；480p 延迟账本可复述。\n- Stop：720p 或 5090 上解码仍很贵、或 Semantic 掉太多，就停在阅读，不要为了追 36ms 去改训练主线。"
+    },
+    {
+      "id": "streaming-aaa-tencent",
+      "rating": "worth",
+      "originality": "mechanism",
+      "credibility": "doubtful",
+      "directions": [
+        "world-model",
+        "streaming"
+      ],
+      "highlight": true,
+      "title": "Streaming-AAA: Streaming AAA Game Video Generation at High Resolution, High Frame Rate, and Low Latency",
+      "tldr": "Tencent AIPD 的游戏世界模型配方：重做 VAE、用 diffusion forcing 拉长训练视野，再蒸馏和压缩记忆。表上 1080p、43.0 FPS、端到端 198ms，对照 LingBot 720p 2.6 FPS / 8200ms（8 卡）、Matrix Game 3.0 720p 6.1 FPS / 9800ms、HY-World 1.5 480p 2.1 FPS / 11300ms。198ms 的算法是扩散 93ms 加半步预算，再加 VAE 58ms（93×1.5+58）；43 FPS 来自 DiT 与 VAE 分卡流水（1000/93×4）。数据是约 2.2 万段 1 分钟原神 1080p 30fps。质量用自定义一致性和成像分，平均 0.832 vs HY-World 1.5 的 0.810。只有项目页，权重未核到。按工业配方进「值得看」，证据存疑。",
+      "institutions": [
+        "Tencent AIPD"
+      ],
+      "published": "arXiv 2611.26040（2026-11-20 列表，本页补收）",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.26040",
+        "project": "https://streamingaaa.github.io/"
+      },
+      "rating_reason": "1080p、实时帧率和亚 200ms 延迟第一次写在同一张与具名游戏世界模型对照的表里，这对交互世界模型有用。但只有原神域、指标是自定义的、至少双卡流水、代码权重未确认，所以是存疑的可用配方，不是必读。",
+      "coverage": {
+        "paper": "partial",
+        "demo": "none",
+        "code": "unavailable",
+        "note": "核过摘要、方法要点和 Table 2，以及延迟分解段（93/58/198 与 43 FPS 公式）。未看项目页视频，未找到已发布的训练或推理代码。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| Diffusion Forcing / 因果游戏 WM（LingBot、Matrix-Game 3.0、HY-World 1.5） | 用 forcing 或因果扩散做可玩世界模型，公开数字多在 480p–720p、个位数 FPS、数秒延迟 | 把 VAE 重做、长视野预训练和蒸馏压缩组合到 1080p 实时档，并给出分项延迟 |\n| FastFrames（同周） | 通用 T2V AR：换解码器和 KV 更新，480p 36ms | Streaming-AAA 面向游戏交互和长视野记忆，分辨率更高，但域更窄、对照不在同一基准上 |\n\n反事实：知道 forcing + 蒸馏 + 编解码流水的人，会预期高分辨率实时是工程堆料的结果；原神单一数据和自定义分数让「质量也更好」这一句不够硬。",
+      "method": "三条设计。第一，为 1080p 重做 VAE，让解码能进实时。第二，预训练用 diffusion forcing，并明显加长时间视野，以求长程依赖和记忆。第三，后训练做蒸馏和记忆压缩。推理时 DiT 和 VAE 解码器放在不同 A800 上做流水。数据约 2.2 万段 1 分钟、1920×1080、30fps 的原神录像（文中写约 4000 万帧、覆盖超过 5 平方公里），带智能体动作。",
+      "evidence": "- Table 2（原文）：Ours 主体一致 0.761 / 背景 0.910 / 运动平滑 0.982 / 成像 0.677 / 平均 0.832，1080p，43.0 FPS，198ms。Lingbot：0.747 平均，720p，2.6 FPS（8 卡），8200ms。YUME：0.800，720p，6.7 FPS，6600ms。Matrix Game 3.0：0.807，720p，6.1 FPS，9800ms。HY-World 1.5：0.810，480p，2.1 FPS，11300ms。运动平滑上 HY-World 1.5 是 0.988，略高于本文 0.982。\n- 延迟段（回原文核对）：扩散 93ms（一块 A800）+ VAE 58ms；因为动作可能在半步中途到达，预算写成 93×1.5+58≈198ms，这是理论计算延迟，不含网络和编码。DiT 与 VAE 分卡流水后，1000/93×4≈43 FPS（4 应是一次扩散对应的帧数）。\n- 对照分辨率和卡数并不对齐：他们分辨率更高、延迟低两个数量级，这一点成立；质量分不能直接当成同设置的 VBench。",
+      "case_analysis": "有项目页。本站未下载演示、未观看、未用 ffmpeg 看长程是否塌。",
+      "code_analysis": "HTML 里只看到 https://streamingaaa.github.io/ ，没有确认代码或权重复制。本站未克隆。",
+      "solidity": "单位写的是 Tencent AIPD。延迟公式和分卡流水写清楚了。缺参数量、总卡时、标准 VBench，以及「merely A800 GPUs」的确切卡数（至少 2）。数据只覆盖原神。",
+      "concerns": "- 单一游戏域，迁移到通用或音视频世界模型未证明。\n- 质量是自定义一致性/成像分，运动平滑不是最高。\n- 198ms 含半步预算，是理论计算延迟。\n- 无代码权重，本站未跑。",
+      "takeaways": "- Who：交互世界模型 / 推理同学阅读配方，不是 Henry 下场。\n- Control：如果要试，先复述「VAE 重做 + DiT/VAE 分卡 + 长视野 forcing」，在自有游戏或室内域对照 Matrix-Game / LingBot 类基线；必须写分辨率、卡数、是否含 VAE。\n- Success：目标分辨率上延迟和帧率可复述，且有一项非自定义的质量或可玩性指标。\n- Stop：没有权重或只能在原神上复现，就停在阅读。"
+    },
+    {
+      "id": "scoutcache-cdr-orhr",
+      "rating": "worth",
+      "originality": "mechanism",
+      "credibility": "solid",
+      "directions": [
+        "streaming",
+        "video-gen"
+      ],
+      "highlight": false,
+      "title": "ScoutCache: Efficient Few-Step Autoregressive Video Diffusion via Conditional Readout and Selective Caching",
+      "tldr": "HKUST（广州）/ 广东工业大学的训练免费推理加速：在公开的 Self-Forcing 和 LongLive 1.3B 检查点上，用条件去噪读出（CDR）、按历史影响分配 KV 阅读预算（ORHR）、以及内容引导的稀疏建缓存（CCSC）。单卡 A100 40GB、832×480、16 FPS、4 步。Self-Forcing 上 5 秒 14.18 FPS / Total 81.76（对照 8.89 FPS / 81.52，1.60×）；120 秒 16.58 FPS / 79.11（对照 7.26 FPS / 75.03，2.28×），长视频质量差距反而拉大。明显快过 TeaCache（约 1.21×）和 FlowCache（约 1.25×）。没有公开代码。转少步队友主评蒸馏/缓存谱系；本站按核心区流式推理加速给「值得看」。",
+      "institutions": [
+        "The Hong Kong University of Science and Technology (Guangzhou)",
+        "Guangdong University of Technology",
+        "The Hong Kong University of Science and Technology"
+      ],
+      "published": "arXiv 2611.21038（2026-11-17 列表，本页补收）",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.21038"
+      },
+      "rating_reason": "和 TeaCache / FlowCache / Forcing-KV 同属训练免费缓存，但 120 秒上加速和分数同时更好，消融把三项都拆开了，设置写明了 A100。没有代码，不进必读。",
+      "coverage": {
+        "paper": "partial",
+        "demo": "unavailable",
+        "code": "unavailable",
+        "note": "核过方法三段名称和 Table 10 / 11 / 13 的关键行。未找到项目页或代码，未上 GPU。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| TeaCache / FlowCache | 复用去噪特征或流，训练免费加速 | 同样训练免费，但 120 秒加速到 2.28×，且 MovieGen Total 从 75.03 升到 79.11；TeaCache 同期大约 1.21× 且分数下降 |\n| Forcing-KV / Dummy Forcing | 针对 Forcing 家族的缓存或占位 | 同一张表上 120 秒仍落后 ScoutCache（Forcing-KV 1.65× / 78.70，Dummy 1.73× / 79.02） |\n| FastVideo H3 --token-reduction / PreSTP | 服务端 token 或步骤削减 | ScoutCache 是读出 + 选择缓存，应作为对照，而不是同一方法 |\n\n反事实：会预期再做一个缓存能比 TeaCache 快一点；120 秒质量不降反升，不是弱缓存论文的默认结果，所以过线。但仍是缓存组合，不是新的生成原理。",
+      "method": "三件套，都是训练免费、挂在现成少步 AR 检查点上。CDR：前几块仍走完整去噪；从第 4 块起，在第三步只跑第一层 Transformer，用浅层特征变化和已知噪声变化估计干净潜变量更新。ORHR：按「拿掉某段历史对注意力输出的影响」给各层各头分配历史 KV 阅读预算，而不是均匀读。CCSC：在进 Transformer 之前按内容选择空间位置来建 KV，降低为写缓存而处理的 token 数。实现：单卡 NVIDIA A100 40GB，PyTorch BF16，batch 1，832×480，16 FPS，4 步，每块 3 个潜帧。",
+      "evidence": "- Table 10（Self-Forcing，原文）：5 秒，ScoutCache 延迟 5.64s / 14.18 FPS / 1.60× / Total 81.76，对照骨干 9.00s / 8.89 FPS / 81.52。30 秒 16.01 FPS / 2.19× / 80.30 vs 7.32 FPS / 79.10。60 秒 16.37 FPS / 2.25× / 79.87 vs 7.28 / 77.76。120 秒 16.58 FPS / 2.28× / 79.11 vs 7.26 / 75.03。TeaCache 120 秒约 1.21× / 74.77；FlowCache 约 1.25× / 74.62。\n- Table 11（LongLive）：30 秒 16.02 FPS / 1.83× / 81.32 vs 8.76 FPS / 80.35；120 秒 16.58 FPS / 1.86× / 80.95 vs 8.90 / 80.06。\n- Table 13 消融（Self-Forcing 30 秒）：骨干 65.59s / 79.10；去掉 CDR 为 1.81× / 80.22，去掉 ORHR 为 2.15× / 79.83，去掉 CCSC 为 2.12× / 80.09，完整方法 29.99s / 2.19× / 80.30。三项都有贡献，不是单一开关。\n- 文中未把 VAE 单独拆出；延迟按端到端报。本站未复测。",
+      "case_analysis": "未找到可下载的项目页演示。",
+      "code_analysis": "arXiv HTML 中未抽出第一方代码或项目链接。本站未克隆。",
+      "solidity": "单位是 HKUST（广州）、广东工业大学和 HKUST。对照覆盖 TeaCache、FlowCache、Forcing-KV 等，硬件和分辨率写清楚。缺代码和失败案例。",
+      "concerns": "- 没有代码，复现成本高。\n- A100 40GB、832×480、16 FPS，不是 1080p，也不是 H200/B200。\n- 训练免费方法常见质量悬崖，文中 120 秒变好值得信，但仍需看失败样例。",
+      "takeaways": "- Who：少步队友可主评缓存谱系；H3 推理同学做对照。不是 Henry 下场。\n- Control：在 H3 因果学生上把 ScoutCache 的思路对照 TeaCache、PreSTP 和 FastVideo --token-reduction；5 秒和 30 秒以上都要报。\n- Success：30 秒以上加速明显优于 TeaCache，且质量不掉到骨干之下。\n- Stop：没有可落地的实现或在 H3 上质量掉下来，就停在阅读。"
+    },
+    {
+      "id": "fliptest-wm-state",
+      "rating": "worth",
+      "originality": "finding",
+      "credibility": "solid",
+      "directions": [
+        "world-model"
+      ],
+      "highlight": true,
+      "title": "The Flip Test: Video World Models Fail to Learn the World State",
+      "tldr": "Google DeepMind / UT Austin 用最小对探针问：现在只差几毫米、未来就会翻转时，视频世界模型的预测会不会一起翻转。1680 张初始帧，10 个仿真任务 + 15 个真实任务，测了 11 个模型，包括 Gemini Omni Flash 1.1、MiniMax-H3（Hailuo，不是 Loopit H3）、Wan2.2、HunyuanVideo-1.5 和 Cosmos3。成对准确率要两边都对，随机猜是 25%。仿真上没有任何模型超过 5.3%；真实上最好的 Gemini Omni Flash 1.1 只有 31.3%，MiniMax-H3 25.3%。整体平均最好 18.3%，低于随机。主要失败是边界两侧生成同一结局（真实 72%、仿真 89%）。把正确答案写进提示后，Gemini 从 18.3% 升到 73.7%；直接读图的 VLM 和测量几何的代码智能体则能过关。新发现成立，按「值得看」收录，不做必读定理。",
+      "institutions": [
+        "Google DeepMind",
+        "The University of Texas at Austin",
+        "UC Berkeley"
+      ],
+      "published": "arXiv 2611.19822（2026-11-17 列表，本页补收）",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.19822",
+        "project": "https://flip-test.github.io/"
+      },
+      "rating_reason": "不只是又一张物理分低的榜。最小对 + 低于随机的模式坍缩 + 「告诉结局就能画、自己读状态就不行」把失败定位在读状态，而不是不会渲染。方法站得住。物理探针这一周还有 Forced Response 和 PhysResponse，不把同一结论升成必读。",
+      "coverage": {
+        "paper": "partial",
+        "demo": "none",
+        "code": "none",
+        "note": "核过摘要、第 4–5 节和项目页链接。未逐格复核 Figure 3 的全部 11 行，未运行评测。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| Physics-IQ / 物理合理性榜 | 给单段生成打是否像真物理 | 改成最小对：两个几乎一样的现在，真实未来相反；只看预测会不会跟着翻 |\n| Forced Response / PhysResponse（同周） | 用强迫响应或受控干预看动力学是否跟参数走 | Flip Test 更强调因果边界上的翻转，并用 VLM / 测量智能体证明信息就在第一帧里 |\n| Visual De-animation / 直觉物理 | 把感知、演化和渲染分开 | 用来解释失败发生在读状态，其次才是渲染 |\n\n反事实：熟悉物理榜的人会预期视频模型不行；但「低于随机是因为两侧画出同一结局」，以及「把结局告诉模型就能画到 73.7%」，不是默认能猜到的细节。发现成立，仍与同周诊断论文共享一条线，故不升必读。",
+      "method": "三级协议。第一级是视觉最小对：两张几乎相同的初始帧，真实结局相反，模型必须两边都对才算一对正确（随机是 25%）。第二级用匹配对照，看模型是只在穿越边界时翻转，还是对任何像素变化都乱翻。第三级沿边界变量做密采样，看响应曲线是不是在阈值附近呈 S 形。评测 11 个视频世界模型：通用生成有 Gemini Omni Flash 1.1、MiniMax-H3、Wan2.2-I2V-A14B 及其推理微调 VBVR-Wan2.2、HunyuanVideo-1.5、CogVideoX1.5-5B-I2V；物理 AI 有 Cosmos-Predict2.5、Cosmos3-Nano、Cosmos3-Super；机器人侧有 VPP2 和 LingBot-Video-MoE-30B-A3B。每个初始帧只生成一段。两位裁决者对 6600 段视频的标签一致率 85.8%，Cohen κ=0.85。",
+      "evidence": "- 仿真：没有任何模型的成对准确率超过 5.3%（四个模型并列这个上限），远低于随机 25%。来源：原文 §4.1。\n- 真实：Gemini Omni Flash 1.1 31.3%，MiniMax-H3 25.3%，Wan2.2-I2V-A14B 24.7%。只有前两名超过随机；CogVideoX 低到 9.3%。整体平均从 5.7% 到 18.3%，18.3% 对应最好的 Gemini 总平均。\n- 模式坍缩：在裁决清楚的对上，两侧生成同一结局的比例是真实 72%、仿真 89%。\n- 规模和专项训练几乎没帮助：Cosmos3-Super 13.7%，与 Wan2.2 的 14.0% 相当；VBVR-Wan2.2 仍是 14.0%；VPP2 8.0%，LingBot-Video-MoE 6.3%。选择性敏感度在 −0.07 到 +0.07 之间，置信区间都跨 0。\n- 把正确答案写进提示后，Gemini Omni Flash 1.1 从 18.3% 升到 73.7%（真实 86.7%，仿真 60.7%）。直接 VLM 在真实对上 87.3%，对照最好视频模型的 31.3%；测量几何的代码智能体到 93.3%。\n- MiniMax-H3 是 Hailuo，不是 Loopit H3。Loopit H3 不在这 11 个模型里。",
+      "case_analysis": "项目页 https://flip-test.github.io/ 。本站未逐条观看对比视频。",
+      "code_analysis": "项目页已给出。本站未运行评测脚本。",
+      "solidity": "Google DeepMind 为主，含 UT Austin 实习和 UC Berkeley。协议、随机基线和 VLM 对照都写清楚。裁决一致率可用。主要局限是任务仍以刚性物体的边界事件为主，以及视频模型只各采样一段。",
+      "concerns": "- 成对指标很严，单边看会显得更宽；但低于随机的原因已经被「同一结局」解释，不是指标苛刻这么简单。\n- MiniMax-H3 必须写成 Hailuo，禁止和 Loopit H3 混报。\n- 同周还有 Forced Response、PhysResponse 和 What One Sample Cannot See，不要把四篇都当成独立重大发现。",
+      "takeaways": "- Who：H3 / 世界模型评测同学跑一遍协议，不是 Henry 下场。\n- Control：用同一套最小对，先跑 MiniMax-H3（论文已有 25.3% 真实）作锚，再跑 Loopit H3；必须分开记账。给真值结局的渲染对照也要做。\n- Success：成对准确率是否稳定高于 25%，以及告诉结局之后能否接近文中 70%+ 的渲染档。\n- Stop：如果只是再现「物理分很低」而没有翻转协议，就不必重复立项。"
+    },
+    {
+      "id": "reference-forcing-drift",
+      "rating": "worth",
+      "originality": "mechanism",
+      "credibility": "doubtful",
+      "directions": [
+        "streaming",
+        "video-gen"
+      ],
+      "highlight": false,
+      "title": "Reference Forcing: Long Video Generation with Region-Guided Drift Correction",
+      "tldr": "罗切斯特大学 / Adobe 给冻结的 Forcing 学生加插件：用与首帧区域对齐的注意力，加上把漂移块的 value 拉回初始参考，KV 预算仍是 12 个潜帧。挂在 LongLive 上，VBench-Long 30/60/120 秒的主体/背景一致性只比骨干高约 0.1–0.3 分（例如 30 秒主体 97.55 vs 97.47，背景 96.70 vs 96.56），动态程度常常更低（30 秒 41.88 vs LongLive 42.81，vs LongLive-RAG 48.59）。挂在 Self-Forcing 上（因为 SF 只在 5 秒上蒸馏，他们额外加了 sink），30 秒动态程度 65.08，高于 LongLive-RAG 的 60.16。人评更偏向一致性。有项目页。核心区必须当日判定：值得看，证据存疑。",
+      "institutions": [
+        "University of Rochester",
+        "Adobe"
+      ],
+      "published": "arXiv 2611.21559（2026-11-17 列表，本页补收）",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.21559",
+        "project": "https://zhaosheng-thu.github.io/reference-force/"
+      },
+      "rating_reason": "Forcing 家族的抗漂插件，机制清楚，必须当日判定。自动指标增量很小，还常牺牲动态程度；2 小时 / 12 小时展示没有可核对的协议。所以是存疑的值得看，不是必读。",
+      "coverage": {
+        "paper": "partial",
+        "demo": "none",
+        "code": "none",
+        "note": "核过 VBench-Long 表中 LongLive 与 Self-Forcing 设定的关键行，以及人评区间。未看 2 小时/12 小时演示，未测插件开销。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| Self-Forcing / LongLive | 自回放或 KV-recache 做长视频 | 不改骨干训练，只在推理/轻量修正里把漂移块拉向首帧参考 |\n| MemRoPE / LongLive-RAG / Deep Forcing | 用位置编码、检索或更深 forcing 抗遗忘 | 本文是区域门控的首帧 value 校正；在 LongLive 上一致性只高一点点，动态程度往往不如 RAG |\n| History corruption / Adversarial Gradient Forcing | 训练时对着历史误差或对抗历史 | 本文是冻结学生上的参考校正，不是新的训练目标 |\n\n反事实：会预期「盯住第一帧」能抬一致性、可能压动态程度。表上的小数点变化基本符合预期。过线是因为核心区必须判定，且人评和 SF 设定还值得记一笔，不是因为发现了新定理。",
+      "method": "插件打在冻结的自回归视频模型（LongLive 或 Self-Forcing）上。一块是区域对齐的首帧注意力，一块是把已经漂移的块的 value 向初始参考做校正。KV 预算与骨干相同（12 个潜帧），噪声设置也相同。挂到 Self-Forcing 时，因为该学生是在 5 秒片段上蒸馏的，他们额外加了 attention sink。",
+      "evidence": "- LongLive + Reference Forcing，VBench-Long（原文表）：30 秒主体 97.55 / 背景 96.70 / 动态 41.88，对照 LongLive 97.47 / 96.56 / 42.81，LongLive-RAG 动态 48.59。60 秒主体 97.56 / 背景 96.67 / 动态 43.13，对照 97.33 / 96.49 / 42.19。120 秒主体 97.27 / 背景 96.56 / 动态 44.69，对照 LongLive 97.06 / 96.30 / 46.45，RAG 动态 49.92。文中按总排名把 RF 写在第 1，但单看动态程度并不占优。\n- Self-Forcing 设定 30 秒：RF 动态 65.08，对照 LongLive-RAG 60.16。这个增益更大，但依赖额外的 sink，不能直接当成对纯 SF 的即插即用。\n- 人评（原文，RF vs LongLive）：整体 78 [67, 86]，一致性 86 [77, 93]。vs LongLive-RAG 整体 58 [46, 68]。更像「人更认一致性」，不是动态程度的胜利。\n- 文中有一趟生成两小时、甚至 12 小时的展示。本站未核协议（分辨率、是否插值或循环），不当作定量结论。",
+      "case_analysis": "有项目页。本站未下载长视频，未抽帧看后段是否漂或变死。",
+      "code_analysis": "项目页已给出。本站未克隆，未测校正的额外延迟。",
+      "solidity": "单位是 University of Rochester 与 Adobe。表是标准 VBench-Long，有人评区间。缺硬件和插件开销。自动一致性增益很小。",
+      "concerns": "- LongLive 上的一致性提升只有约 0.1–0.3，动态程度常下降。\n- 超长展示缺少可复核协议。\n- SF 结果加了 sink，公平性要注明。",
+      "takeaways": "- Who：AR 抗漂同学，对照已在观察名单上的 History / MemRoPE，不是 Henry 下场。\n- Control：同一冻结学生，比「首帧区域校正」和现有记忆/RAG；同时报一致性和动态程度，以及插件延迟。\n- Success：一致性提升不能以动态程度明显下降为代价，或人评与动态程度都说得清。\n- Stop：若只有 0.1 分的表上优势，不必进训练主线。"
+    }
+  ],
+  "trend_summary": "这一周（补扫）有效增量集中在「推理路径上的配件」和「世界模型会不会读状态」，不是新的蒸馏定理。\n\n音视频联合流式没有过线新系统。Kyutai 的 AURA（2611.26540）是实时语音驱动数字人，1.3B 在 576p 做到 20.7 fps 对着 16 Hz 播放、5B 在 720p 做到 9.7 fps，配方是 ODE 轨迹对齐再加 DMD 和滚动 KV，属于把视频流式方案搬到 talking head，本页放在重做一行。KAIST 的 Beyond Co-Generation（2611.22857）指出「一起生成≠真正联合」，JointREPA 在 Javis / LTX-2.3 上抬了一致性，但 DeSync 几乎不动，也不是流式系统，了解即可。\n\nKandinsky 6.0 Video 的 v2（2610.05608，周五替换）仍是双向 5 秒级开源 AV 底座，10-09 已因非流式落选，v2 未看到流式或因果新结果，不重新上卡。UnStep v2（2609.32518）PDF 体积与 10 月已读版本相同，维持可用资源，不升级。\n\n同周未过线但要记在账上的：SpecWM（验证改成精炼，导航分数几乎持平且未写硬件）、Spark-H3（在 MiniMax-H3/Hailuo 上的训练免费块稀疏注意力，名字会撞 Loopit H3，因果流式未说清）、ScaleWorld / FlexVSR（低分预测 + 高分细化）、TRQ 2-bit KV（MIT，对 Self-Forcing 和 LongCat）、LynnReal-Hand 与 inclusionAI 的 Code World Model 2.0 / invoker-render 权重、Segue v3（中途改提示 + SpanDMD，StreamAV-Bench 自称 6 项里 4 项第一，细节未全部核完，不进本页卡片）。物理探针除 Flip Test 外，Forced Response 和 PhysResponse 作陪衬，后一篇带 7.2 万仿真视频，转数据助手。\n\n组织追踪（since 2026-11-16，187 条，新建 28）：Apple 放出 FastFrames-S/L 权重，和本页 FastFrames 卡一致；Tencent/WeMM-Video 及 2611.26409 是音视频理解（生成文本，不是生成视频），分诊未进 113 篇候选，记为理解向 FYI；inclusionAI/invoker-render-1.0 对应 CWM 2.0；FastVideo 合入 #2050，把 H3 视觉帧做成变长注意力批处理，这里的 H3 是 MiniMax/Hailuo。NVIDIA flashdreams 本周没有新的实质提交。",
+  "resources": [
+    {
+      "title": "Apple FastFrames-S / FastFrames-L 权重",
+      "url": "https://huggingface.co/apple/FastFrames-S",
+      "license": "未在本站核对",
+      "note": "与 2611.23226 卡片同一工作。L：https://huggingface.co/apple/FastFrames-L ；项目页还声称有代码。"
+    },
+    {
+      "title": "inclusionAI / Code World Model 2.0（invoker-render-1.0）",
+      "url": "https://huggingface.co/inclusionAI/invoker-render-1.0",
+      "license": "未在本站核对",
+      "note": "论文 2611.22925。代码 https://github.com/inclusionAI/CodeWorldModel 。代码世界模型渲染路线，不是联合 AV 流式。本页不过线。"
+    },
+    {
+      "title": "LynnReal-Hand 权重与超快 VAE",
+      "url": "https://github.com/LynnReal-AI/LynnReal",
+      "license": "未在本站核对",
+      "note": "论文 2611.21479。手部控制的交互世界模型，文中写单卡 H200、540p、18.03 FPS / 0.741s 延迟。HF 上有 Base、Fast-preview 和 ultra-fast-vae。本页不过线。"
+    },
+    {
+      "title": "Spark-H3 / Spark-Attn 代码",
+      "url": "https://github.com/zechengtang/Spark-H3",
+      "license": "未在本站核对",
+      "note": "论文 2611.24256。训练免费块稀疏注意力，数字打在 MiniMax-H3（Hailuo）上，不是 Loopit H3；加速是 DiT-only，用 PSNR 对密集骨干，因果流式兼容性未说清。"
+    },
+    {
+      "title": "UnStep（维持，不升级）",
+      "url": "https://github.com/facebookresearch/UnStep",
+      "license": "CC-BY-NC-4.0（含部分 Apache）",
+      "note": "2609.32518 周五替换 v2，PDF 体积与 10 月已读版本相同，维持 10-25 的可用资源判定。"
+    }
+  ],
+  "redo": [
+    {
+      "title": "AURA: AUdio-dRiven streaming Avatar（2611.26540）",
+      "url": "https://arxiv.org/abs/2611.26540",
+      "note": "Kyutai / Sorbonne ISIR / Google DeepMind（Pérez 在 Kyutai 完成）。实时语音驱动数字人：1.3B、576p、20.7 fps 对着 16 Hz 播放；5B、720p、9.7 fps。配方是 ODE 轨迹对齐再加 DMD 和滚动 KV，相对 TalkVerse 教师称 17–23×。这是把视频流式方案搬到 talking head，不是原生联合 AV。名字会撞此前已 OUT 的理解论文 AURA 2.0，以及 2607.04311 的多主体 Aura。项目页 kyutai.org/aura。同步指标需另核，本页不单独上卡。"
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "week": "2026-W47",
+  "title": "W47（11-16 至 11-22）先有周一补上的全双工/按帧延迟，后半周例行失败，直到本页才补上「配件」推理和 Flip Test。没有必读新定理；周五批次周一补。",
+  "range": [
+    "2026-11-16",
+    "2026-11-22"
+  ],
+  "summary": "周一 11-16 已经把漏掉的周五 13 日批次写进站点：Duo 全双工 AV 配方、PixVid 按帧 34ms、WorldTrace 可寻址 KV、OmniDreams 开源 2 步驾驶配方。那是 W46 的尾巴，也是本周的起点。\n\n之后周二到周五的晨报和周五补扫都失败了。11-20 13:45 已经把 Mon 16 到 Fri 20 的列表抓回来并完成 113 篇分诊，但没有定级上站。今天（11-23）把这批积压一次补齐，并补写本周周报。今早 6:47 的 /new 仍是周五 20 日，周一周末窗还没翻，交给 08:45 / 10:45 / 13:45。\n\n后半周过线的五篇里，没有新的必读定理。能用的是推理路径上的配件：FastFrames 证明在少步 AR 里 VAE 解码和 KV 更新已经比去噪更贵，并用公开权重把 1.3B 做到单卡 B200 36ms；Streaming-AAA 把游戏世界模型推到 1080p / 43 FPS / 198ms，但只有原神和自定义分数；ScoutCache 让训练免费缓存在 120 秒上又快又稳。知识上最硬的是 Flip Test：11 个视频世界模型在因果最小对上低于随机，失败主要是两侧画出同一结局；MiniMax-H3（Hailuo）真实对 25.3%，不是 Loopit H3。Reference Forcing 是 Forcing 家族必须当日判定的抗漂插件，自动指标增量很小。\n\n音视频联合流式本周没有过线新系统。AURA 是 talking head 的流式搬迁，放在重做一行。\n\n召回审计：主渠道 arXiv 在 11-16 之后一度中断，今天用 catchup 补 Mon 16–Fri 20（周五五类 union 约 662，漏扫四日 union 约 2916，收紧后合并 113 篇进入分诊）。组织追踪 11-16 以来 187 条、新建 28，有用的是 FastFrames 权重、invoker-render，以及腾讯 WeMM-Video（理解模型，不是生成，2611.26409 正确地没有进生成短名单）。OpenReview 自管开放 SLA 仍为无。漏报风险：例行中断四天，今天一次补齐；WeMM 不作为生成漏报。延迟：周五批次和周报都是周一补。",
+  "highlights": [
+    {
+      "date": "2026-11-16",
+      "paper_id": "duo-rwm-full-duplex",
+      "title": "Duo: A Reciprocal World Model for Full-Duplex Interaction",
+      "note": "全双工 AV 开源配方；Realization 来自 MiniMax-H3/Hailuo，不是 Loopit H3。"
+    },
+    {
+      "date": "2026-11-16",
+      "paper_id": "pixvid-pixel-sf",
+      "title": "Back to Pixels: Lifting Latent Video Diffusion into Pixel Space",
+      "note": "去掉时序 VAE 块后控制到出画 34ms，为后半周 FastFrames 做了铺垫。"
+    },
+    {
+      "date": "2026-11-16",
+      "paper_id": "worldtrace-addr-kv",
+      "title": "Addressable Memory for Video World Models (WorldTrace)",
+      "note": "可寻址 KV，v2 首次收录。"
+    },
+    {
+      "date": "2026-11-16",
+      "paper_id": "omnidreams-sf-recipe",
+      "title": "NVIDIA OmniDreams",
+      "note": "驾驶域开源 2 步 Self-Forcing+DMD 配方。"
+    },
+    {
+      "date": "2026-11-23",
+      "paper_id": "fastframes-pixel-kv",
+      "title": "FastFrames: Video Generation at Interactive Latency",
+      "note": "VAE/KV 配件替换，1.3B 单卡 B200 36ms，权重已放。"
+    },
+    {
+      "date": "2026-11-23",
+      "paper_id": "streaming-aaa-tencent",
+      "title": "Streaming-AAA",
+      "note": "1080p 游戏 WM，43 FPS / 198ms；原神域，证据存疑。"
+    },
+    {
+      "date": "2026-11-23",
+      "paper_id": "scoutcache-cdr-orhr",
+      "title": "ScoutCache",
+      "note": "训练免费缓存，120 秒 2.28× 且质量上升。"
+    },
+    {
+      "date": "2026-11-23",
+      "paper_id": "fliptest-wm-state",
+      "title": "The Flip Test",
+      "note": "11 个视频 WM 在因果最小对上低于随机；Hailuo H3 真实对 25.3%。"
+    },
+    {
+      "date": "2026-11-23",
+      "paper_id": "reference-forcing-drift",
+      "title": "Reference Forcing",
+      "note": "Forcing 家族首帧区域校正；自动指标增量小。"
+    }
+  ],
+  "threads": "### 推理配件，而不是更少的去噪步\n\nPixVid（周一）已经把控制到出画从块级降到帧级。FastFrames 把同一观察写完整：在 CF++ 路径上，VAE 解码 147ms，去噪不再是大头。Streaming-AAA 走的是另一条配件线：重做 VAE + 分卡流水，换来 1080p 实时，但域和指标都窄。ScoutCache 则把缓存从「略快一点」做到 120 秒仍然质量更好。\n\n### 世界模型是不是在读状态\n\nFlip Test 把「物理分低」收成可证伪的最小对，并证明信息在第一帧里。Forced Response 和 PhysResponse 是同周陪衬，不要重复立项。\n\n### 音视频流式\n\n本周没有新的过线联合 AV 系统。Duo 仍是周一留下的全双工参考。AURA 是 talking head 搬迁。",
+  "watchlist": "- 08:45 / 10:45 / 13:45 接周一覆盖周末的新批次，勿与本页积压混淆。\n- FastFrames 解码器 / KV 精炼接到 H3 因果学生；ScoutCache 对照 TeaCache / token-reduction / PreSTP。\n- Flip Test 协议在 Loopit H3 上跑一遍，必须和论文里的 MiniMax-H3（Hailuo）分开记账。\n- peers：Direct Forcing 权重、Speculative Forcing 代码（仍待），本周组织追踪未看到它们放出。\n- Spark-H3 只作为 Hailuo 服务旁注，不要写成 Loopit H3 的叉。"
+}
