@@ -1,0 +1,359 @@
+{
+  "date": "2026-11-27",
+  "headline": "本周晨报和补扫因额度中断四天，今天 13:45 一次补上周一到周四四批。过线 8 篇，没有必读新定理。主线是自回归流式的历史与延迟：Hindsight Forcing 让历史块从未来回传梯度；ShowNow 把交互出画从 620ms 降到 210ms；LiveVAE 把 MiniMax-H3 的官方 VAE 编解码加快 3–6 倍；BigSmall 用 14B 规划、1.3B 绘制，语义不掉却快约 3 倍。Henry 不必亲自下场。周五 27 日列表还没翻（Age 约 24.6 小时），交给周一晨报。",
+  "catchup_note": "2026-11-27 13:37 Asia/Shanghai。五类 /list/*/new 均为 Thursday, 26 November 2026（HTTP 200）。Age：cs.CV 88445s ≈24.57h，其余 88335–88408s，未重置。HTTPS API 200、Age 0，newest 2611.34944v1 published 2026-11-25T18:59:59Z（周四公告窗）。上次成功处理的列表日是 Friday, 20 November 2026（11-23 晨报及 08:45 补扫确认）。其后晨报与补扫均因额度失败，本槽用 catchup 补 Mon 23 / Tue 24 / Wed 25 / Thu 26。周五 27 日批次尚未翻页。Codex CLI 本槽 refresh token 被撤销（401），分诊和抽表由本站人工完成。",
+  "papers": [
+    {
+      "id": "shownow-speculative-wm",
+      "rating": "worth",
+      "originality": "mechanism",
+      "credibility": "solid",
+      "directions": [
+        "world-model",
+        "streaming"
+      ],
+      "highlight": true,
+      "title": "ShowNow: Fine-Grained Speculative Streaming for Responsive World Models",
+      "tldr": "NUS Show Lab 把交互世界模型的「按下到出画」做成可准备多条未来的推测流式：单卡 H100 上 ShowNow Eight Futures 的 P50/P90/P99 是 208/345/374ms、15.99 FPS，对照他们微调的 SolarWM-FT 自动提前量是 620/983/1385ms、15.76 FPS。动作准确率 0.860，高于 SolarWM-FT 的 0.793，但 1 秒 PSNR 17.64 低于对方的 18.80。代码仓库是 showlab/ShowNow。",
+      "institutions": [
+        "Show Lab, National University of Singapore"
+      ],
+      "published": "arXiv 2026-11-26",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.34693",
+        "code": "https://github.com/showlab/ShowNow"
+      },
+      "rating_reason": "把交互延迟从约 0.6s 降到约 0.2s，账本是单卡 H100、1857 次按键分位数，对照是同一套 SolarWM 微调。机制是多未来准备加共享前缀缓存，不是新定理，但是可对的可用配方。",
+      "coverage": {
+        "paper": "full",
+        "demo": "none",
+        "code": "none",
+        "note": "核对 Table 1/2 与延迟协议；未跑代码、未看附属视频。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| SolarWM / FastTree | 交互世界模型，用缓存和提前量压延迟 | 同一套部署对比：SolarWM-FT 自动提前量 P50 620ms，ShowNow 一帧提前量 210ms，帧率几乎一样 |\n| PixVid（本站 11-16） | 去掉时序 VAE 后控制到出画 34ms | 协议不同，不能直接比 34ms 和 210ms；ShowNow 保留 Wan VAE，拼的是动作准备和分支注意力 |\n| 普通推测解码 | 草稿再由大模型验证 | 这里是对支持的动作预先生成多条未来，输入到来时选择，而不是逐块验证 |\n\n反事实：知道 SolarWM 瓶颈在「输入到来后才重新生成」的人，会预期预计算未来能降延迟；208ms 分位数和动作准确率对照是需要实测的。判定为可用配方。",
+      "method": "在已提交的 15 个历史潜变量上保留共享前缀 KV（FastTree），候选动作只算分支分区。输入到来时在已准备的未来里选择，每一拍追加 4 帧。Reactive 是输入后再生成；One Future 预先准备当前按住的动作，变了再重生成；Eight Futures 覆盖支持的动作。质量对照里教师走 30 步，ShowNow 走实时路径。训练内容是 16 fps；他们另报了 32 FPS 作为 2 倍播放。",
+      "evidence": "- Table 1（单卡 H100，六种子等速率协议，1857 次输入）：SolarWM-FT B3 + FastTree 自动提前量，出画 P50/P90/P99 = 620/983/1385ms，15.76 FPS；同一模型改成一帧提前量是 536/915/1370ms、14.50 FPS。ShowNow B1 + FastTree 一帧提前量是 210/339/374ms、15.61 FPS；优化后的 Eight Futures 是 208/345/374ms、15.99 FPS。来源：原文 Table 1。本站未复测。\n- Table 2（八动作、冻结 IDM/Wan VAE）：动作准确率 Teacher / SolarWM-FT / ShowNow = 0.943 / 0.793 / 0.860；切换后过渡 0.936 / 0.591 / 0.813；1 秒 PSNR 19.61 / 18.80 / 17.64，SSIM 0.574 / 0.560 / 0.530。ShowNow 更跟手，重建略差。\n- 延迟定义是 input-to-display，不是纯 GPU 时间。空转比例 Eight Futures 为 0.09%/0.00%。",
+      "solidity": "机构是 NUS Show Lab。延迟写了卡型号、协议和分位数。质量表承认 PSNR/SSIM 不如 SolarWM-FT。",
+      "concerns": "- 210ms 不能直接和 PixVid 的 34ms 比，协议和是否含 VAE/显示等待不同。\n- 32 FPS 是把 16 fps 内容倍速播放，不是原生 32 fps 训练。\n- 本站未看附属视频，也未跑仓库。",
+      "takeaways": "- Who：交互世界模型 / H3 低延迟推理同学，不是 Henry 亲自下场。\n- Control：在现有因果学生上做「一帧提前量 vs 多未来准备」，单卡写明型号，报 P50/P90 出画和动作准确率。\n- Success：出画 P50 明显低于当前 Solar/FastTree 类基线，动作准确率不低于该基线，帧率仍接近播放。\n- Stop：质量掉到不能用，或延迟只在排除显示等待后好看，就停在阅读。"
+    },
+    {
+      "id": "livevae-streaming-vae",
+      "rating": "worth",
+      "originality": "mechanism",
+      "credibility": "solid",
+      "directions": [
+        "streaming",
+        "video-gen"
+      ],
+      "highlight": true,
+      "title": "LiveVAE: Causal Window Attention Makes Efficient Streaming Video VAE",
+      "tldr": "MeiGen 把视频 VAE 做成因果窗口注意力的流式编解码器，可替换官方 VAE。在 MiniMax-H3（Hailuo，不是 Loopit H3）上，单卡 H100 编码快 5.2–6.2 倍、解码快 3.0–3.3 倍，PSNR 还高 0.07–0.90 dB；加上推理优化可再到十几倍。Wan2.2 上解码快 4.7–6.5 倍。生成侧用冻结的少步 DiT 衡量，分数基本贴着官方解码器。代码声明将开源，项目页 livevae.github.io，仓库 MeiGen-AI/LiveVAE。",
+      "institutions": [
+        "MeiGen",
+        "University of Macau"
+      ],
+      "published": "arXiv 2026-11-26",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.34912",
+        "project": "https://livevae.github.io/",
+        "code": "https://github.com/MeiGen-AI/LiveVAE"
+      },
+      "rating_reason": "和 FastFrames 同一条「VAE 已经是瓶颈」的线上，但这篇同时加速编码和解码，并保持官方潜空间，便于当即插即用配件。数字写了 H100、分辨率和内存。不是新定理。",
+      "coverage": {
+        "paper": "full",
+        "demo": "none",
+        "code": "none",
+        "note": "核对 Table 1/2 与 H100 计时定义；未跑代码。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| FastFrames / PixVid / TAEHV | 换掉或绕过 VAE 解码，压交互延迟 | LiveVAE 保留潜空间，编码和解码都做成流式，服务条件生成和编辑 |\n| LynnReal-Omni / Solar-X / StreamRender-H3 | 只加速 H3 解码器，编码器仍是官方速度 | 官方 H3 编码比解码更慢；本文编码 5.2–6.2×，解码 3.0–3.3× |\n| 官方 MiniMax-H3 / Wan2.2 VAE | 重卷积或全帧注意力 | 用感受野分析说明补丁几乎只看邻居，改成因果窗口注意力并限制 KV |\n\n反事实：VAE 是瓶颈已经是共识；同时改编码器、还保持潜空间可替换，是工程上该做的一步，不是事先算不出的新机制。判定为可用配方。",
+      "method": "先看预训练 VAE 的有效感受野，发现编解码一个补丁几乎只依赖时空邻居。于是用因果窗口注意力做流式编码器和解码器，KV 有界。训练是先对编码器、解码器分别蒸馏，再联合微调，以保持原潜空间。文中的 Ours-Opt 另外加了 H100 上的推理优化，FP8 只在 1080p 和 2160p 使用。教师是 MiniMax-H3 官方 VAE 和 Wan2.2 VAE。文中的 MiniMax-H3 是 Hailuo，不是 Loopit H3。",
+      "evidence": "- Table 1（单卡 H100，batch 1，中位延迟，单位 ms）：H3 上 Ours 相对官方编码 5.2–6.2×、解码 3.0–3.3×，PSNR 在四个分辨率都高于官方教师 0.07–0.90 dB。480p 峰值显存从 8.8 GB 降到 4.4 GB；2160p 只需约 14–16 GB，Solar-X 会 OOM。Ours-Opt 在 720p 编码/解码可到 15.7× / 8.0× 量级（原文还有 18.7× / 9.5× 的写法，以分分辨率表为准）。来源：原文 Table 1 与 §4.2.2。本站未复测。\n- Wan2.2：解码 4.7–6.5×，编码只有 1.4–1.6×（官方 Wan 解码更重）。\n- Table 2，冻结少步 DiT（Wan2.2 用 3 步 FastWan2.2-TI2V-5B，H3 用 4 步 Wuli MiniMax-H3 Turbo LoRA）：Wan2.2 总分 0.581 vs 官方 0.582；H3 各分项与官方差约 0.01 以内。",
+      "solidity": "计时写了单卡 H100、warmup、只计编码器或解码器。生成实验冻结 DiT，避免和生成器改动搅在一起。机构含 MeiGen。",
+      "concerns": "- MiniMax-H3 是 Hailuo，迁到 Loopit H3 之前要先对照官方 VAE 的潜空间是否兼容。\n- LPIPS 仍略差于官方 H3 VAE。\n- 仓库是否已有可用权重，本站没有核到。\n- Ours-Opt 的最大倍数和分分辨率表要对照着读，不要混用。",
+      "takeaways": "- Who：H3 推理 / VAE 同学，不是 Henry 亲自下场。\n- Control：在 Loopit H3 或 Wan 学生上，先只替换 VAE 编解码，对照官方 VAE；单卡写明型号和分辨率，分项报编码 / 解码 / 端到端和 PSNR。\n- Success：编码或解码明显加快，PSNR/生成分不明显低于官方 VAE。\n- Stop：潜空间对不齐或编辑/条件生成变差，就停在阅读。"
+    },
+    {
+      "id": "hindsight-forcing-lst",
+      "rating": "worth",
+      "originality": "mechanism",
+      "credibility": "solid",
+      "directions": [
+        "streaming",
+        "video-gen"
+      ],
+      "highlight": true,
+      "title": "Hindsight Forcing: Learning Better History from the Future in Autoregressive Video Diffusion",
+      "tldr": "城大与 Philo AI 给少步自回归视频加了一座潜空间直通桥：前向仍完整多步写出 KV，反向只把未来损失送回历史块里被选中的一步，不增加参数、也不做 SGF 那种两遍回放。Wan2.1-T2V-1.3B、832×480、16 FPS 的 5 秒 VBench 上，Total 85.74、Quality 86.89、Dynamic Degree 92.22，对照 Self-Forcing 84.29 / 85.12 / 67.22、Causal Forcing 84.08 / 84.81 / 84.17、Reward Forcing 85.07 / 86.28 / 87.78。单卡 H100 上每条 5 秒视频约 5.6 秒，和这些基线几乎一样。代码仓库 haonanAN309/Hindsight-Forcing。",
+      "institutions": [
+        "City University of Hong Kong",
+        "Philo AI"
+      ],
+      "published": "arXiv 2026-11-23",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.27074",
+        "code": "https://github.com/haonanAN309/Hindsight-Forcing"
+      },
+      "rating_reason": "在 SGF / RAVEN 已经能把梯度送到历史编码之后，它第一次把历史去噪器也纳入未来监督，并有完整消融。Total 只比 Reward Forcing 高 0.67，但 Dynamic Degree 从 SGF+ 的 55 提到 92，机制清楚。不是必读新定理。",
+      "coverage": {
+        "paper": "full",
+        "demo": "none",
+        "code": "none",
+        "note": "核对 Table 1–3；未跑训练。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| Self-Forcing / Causal Forcing | 自生成历史，但把历史潜变量 detach，历史去噪收不到后续损失 | 前向仍用完整 rollout 写 KV，反向用直通桥把未来损失送到被选中的历史去噪步 |\n| SGF / SGF+ | 两遍回放，梯度主要到历史编码；SGF+ 还要把学生参数翻倍 | Table 1：本文编码和去噪都收梯度，额外参数为 0 |\n| RAVEN | 用最终步历史，交错一次，梯度到编码不到去噪 | 同样用最终步历史，但去噪器也被未来损失训练 |\n\n反事实：熟悉 SGF 的人会预期「让历史看到未来」能抗漂；把监督送到历史去噪器、还不加参数，是需要消融才能确认的一步。判定为新机制，但属于同一条信用分配线，不进必读。",
+      "method": "学生从 Causal Forcing 的因果 ODE 检查点初始化，教师是冻结的 Wan2.1-T2V-14B。每块 3 个潜帧、4 步去噪。前向每块跑完多步再写 KV；反向只保留一个被选中的去噪步，用 straight-through 把后续块的损失送回去，同一套参数既写上下文也做历史去噪。训练在 H100 80GB 上，全局 batch 64，150 次生成器更新后取 EMA。",
+      "evidence": "- Table 2（VBench 分数×100；832×480、81 帧、16 FPS、约 5 秒；944 个提示各 5 条；单卡 H100 80GB 报推理时间）：Hindsight Forcing Total / Quality / Semantic / Dynamic Degree = 85.74 / 86.89 / 81.11 / 92.22，额外参数 0，训练峰值显存 38.08 GiB，每条视频 5.619 秒。Self-Forcing 84.29 / 85.12 / 80.99 / 67.22，显存 30.70，5.612 秒。Causal Forcing 84.08 / 84.81 / 81.15 / 84.17。Reward Forcing Total 85.07，最接近，但 Dynamic Degree 87.78，显存 41.38。RAVEN Dynamic Degree 91.67，但 Quality 只有 84.71。SGF Total 84.70、DD 74.72；SGF+ Total 83.75、DD 55.00，额外参数 +100%。来源：原文 Table 2。本站未复测。\n- Table 3：只做完整 rollout 并 detach，Total 85.03（Causal Forcing 是 84.08）；加上直通桥后 Total 85.74，Dynamic Degree 从 73.33 到 92.22。\n- 一分钟定性对照写了颜色漂移，主表仍是 5 秒 VBench。",
+      "solidity": "对照都是具名的 Forcing 家族官方检查点。显存比 Self-Forcing 高约 7 GiB，推理时间基本持平。机构可确认。",
+      "concerns": "- Total 相对 Reward Forcing 只有 0.67，主收益在运动，不要说全面碾压。\n- 一分钟结果主要是定性。\n- 仓库是否已有可复现训练脚本，本站没有核到。",
+      "takeaways": "- Who：H3 AR / 历史抗漂同学，不是 Henry 亲自下场。\n- Control：在现有因果学生上只加 LST 桥，对照 Causal Forcing / Self-Forcing / 如有则 RAVEN；同一套 5 秒 VBench 和显存。\n- Success：Total 不低于当前学生，Dynamic Degree 明显提高，推理时间不恶化。\n- Stop：显存涨太多或运动提高来自胡乱乱动，就停在阅读。"
+    },
+    {
+      "id": "bigsmall-plan-paint",
+      "rating": "worth",
+      "originality": "mechanism",
+      "credibility": "solid",
+      "directions": [
+        "streaming",
+        "video-gen"
+      ],
+      "title": "Plan Big, Paint Small: Semantic-Aware Computation Allocation for Efficient Autoregressive Video Generation",
+      "tldr": "芝加哥大学与东北大学把 Krea-Realtime-14B 当规划器、Self-Forcing-1.3B 当绘制器，按语义变化决定何时动用大模型。单卡 RTX PRO 6000 Blackwell（96GB）、832×480、81 帧、只计 DiT 时间：BigSmall 10.0 FPS、3.02×，VBench Total 84.32、Semantic 82.18，对照 14B 的 3.3 FPS / 84.25 / 82.21；Fast 变体 12.5 FPS、3.77×，Semantic 几乎不掉。只用 1.3B 虽然 17.1 FPS，Semantic 要低 1.08。含 VAE 的端到端是 2.34×，首块延迟仍等于 14B 的 2.09 秒。",
+      "institutions": [
+        "University of Chicago",
+        "Northeastern University"
+      ],
+      "published": "arXiv 2026-11-24",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.28402"
+      },
+      "rating_reason": "同一潜空间里「大模型只在需要时出手」，语义几乎贴着 14B，速度介于 14B 和纯 1.3B 之间。对照含 Speculative Forcing 和 SDVG。是调度配方，不是新定理。",
+      "coverage": {
+        "paper": "full",
+        "demo": "none",
+        "code": "unavailable",
+        "note": "核对 Table 1 与实验设置；未见代码。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| 只用 Self-Forcing-1.3B | 快，但 Semantic 比 14B 低 1.08 | 大模型规划、小模型绘制，Semantic 与 14B 的配对差为 +0.01 |\n| Speculative Forcing | 同一 14B 上 1.98×，Semantic 还不掉 | BigSmall 3.02×，Semantic 同样贴着 14B |\n| SDVG / 推测解码 | 小模型先出再验证 | 验证会吃掉加速；精确推测解码甚至慢于 14B（0.90×） |\n\n反事实：大模型管难、小模型管易是预期方案；关键是语义变化检测真能在 AR 块级调度里把 Semantic 保住。判定为可用配方。",
+      "method": "规划器是四步 Krea-Realtime-14B，绘制器是四步 Self-Forcing-1.3B（DMD），同一 Wan2.1 潜空间和噪声日程。内容变化时用 14B 规划，其余块用 1.3B 画。Fast 变体只在第 0 块用 14B，其余全用 1.3B。测速：BF16、PyTorch SDPA、无编译，单卡 RTX PRO 6000 Blackwell 96GB；主表 FPS=81/T，T 为每条视频的 DiT 时间，不含 VAE。",
+      "evidence": "- Table 1（946 扩展提示、五种子）：Krea-Realtime-14B 24.50s、3.3 FPS、Total/Quality/Semantic 84.25 / 84.76 / 82.21。Self-Forcing-1.3B 4.74s、17.1 FPS、84.07 / 84.83 / 81.01，∆Sem −1.08。Speculative Forcing 12.40s、6.5 FPS、1.98×、84.16 / 84.60 / 82.41。SDVG 12.54s、6.5 FPS、84.37 / 84.92 / 82.16。BigSmall 8.11s、10.0 FPS、3.02×、84.32 / 84.86 / 82.18，∆Sem +0.01 [−0.22, +0.26]。BigSmall-Fast 6.50s、12.5 FPS、3.77×、84.38 / 84.94 / 82.15，∆Sem −0.03。来源：原文 Table 1。本站未复测。\n- 文中写：含 VAE 解码后端到端 2.34×；首块延迟仍是 14B 的 2.09s；同时驻留两套模型，峰值显存 60.2→68.6 GB。",
+      "solidity": "卡型号、是否含 VAE、首块延迟和显存都写了。Semantic 给了配对置信区间。没有代码。",
+      "concerns": "- 主表 FPS 不含 VAE，引用时要同时说端到端 2.34× 和首块仍是 2.09s。\n- 5090/H100 上的倍数可能不同。\n- 无开源。",
+      "takeaways": "- Who：H3 14B/1.3B 联合推理同学，不是 Henry 亲自下场。\n- Control：在同一潜空间的大小模型上，按语义变化调度，对照纯 14B、纯 1.3B 和 Speculative Forcing；同时报 DiT 时间和含 VAE 的端到端、首块延迟。\n- Success：Semantic 与大模型的差落在约 0 附近，端到端明显快于纯大模型。\n- Stop：首块等待仍不可接受，或两套模型显存放不下，就不要上训练主线。"
+    },
+    {
+      "id": "draft-forcing-spec",
+      "rating": "worth",
+      "originality": "mechanism",
+      "credibility": "solid",
+      "directions": [
+        "streaming",
+        "video-gen"
+      ],
+      "title": "Draft Forcing: Target-guided Speculative Drafting and Learned Verifier for Autoregressive Video Generation",
+      "tldr": "交大、LIGHTSPEED 与阿里把 1.3B Self-Forcing 草稿和 14B Self-Forcing 目标（Krea Realtime 14B）做成块级推测：在 H200 上默认设置 DiT / 端到端加速 1.63× / 1.57×，VBench Total 84.41 对目标的 84.55，SSIM 0.6764；更激进可达 2.02× / 1.89×，Total 84.35。和 Dummy Forcing 的 KV 压缩可叠加到 1.93× / 1.82×。对照 SDVG 虽然 1.67×，但 Total 掉到 82.76、SSIM 0.4660。文中还把草稿接到 RAVEN-H3（MiniMax-H3/Hailuo 的流式适配，不是 Loopit H3）。",
+      "institutions": [
+        "Shanghai Jiao Tong University",
+        "LIGHTSPEED",
+        "Alibaba Group"
+      ],
+      "published": "arXiv 2026-11-24",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.30328"
+      },
+      "rating_reason": "块级推测在少步流式里常常要么不快、要么漂。这篇用目标引导的草稿和在线特征验证器把质量几乎保住，并能接到异构的 RAVEN-H3。加速是 1.6–1.9 倍，不是数量级，但是可叠加的配件。",
+      "coverage": {
+        "paper": "full",
+        "demo": "none",
+        "code": "unavailable",
+        "note": "核对 Table 1 与 H200 计时说明；未跑。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| 训练免费草稿（同文对照） | 现成 1.3B 块直接被接受 | 只有 1.35× 端到端，SSIM 0.5982，轨迹会漂 |\n| SDVG | 块级推测加奖赏模型验证 | 1.67×，但 Total 82.76、SSIM 0.4660 |\n| 步级推测 / Dummy Forcing、Forcing-KV | 在去噪步或 KV 上加速 | 文中说与 KV 压缩正交，叠加后 1.82× 端到端 |\n\n反事实：推测解码搬到视频是预期方向；难在少步、块级提交之后历史会偏。在线验证器和跨 VAE 映射是需要看表的部分。判定为可用配方。",
+      "method": "目标是冻结的 14B Self-Forcing（Krea Realtime 14B，5 步），草稿是预训练 1.3B Self-Forcing（4 步），只微调 LoRA 和层融合。验证器在特征空间打分，按最差帧决定是否接受该块，并用累计相对 RMSE 预算触发目标刷新。跨骨干时用学习过的潜空间映射，把 Wan 草稿接到 RAVEN-H3。视频是 7 块×3 潜帧，解码成 81 帧、480×832、16 fps。效率在 NVIDIA H200 上测。",
+      "evidence": "- Table 1（相对仅目标；VBench）：仅 14B 目标 Total 84.55、Quality 85.18、Semantic 81.99、DD 75.83。训练免费草稿 84.57，SSIM 0.5982，草稿率 42.86%，DiT/E2E 1.38× / 1.35×。SDVG 82.76 / 82.93 / 82.08 / 65.83，SSIM 0.4660，1.75× / 1.67×。Draft Forcing 默认（文中）Total 84.41，SSIM 0.6764，1.63× / 1.57×；激进设置草稿率 70.79%，2.02× / 1.89×，Total 84.35。叠加 Dummy Forcing 一行是 Total 84.53、SSIM 0.5728、草稿率 57.53%，1.93× / 1.82×。来源：原文 Table 1 与 §4。本站未复测。\n- RAVEN-H3 是 MiniMax-H3（Hailuo）的流式适配，不是 Loopit H3。",
+      "solidity": "对照包含训练免费草稿和 SDVG，质量与加速写在同一张表。计时在 H200，主设定分辨率写清。无代码。",
+      "concerns": "- 1.6× 不是数量级加速，要和 KV 压缩、解码器替换一起看。\n- 叠加 KV 压缩后 SSIM 降到 0.5728。\n- 跨到 Hailuo H3 的映射不能直接假设能接到 Loopit H3。",
+      "takeaways": "- Who：H3 推测解码 / 14B 学生推理同学，不是 Henry 亲自下场。\n- Control：1.3B 草稿 + 当前目标，对照仅目标、训练免费草稿；报 Total、SSIM 和端到端倍数，写明 H200 或本机卡。\n- Success：Total 相对目标掉不到 0.3，端到端明显快于仅目标。\n- Stop：历史一漂质量就不稳，或跨 VAE 对不齐，就不要上主线。"
+    },
+    {
+      "id": "molt-forcing-stale-cache",
+      "rating": "worth",
+      "originality": "finding",
+      "credibility": "solid",
+      "directions": [
+        "streaming",
+        "video-gen"
+      ],
+      "title": "The Old Scene Lives in the Cache: Diagnosing and Shedding Stale History in Streaming Video Generation",
+      "tldr": "港中文发现流式 KV 在提示切换后会把旧场景留下：原生历史在 32 条视频上的旧物体残留率 0.949，几乎清不掉；只冲掉 KV 几乎没用（0.929）。换成窗口能清（残留 0.087）但脸相似度从 0.734 掉到 0.363；冷启动更干净，脸只剩 0.350。他们的 Molt Forcing 残留 0.024、30/32 条清干净，脸相似度 0.587，介于硬切和保留身份之间。",
+      "institutions": [
+        "The Chinese University of Hong Kong",
+        "BNU-HKBU United International College"
+      ],
+      "published": "arXiv 2026-11-25",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.32116"
+      },
+      "rating_reason": "这是可复现的诊断：旧场景住在缓存里，冲 KV 不够。Molt Forcing 是同一诊断上的处理方法，身份和清场仍有折中，所以按新发现而不是新定理来收。",
+      "coverage": {
+        "paper": "full",
+        "demo": "none",
+        "code": "unavailable",
+        "note": "核对 Table 1 与诊断设定；未复现。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| LongLive 再缓存 | 长视频里带着 KV 往下走 | 图 1：再缓存会把旧街上的物体和鱼同时留下 |\n| Echo-Forcing 硬切 | 切换时改环境 | 环境换了，脸也换了（Table 1 脸 0.373） |\n| 只冲 KV / 重算 sink | 直觉上该忘掉旧场景 | 残留仍是 0.929 / 0.938，几乎等于原生历史 |\n\n反事实：有人会以为冲缓存就能换场；表证明不够。这个结果事先并不显然。判定为新发现。",
+      "method": "构造提示切换（例如城市街道切到水族馆隧道），在多个时刻看旧物体是否还在，并在切换后 6.7 秒用 ArcFace 比脸。对照包括原生历史、替换 sink、替换窗口、冷启动、Echo 硬切、KV flush、sink 重算，以及他们的 Molt Forcing。",
+      "evidence": "- Table 1（32 条视频 / 16 组；人脸子集 20 条 / 10 组；括号是 95% 区间）：原生历史残留 0.949，清干净 0/32，脸 0.734。KV flush 残留 0.929，清干净 0/32，脸 0.730。Sink 重算 0.938 / 0/32 / 0.725。替换窗口残留 0.087，清干净 20/32，脸 0.363。冷启动 0.013，31/32，脸 0.350。Echo 硬切 0.043，28/32，脸 0.373。Molt Forcing 0.024，30/32，脸 0.587。来源：原文 Table 1。本站未复测。",
+      "solidity": "诊断设计清楚，对照覆盖了直觉上会试的缓存操作。样本量 32 条不算大，但区间写了。无代码。",
+      "concerns": "- 32 条视频，推广要谨慎。\n- Molt Forcing 的脸 0.587 仍低于原生历史的 0.734，身份和换场没有同时完美。\n- 无开源，复现要自己按协议搭。",
+      "takeaways": "- Who：H3 流式 KV / 提示切换同学，不是 Henry 亲自下场。\n- Control：在当前 H3 学生上复现「切场后旧物体是否还在」和脸相似度，至少包含原生历史、KV flush、冷启动。\n- Success：能复述残留率和脸的折中；若要上方法，清场不能明显毁身份。\n- Stop：只在自己的切场协议上有效，就当诊断，不要改训练主线。"
+    },
+    {
+      "id": "mass-forcing-dmd",
+      "rating": "worth",
+      "originality": "mechanism",
+      "credibility": "doubtful",
+      "directions": [
+        "streaming",
+        "video-gen"
+      ],
+      "title": "Mass Forcing: On-Policy Mass-Aware Distillation for Autoregressive Video Generation",
+      "tldr": "城大与阿里高德认为 DMD 的反向 KL 会在训练中把动态程度打塌，问题不在初始化。Mass Forcing 从同一前缀分出多条续写，按教师相对学生的质量重加权。480p、单卡 H100、不计 VAE、也不计第一块时，吞吐量仍是 17.0 FPS / 0.69s，与 Self-Forcing、Causal Forcing 相同。VBench Total 84.98、Dynamic Degree 88.89，对照 Causal Forcing 84.14 / 86.11、Self-Forcing 83.49 / 61.11。成像质量低于 Self-Forcing（66.93 vs 69.53），所以可信度记为存疑。",
+      "institutions": [
+        "City University of Hong Kong",
+        "AMAP, Alibaba Group"
+      ],
+      "published": "arXiv 2026-11-24",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.29618"
+      },
+      "rating_reason": "把 DMD 动态程度塌缩从「换初始化」改写成目标本身的问题，并给出可对的表。Total 相对 Causal Forcing 只高约 0.8，而且成像质量下降，所以不把可信度打满。蒸馏部分转少步队友。",
+      "coverage": {
+        "paper": "full",
+        "demo": "none",
+        "code": "unavailable",
+        "note": "核对 Table 1 与成像质量脚注；未复现训练曲线。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| Self-Forcing DMD | 在线蒸馏，动态程度常在训练中下降 | 文中三条不同初始化都出现下降，指向目标而不是起点 |\n| Causal Forcing / Causal-rCM | 更强的少步 AR 基线 | MovieGen Total 82.51→83.38，VBench 84.14→84.98；DD 仍明显更高 |\n| 覆盖式学生初始化 | 先把模式铺开再 DMD | 他们认为这种覆盖是暂时的 |\n\n反事实：DMD 掉动态不是新闻；「质量重加权能在不降速的情况下拉回 DD」需要看表。判定为新机制，证据存疑。",
+      "method": "每个更新从学生生成的同一前缀分出多条续写，用潜空间分数积分估计教师相对学生的密度比，再重加权条件 DMD，把教师下更稀、学生下更密的轨迹放大。推理仍是四步、IID 高斯噪声，不使用分数估计。训练提示来自过滤后的 VidProM。计时在单卡 H100、batch 1，不含 VAE，AR 方法也不含第一块。",
+      "evidence": "- Table 1：Mass Forcing 与 CausVid / Self-Forcing / Causal Forcing / Causal-rCM 均为 17.0 FPS、0.69s。MovieGen Total / Quality / Semantic / DD = 83.38 / 84.53 / 78.78 / 83.35，对照 Causal Forcing 82.51 / 83.28 / 79.42 / 77.57、Self-Forcing 81.75 / 82.77 / 77.70 / 63.41。VBench 84.98 / 86.17 / 80.23 / 88.89，对照 Causal Forcing 84.14 / 85.22 / 79.83 / 86.11、Self-Forcing 83.49 / 84.51 / 79.40 / 61.11。来源：原文 Table 1。本站未复测。\n- 文中承认 VBench Imaging Quality 66.93，低于 Self-Forcing 的 69.53。\n- 不要和 Hindsight Forcing 的 85.74 直接比，分辨率和协议不同。",
+      "solidity": "计时口径写清楚了（不含 VAE、不含第一块）。官方检查点对照。成像质量下降被作者自己写出。",
+      "concerns": "- Total 增益不大，主收益在 DD，可能与成像质量对掉。\n- MovieGen 的语义评估用了 Qwen3-VL-32B 自建元数据。\n- 无代码。",
+      "takeaways": "- Who：H3 DMD 同学，并转少步队友主评蒸馏目标；不是 Henry 亲自下场。\n- Control：在当前 DMD 学生上画 Dynamic Degree 随训练的曲线，对照是否塌缩；若试 Mass Forcing，盯 Imaging Quality。\n- Success：DD 不再随训练掉下去，Total 不低于当前学生，成像质量不明显变差。\n- Stop：只是更动、图像变糊，就不要换目标。"
+    },
+    {
+      "id": "flowmap-ar-distill",
+      "rating": "worth",
+      "originality": "mechanism",
+      "credibility": "solid",
+      "directions": [
+        "streaming",
+        "video-gen"
+      ],
+      "title": "Analyzing and Improving FlowMap Distillation of Autoregressive Video Models",
+      "tldr": "宾大、Roblox 与斯坦福给自回归视频的 FlowMap 蒸馏补了抗漂指导和运动感知指导，使得只用 1.3B 因果教师的 4 步学生，能接近从 14B 教师 DMD 出来的学生，并声称保住教师多样性。在 Causal-rCM 一组，他们的 π-Flow Total 84.87，对照官方 Causal-rCM（14B DMD）84.92；在 Causal Forcing 一组，π-Flow Total 84.76、DD 88.3，对照官方 Causal Forcing 84.74 / 83.9。蒸馏方法本身请少步队友主评。",
+      "institutions": [
+        "University of Pennsylvania",
+        "Roblox",
+        "Stanford University"
+      ],
+      "published": "arXiv 2026-11-24",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.31164",
+        "project": "https://enkeejunior1.github.io/ar-video-flowmap/"
+      },
+      "rating_reason": "价值是「不必再靠 14B 双向教师做 DMD，也能把 4 步 AR 学生做到接近」。表按同一 AR 底座分组，可读。机制是指导项，不是新的蒸馏理论，故不进必读。",
+      "coverage": {
+        "paper": "partial",
+        "demo": "none",
+        "code": "none",
+        "note": "核对 Table 1 主行；未复核 30 秒漂移动图中的每条曲线。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| DMD / Self-Forcing / Causal Forcing | 用大双向教师匹配分布，常见多样性下降 | 改走 FlowMap（π-Flow / MeanFlow / CD），教师可以是 1.3B 因果模型 |\n| 已有 AR 上的 FlowMap / Causal-rCM 的 TF-sCM | 单独 FlowMap 往往不如 DMD | 加抗漂指导和运动感知指导后，π-Flow 与 14B DMD 学生接近 |\n\n反事实：给 FlowMap 加抗漂项是预期改进；能在 1.3B 教师上追平 14B DMD，需要看分组表。判定为新机制、站得住。",
+      "method": "分析独立 AR FlowMap 为什么落后，然后加两项指导：抗漂指导用一个辅助模型去模仿学生的漂移，作为负向分支，让 AR 教师纠正已漂的学生 rollout；运动感知指导定位运动补丁并做 skip-layer。可套在 π-Flow、MeanFlow 和一致性蒸馏上。学生 4 NFE，底座是 Wan2.1-1.3B 的不同 AR 初始化。",
+      "evidence": "- Table 1（4-NFE，Wan2.1-1.3B）：Self-Forcing 官方 DMD、14B 教师，Total 84.22、DD 66.1。Causal-rCM 官方 DMD、14B，84.92、DD 81.1；其 TF-sCM FlowMap 只有 83.78。本文 π-Flow、1.3B AR 教师，84.87 / 85.76 / 81.29 / 71.4。Causal Forcing 官方 DMD、14B，84.74、DD 83.9；本文 π-Flow 84.76 / 85.83 / 80.46 / 88.3。来源：原文 Table 1。本站未复测。\n- 文中还写 30 秒 rollout 的漂移下降，以及多样性相对 DMD 更好；多样性没有在 Table 1 主列展开，引用时要回到原文图和附录。",
+      "solidity": "按同一 AR 底座分组，避免把不同初始化混在一起。计时和硬件不在 Table 1，这篇比的是质量和教师规模。",
+      "concerns": "- Semantic 在 Causal Forcing 一组的 π-Flow 是 80.46，低于官方 Causal Forcing 的 82.02。\n- 多样性主张要看原文图，主表没有单独一列。\n- 少步方法请少步队友复评。",
+      "takeaways": "- Who：H3 少步 AR 同学，并转少步队友；不是 Henry 亲自下场。\n- Control：用当前 1.3B 因果教师做 FlowMap（或 π-Flow），对照现有 DMD 学生；看 Total、DD、Semantic 和样本多样性。\n- Success：Total 接近现有 DMD 学生，多样性明显更好，不必依赖 14B 双向教师。\n- Stop：Semantic 掉太多，或 30 秒仍然漂，就维持 DMD。"
+    },
+    {
+      "id": "liveaudio-stream-v2a",
+      "rating": "worth",
+      "originality": "mechanism",
+      "credibility": "solid",
+      "directions": [
+        "av-streaming"
+      ],
+      "title": "LiveAudio: From Bidirectional to Autoregressive Diffusion for Real-Time Streaming Video-to-Audio Generation",
+      "tldr": "清华把双向视频到音频模型改造成块级因果生成器，并蒸馏成少步。这是流式 V2A，不是音视频联合生成。VGGSound 上 DeSync 0.395，好于教师的 0.484 和 WorldSonus 的 0.659；单卡 A100 上 TTFF 143ms、RTF 0.79，能实时。人评 MOS-T 4.06±0.27，高于 WorldSonus 3.42 和 V-AURA 3.50。项目页 streamaudio.github.io。",
+      "institutions": [
+        "Tsinghua University",
+        "Monash University",
+        "Renmin University of China"
+      ],
+      "published": "arXiv 2026-11-24",
+      "links": {
+        "paper": "https://arxiv.org/abs/2611.30714",
+        "project": "https://streamaudio.github.io"
+      },
+      "rating_reason": "范围是级联的流式配音，不是原生联合 AV。但它给出了 DeSync 和单卡 A100 实时账本，对照 WorldSonus / V-AURA，对交互世界模型的声音一侧有用。",
+      "coverage": {
+        "paper": "full",
+        "demo": "none",
+        "code": "none",
+        "note": "核对 Table 1/2 与延迟分解；未听样本、未跑。"
+      },
+      "comparison": "| 最接近工作 | 它做了什么 | 本文增量 |\n|---|---|---|\n| WorldSonus / LiveFoley / V-AURA | 流式或近实时 V2A | 从现成双向模型做渐进因果微调再蒸馏，而不是从头训流式模型 |\n| 离线 MMAudio / Omni2Sound | 质量高，但要等完整视频 | 本文 TTFF 143ms；同步还略好于自己的双向教师 |\n\n反事实：把双向模型因果化再蒸馏，是视频里 CausVid / Self-Forcing 已经走过的路；搬到 V2A 并给出实时和 DeSync，是可预期的迁移。判定为可用配方，放在音视频流式，但不要写成联合生成。",
+      "method": "先把双向 DiT 改成块因果，再逐步因果微调，然后 ODE 回归并蒸馏成不需要 CFG 的少步生成器。每块只依赖已经播放的视频。训练数据含 SoundAtlas 约 47 万音视频对。",
+      "evidence": "- Table 1（VGGSound 测试集）：LiveAudio FDO / DeSync / IB / TTFF / RTF = 70.97 / 0.395 / 0.323 / 0.143s / 0.79。双向教师 68.17 / 0.484 / 0.324 / 无 TTFF / 0.50（离线）。WorldSonus 90.24 / 0.659 / 0.258 / 0.502s / 0.60。V-AURA 82.76 / 0.678 / 0.279 / 7.148s / 2.31。MMAudio 质量好（FDO 65.85、DeSync 0.457）但是离线。来源：原文 Table 1。计时：单卡 A100、batch 1。本站未复测。\n- Table 2 人评：LiveAudio MOS-Q 3.66±0.19、MOS-T 4.06±0.27；WorldSonus 3.35 / 3.42；V-AURA 3.43 / 3.50；离线 Omni2Sound 3.87 / 3.97。\n- 延迟分解：第一块 143ms 里有一半以上是在等第一段视频。",
+      "solidity": "用了 DeSync，不是只报 LSE-C。硬件和 RTF 写清。人评有置信区间。",
+      "concerns": "- 不是联合音视频生成，不能进 P0 联合系统的主比较。\n- RTF 0.79 是 A100；5090 上要重测。\n- 本站未听样本。",
+      "takeaways": "- Who：H3 声音 / 交互世界模型配音同学，不是 Henry 亲自下场。\n- Control：若要接流式 V2A，对照 WorldSonus，报 DeSync、TTFF、RTF 和卡型号。\n- Success：RTF<1，DeSync 明显好于当前流式基线。\n- Stop：只是级联配音、联合模型已经能同步，就不必单独立项。"
+    }
+  ],
+  "trend_summary": "四天漏扫的主线不是又一篇联合 AV 系统，而是自回归流式的历史怎么写、延迟从哪里省。\n\n训练侧，Hindsight Forcing 把未来损失送回历史去噪器；Mass Forcing 认为 DMD 动态程度塌缩来自目标本身。推理侧，ShowNow、BigSmall、Draft Forcing、LiveVAE 分别从多未来准备、大小模型调度、块级推测和流式 VAE 下手。Molt Forcing 则给出一个可复述的诊断：冲 KV 清不掉旧场景。FlowMap 一篇说明 1.3B 因果教师加指导后，4 步学生可以接近 14B DMD。\n\n音视频联合生成仍然没有新的过线系统。LiveAudio 是流式 V2A（级联配音），DeSync 和 A100 实时账本扎实，不要写成原生联合 AV。\n\n未过线但当日已判定的核心区：WorldInteract 单卡 H100 8 fps、Physics-IQ 63.0，低于播放帧率，证据含 VLM 裁判，暂不定级为过线；Dynamics Forcing 在 Astronex-World 上把 VBench-I2V Total 从 85.15 提到 90.02，主表像是图，样本量小，记存疑；Agentic LongLive 把身份撑到约 14 分钟，B200 上仍实时，但要额外 3–4 张卡跑智能体，且主表含 LLM 裁判；HorizonFlow 是少步蒸馏（约 51 A100-h、VBench Total 85.64），请少步队友主评；BASE 是全双工数字人的后端层，不是生成模型；Omni-H3-Image 只是图像修复，名字会撞 H3，生成范围 OUT；已见过的替换版 Streaming-AAA / dKV Forcing / FreqForcing / FlexVSR 不重推。",
+  "resources": [
+    {
+      "title": "ShowNow 代码",
+      "url": "https://github.com/showlab/ShowNow",
+      "license": "未核到",
+      "note": "论文声明提供附属视频和仓库。本站未跑。"
+    },
+    {
+      "title": "LiveVAE 项目页与代码",
+      "url": "https://livevae.github.io/",
+      "license": "未核到",
+      "note": "仓库 https://github.com/MeiGen-AI/LiveVAE ；权重是否已放本站未核到。"
+    },
+    {
+      "title": "Hindsight Forcing 代码",
+      "url": "https://github.com/haonanAN309/Hindsight-Forcing",
+      "license": "未核到",
+      "note": "摘要中的仓库链接。本站未跑。"
+    },
+    {
+      "title": "LiveAudio 项目页",
+      "url": "https://streamaudio.github.io",
+      "license": "",
+      "note": "流式 V2A 样本页。"
+    },
+    {
+      "title": "AR FlowMap 项目页",
+      "url": "https://enkeejunior1.github.io/ar-video-flowmap/",
+      "license": "",
+      "note": "2611.31164 项目页；若打不开以论文为准。"
+    }
+  ],
+  "redo": [
+    {
+      "title": "WorldInteract（2611.34730）",
+      "url": "https://arxiv.org/abs/2611.34730",
+      "note": "材料感知的流式交互视频，单卡 H100 8 fps，Physics-IQ 63.0 vs Goal Force 48.0。帧率低于 16 fps 播放，人评含 VLM 裁判，暂放观察，不算过线。"
+    },
+    {
+      "title": "Agentic LongLive（2611.34907）",
+      "url": "https://arxiv.org/abs/2611.34907",
+      "note": "给 LongLive 加异步记忆，14 分钟身份更好，B200 上生成仍实时（文中 34.3 FPS），但智能体还要 3–4 张卡；LongLive-H3 是 Hailuo 线。当系统备忘，不单独立卡。"
+    }
+  ]
+}

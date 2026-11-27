@@ -1,0 +1,67 @@
+{
+  "week": "2026-W48",
+  "title": "W48（11-23 至 11-27）前半周例行失败，周五补扫一次补上周一到周四。没有必读新定理；主线是 AR 流式的历史信用分配和推理配件。周五 27 日批次还没翻。",
+  "range": [
+    "2026-11-23",
+    "2026-11-27"
+  ],
+  "summary": "11-23 晨报补的是上一周（W47）积压，当时列表仍是周五 20 日。之后周二到周五的晨报和 08:45/10:45 补扫都因额度失败。今天 13:45 列表已经是周四 26 日（Age 约 24.6 小时），周一 23 到周四 26 都还没扫过。五类 catchup 合计新稿大约：周一 239、周二 659、周三 421、周四 398，去重收紧后进入分诊 254 篇，过线 8 篇。Codex CLI 本槽登录失效，分诊改为人工。\n\n过线的八篇里没有新的必读定理。能用的是两条线。一条是历史：Hindsight Forcing 让历史去噪器看到未来损失；Molt Forcing 证明冲 KV 清不掉旧场景；Mass Forcing 把 DMD 动态塌缩写成目标问题。一条是延迟和算力：ShowNow 把交互出画从 620ms 降到 210ms；LiveVAE 把 Hailuo H3 官方 VAE 的编解码加快数倍；BigSmall 用 14B 规划、1.3B 绘制保住语义并快约 3 倍；Draft Forcing 用 1.3B 草稿给 14B 做块级推测；FlowMap 显示 1.3B 因果教师也能蒸出接近 14B DMD 的 4 步学生。\n\n音视频联合流式本周仍没有过线新系统。LiveAudio 是实时 V2A，DeSync 0.395、A100 上 RTF 0.79，只作为级联配音配方。\n\n召回审计：主渠道 arXiv 自 11-23 08:45 之后中断四天，本槽用 catchup?abs=True 补 Mon–Thu（周四与 /new 一致，CV 新稿 242）。组织追踪、HF Daily、共引本槽未跑，周一晨报再补。OpenReview 自管开放 SLA 维持无。漏报风险：中断四天后一次补齐；周五 27 日批次尚未出现，交给周一。已见替换版不重推。",
+  "highlights": [
+    {
+      "date": "2026-11-27",
+      "paper_id": "shownow-speculative-wm",
+      "title": "ShowNow",
+      "note": "交互出画 620ms→210ms，单卡 H100。"
+    },
+    {
+      "date": "2026-11-27",
+      "paper_id": "livevae-streaming-vae",
+      "title": "LiveVAE",
+      "note": "Hailuo H3 官方 VAE 编码 5.2–6.2×、解码 3.0–3.3×；不是 Loopit H3。"
+    },
+    {
+      "date": "2026-11-27",
+      "paper_id": "hindsight-forcing-lst",
+      "title": "Hindsight Forcing",
+      "note": "历史去噪器收未来梯度，VBench Total 85.74，DD 92.22。"
+    },
+    {
+      "date": "2026-11-27",
+      "paper_id": "bigsmall-plan-paint",
+      "title": "Plan Big, Paint Small",
+      "note": "14B 规划 + 1.3B 绘制，3.02×，Semantic 几乎不掉。"
+    },
+    {
+      "date": "2026-11-27",
+      "paper_id": "draft-forcing-spec",
+      "title": "Draft Forcing",
+      "note": "1.3B 草稿加速 14B，默认 1.57× 端到端，质量几乎保住。"
+    },
+    {
+      "date": "2026-11-27",
+      "paper_id": "molt-forcing-stale-cache",
+      "title": "The Old Scene Lives in the Cache",
+      "note": "冲 KV 清不掉旧场景；Molt Forcing 残留 0.024。"
+    },
+    {
+      "date": "2026-11-27",
+      "paper_id": "mass-forcing-dmd",
+      "title": "Mass Forcing",
+      "note": "DMD 动态塌缩指向目标；成像质量下降，存疑。"
+    },
+    {
+      "date": "2026-11-27",
+      "paper_id": "flowmap-ar-distill",
+      "title": "FlowMap distillation for AR video",
+      "note": "1.3B 因果教师的 4 步学生接近 14B DMD。"
+    },
+    {
+      "date": "2026-11-27",
+      "paper_id": "liveaudio-stream-v2a",
+      "title": "LiveAudio",
+      "note": "流式 V2A，不是联合生成；A100 上 RTF 0.79，DeSync 0.395。"
+    }
+  ],
+  "threads": "### 历史从哪里来，梯度回给谁\n\nHindsight Forcing 把 SGF/RAVEN 没送到的历史去噪器接上未来损失。Mass Forcing 则说动态程度塌缩是 DMD 目标的问题。Molt Forcing 从另一头证明：缓存里的旧场景不是冲一下 KV 就能忘掉的。\n\n### 推理配件：准备、调度、推测、换 VAE\n\nShowNow 预计算动作未来。BigSmall 让 14B 只在内容变化时出手。Draft Forcing 是块级推测。LiveVAE 把 Hailuo H3 的 VAE 编解码一起加快。可以和上周 FastFrames 的解码器/KV 精炼放在同一条配件线上，但不要混用 MiniMax-H3 和 Loopit H3。\n\n### 音视频流式\n\n本周没有新的过线联合 AV 系统。LiveAudio 只解决声音一侧的流式级联。",
+  "watchlist": "- 周一晨报接周五 27 日批次（若假期无公告则记下）。本槽未跑组织追踪和共引，周一补。\n- LiveVAE / ShowNow / Hindsight 先做接入对照，不要改训练主线。\n- Flip Test 在 Loopit H3 上的补跑仍然有效，必须和 Hailuo MiniMax-H3 分账。\n- HorizonFlow、Mass Forcing、FlowMap 的蒸馏部分等少步队友定级。\n- Codex CLI 需要重新登录后才能恢复自动分诊。\n- peers：Direct Forcing 权重、Speculative Forcing 代码，本槽未查组织追踪。"
+}
